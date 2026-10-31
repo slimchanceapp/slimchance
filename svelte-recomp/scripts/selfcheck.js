@@ -5038,6 +5038,34 @@ check('the suite runs on one clock, so GitHub and the laptop agree', () => {
   assert.equal(Intl.DateTimeFormat().resolvedOptions().timeZone, 'Europe/Bratislava');
 });
 
+check('each person’s first link tag is counted with the setup numbers, by tag, never by person', async () => {
+  // 2026-10-31: friends, the owner's audience and each stranger post must be
+  // separate groups before the first link goes out.
+  const { readFileSync } = await import('node:fs');
+  const js = readFileSync('static/from.js', 'utf8');
+  const sql = readFileSync('../supabase/migrations/20261031120000_came_from.sql', 'utf8');
+  const pattern = js.match(/\/\^(\[a-z0-9\]\[a-z0-9-\]\{0,39\})\$\/\.test/)?.[1];
+  assert.ok(pattern && sql.includes(`p_from !~ '^${pattern}$'`) && sql.includes(`came_from ~ '^${pattern}$'`), 'one pattern on the phone and the server');
+  const run = (search, stored) => {
+    const store = new Map(stored ? [['recompos.cameFrom', stored]] : []);
+    new Function('location', 'localStorage', js)({ search }, { getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v) });
+    return store.get('recompos.cameFrom') ?? null;
+  };
+  assert.equal(run('?from=r-loseit-1'), 'r-loseit-1');
+  assert.equal(run('?from=r-loseit-1', 'friends'), 'friends', 'the first tag wins');
+  assert.equal(run('?from=<script>'), null, 'only plain tags');
+  assert.equal(run(''), null);
+  assert.match(readFileSync('src/app.html', 'utf8'), /<script src="%sveltekit\.assets%\/from\.js"><\/script>/);
+  for (const page of ['about', 'guides/why-the-scale-went-up', 'guides/consistent-beats-accurate']) {
+    assert.match(readFileSync(`static/${page}/index.html`, 'utf8'), /<script src="\/from\.js"><\/script>/, `${page} keeps the tag`);
+  }
+  assert.match(readFileSync('src/lib/events.ts', 'utf8'), /supabase\.rpc\('note_origin', \{ p_from: tag \}\)/);
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /noteOrigin\(\);/);
+  assert.match(sql, /'by_from'/, 'the Numbers page gets the steps per tag');
+  assert.match(sql, /alter table public\.app_origins enable row level security;/, 'no client reads the tags');
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /\?from=/, 'the privacy page says so');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

@@ -25,7 +25,7 @@
   import { syncHealthConnect } from '$lib/health/healthConnect';
   import { pullToRefresh } from '$lib/actions/pullToRefresh';
   import { refreshAll, refreshing, refreshError, lastRefresh, startClock, stopClock, nowTick } from '$lib/stores/refresh';
-  import { noteEvent } from '$lib/events';
+  import { noteEvent, noteOrigin } from '$lib/events';
   import Onboarding from '$lib/components/Onboarding.svelte';
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
   import { trainedDates } from '$lib/health/exercise';
@@ -272,10 +272,11 @@
     }
   }
 
-  // One "open" a day per person, for the Numbers page's retention (lib/events).
+  // One "open" a day per person, for the Numbers page's retention, and the tag
+  // of the link they came by, once (lib/events).
   $effect(() => {
     void $nowTick;
-    if ($user) noteEvent('open');
+    if ($user) { noteEvent('open'); noteOrigin(); }
   });
 
   // Alarms have to be armed from the app SHELL, not from the Alarms page. They were

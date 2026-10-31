@@ -16,6 +16,8 @@
     weeks: Array<{ week: string; people: number }>;
     opens: Array<{ day: string; people: number }>;
     errors: Array<{ message: string; times: number; people: number; last: string }>;
+    /** The same steps per link tag (migration 20261031120000_came_from). */
+    by_from?: Array<{ from: string; joined: number; setup: number; weighed: number; three_of_seven: number; week: number; month: number }>;
   }
 
   const SPANS = [30, 90, 365] as const;
@@ -76,6 +78,15 @@
     <div class="nb-pair"><span>Still trials (no email)</span><b>{m.trials}</b></div>
     <div class="nb-pair"><span>Saved with an email</span><b>{m.saved_accounts}</b></div>
     <div class="nb-pair"><span>Logged any food</span><b>{m.logged_food}</b></div>
+  </section>
+
+  <section class="card" aria-label="By the link they came by">
+    <div class="card-lbl">By the link they came by</div>
+    {#each m.by_from ?? [] as g}
+      <div class="nb-pair"><span>{g.from === 'untagged' ? 'No tag' : g.from}</span><b>{g.joined}</b></div>
+      <p class="nb-foot nb-from">{g.setup} finished setup · {g.three_of_seven} weighed in on 3 of their first 7 days · {g.week} back after a week · {g.month} after four</p>
+    {/each}
+    <p class="nb-foot">A link like slimchance.app/?from=r-loseit-1 tags everyone who arrives by it; the first tag a person brings is theirs.</p>
   </section>
 
   <section class="card" aria-label="New people per week">

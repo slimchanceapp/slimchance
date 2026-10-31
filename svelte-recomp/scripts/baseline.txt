@@ -133,6 +133,7 @@ different activities at the same time are not merged
 drop-off is counted in our own database, by a fixed list, and only the owner reads it
 during Back Rebuild nothing judges the light loads
 each goes out at the first unlock inside its window (MomentClock.java)
+each person’s first link tag is counted with the setup numbers, by tag, never by person
 each topic leads with its most severe item and counts the rest
 entries logged together become one re-loggable meal
 equipment is inferred from the exercise name
