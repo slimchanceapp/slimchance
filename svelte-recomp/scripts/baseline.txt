@@ -90,6 +90,7 @@ a weight history comes in from any app, one morning a day, in kg
 a weight reads in the person’s own unit, and what they type comes back as kg
 a weight typed on the notification gets its answer on the first line, and the app’s typo range
 a zero-length session gets a real duration instead of being rejected
+account deletion has its own address, for Google Play
 activity level tracks training frequency
 activity multiplier is applied
 adding a write type earns a fresh permission prompt

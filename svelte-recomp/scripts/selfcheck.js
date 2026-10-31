@@ -5102,6 +5102,15 @@ check('on Google Play the app is app.slimchance; the direct download keeps its i
   assert.match(hc, /scaleDays\(records, \(await App\.getInfo\(\)\)\.id\)/);
 });
 
+check('account deletion has its own address, for Google Play', async () => {
+  // Play's data-safety form asks for a page that explains deletion without the app.
+  const { readFileSync } = await import('node:fs');
+  const li = readFileSync('static/privacy.html', 'utf8').match(/<li id="delete">([\s\S]*?)<\/li>/)?.[1] ?? '';
+  assert.match(li, /Delete my account/, 'where it is in the app');
+  assert.match(li, /hello@slimchance\.app/, 'and how to ask without it');
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /<span>Delete my account<\/span>/, 'named as the menu names it');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

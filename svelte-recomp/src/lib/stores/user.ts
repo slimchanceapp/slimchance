@@ -44,7 +44,7 @@ export async function signIn(email: string, password: string) {
 }
 
 /** The version of the privacy page a consent was given to (static/privacy.html). */
-export const PRIVACY_VERSION = '2026-10-30';
+export const PRIVACY_VERSION = '2026-10-31';
 
 /** Creating an account needs explicit consent to keeping health data (GDPR
  *  Art. 9); it's recorded on the account itself, so it can be shown later. */
