@@ -5,7 +5,7 @@
   // logged sets, body-fat measurements, food. None of it needed new input; it just
   // had nowhere to be read together. See $lib/recomp.ts for the reasoning.
   import { liveWeights, liveWorkoutLogs, liveTracks, liveFoodLogs, liveGoal, liveActivitySessions } from '$lib/stores/live';
-  import { body, stall, fitness, line } from '$lib/stores/body';
+  import { body, stall, fitness, line, todayPulse } from '$lib/stores/body';
   import { editing } from '$lib/commitments';
   import { cleanPlans } from '$lib/plans';
   import { upsertRecord } from '$lib/stores/sync';
@@ -27,6 +27,7 @@
   import WeekShape from '$lib/components/WeekShape.svelte';
   import WeekJournal from '$lib/components/WeekJournal.svelte';
   import WeightLine from '$lib/components/WeightLine.svelte';
+  import DetailRow from '$lib/components/DetailRow.svelte';
   import { onMount, tick } from 'svelte';
   import { afterNavigate } from '$app/navigation';
   import { base } from '$app/paths';
@@ -36,7 +37,6 @@
   // that drive the verdict below (height, body fat, goal weight) belong beside
   // the verdict, not on a different tab.
   let showBodyGoals = $state(false);
-  let showMore = $state(false);
   async function openBodyGoalsFromHash() {
     if (typeof location === 'undefined') return;
     // #goal: the goal moment's "aim a little lower" lands on the goal, open.
@@ -190,96 +190,16 @@
     return watchAgreement(hand, sessions);
   });
 
-  // ── JOURNEY hero ── the orb fills with how far you've travelled from your
-  // starting weight toward goal; colour is the recomp verdict (fat vs muscle).
-  const startWeight = $derived($body.firstKg);
-  const journeyPct = $derived.by(() => {
-    if (startWeight == null || currentWeight == null || goalKg == null) return 0;
-    const total = startWeight - goalKg;
-    if (Math.abs(total) < 0.01) return 100;
-    return Math.max(0, Math.min(100, ((startWeight - currentWeight) / total) * 100));
-  });
-  const journeyTone: 'good' | 'ok' | 'warn' | 'bad' | 'na' = $derived(
-    tone === 'good' ? 'good' : tone === 'warn' ? 'warn' : tone === 'bad' ? 'bad' : 'ok'
-  );
-  const changeToDate = $derived(
-    startWeight != null && currentWeight != null ? (startWeight - currentWeight) : null
-  );
-  const strengthArrow = $derived(
-    strength.direction === 'up' ? '↑' : strength.direction === 'holding' ? '→' : strength.direction === 'down' ? '↓' : '—'
-  );
+  // Am I getting there: the same pulse every screen shares (stores/body).
+  const p = $derived($todayPulse);
 </script>
 
-<PageHero title="Progress" sub="Is the weight coming off fat, or muscle?"
-  tone={journeyTone} pct={journeyPct}
-  value={currentWeight != null ? wtNum(currentWeight) : '—'}
-  caption={`${weightUnit() === 'st' ? '' : `${unitWord()} `}trend${goalKg != null ? ` → ${wtShort(goalKg)} goal` : ''}`}
-  story={verdict.headline}
-  stats={[
-    { v: changeToDate != null ? `${changeToDate >= 0 ? '−' : '+'}${dwtNum(changeToDate)}` : '—', l: `${changeWord()} to date` },
-    { v: wv ? `${wv.rateKgPerWeek >= 0 ? '−' : '+'}${dwtNum(wv.rateKgPerWeek, 2)}` : '—', l: `${changeWord()} / week` },
-    // Strength only for people whose lifts it can read; anyone else sees their goal.
-    strengthArrow !== '—' ? { v: strengthArrow, l: 'strength' } : { v: goalKg != null ? wtShort(goalKg) : '—', l: 'goal' }
-  ]} />
+<!-- Am I getting there? One number, the odds and the pace (stores/body
+     todayPulse: the hero Today had until 2026-10-31), then the line. -->
+<PageHero title="Progress" sub="Am I getting there?" tone={p.tone} pct={p.pct}
+  value={p.kg != null ? wtNum(p.kg) : '—'} caption={p.caption} story={p.story} odds={p.odds} />
 
-<!-- Is it coming off? The line first, then how sure it is, then why not when it isn't. -->
 <WeightLine />
-
-{#if wv}
-  <div class="card trust-card" class:trust-solid={wv.state === 'answerable'}>
-    <div class="card-lbl">
-      {wv.state === 'answerable' ? '✓ This screen can answer you'
-        : $body.pace === 'stalled' || $body.pace === 'gaining' ? '◑ Enough to rule out your plan'
-        : '◔ Not enough to answer yet'}
-    </div>
-
-    {#if wv.state === 'answerable'}
-      <div class="trust-head">
-        Your weight is going <strong>{rateWord} {kg(wv.rateKgPerWeek)}</strong> a week.
-      </div>
-      <details class="trust-more"><summary>How sure is this?</summary><div class="trust-body">
-        Your weigh-ins scatter about <b>&plusmn;{dwt(wv.scatterKg)}</b> around that line,
-        so the true rate is between <b>{kg(Math.min(Math.abs(wv.loKgPerWeek), Math.abs(wv.hiKgPerWeek)))}</b> and <b>{kg(Math.max(Math.abs(wv.loKgPerWeek), Math.abs(wv.hiKgPerWeek)))}</b> a week.
-        That range doesn't include zero — so this is a real trend, not scale noise.
-      </div>{@render foot()}</details>
-    {:else if wv.state === 'not-enough'}
-      <div class="trust-head">
-        {wv.n} weigh-in{wv.n === 1 ? '' : 's'} isn't enough to tell you anything honest.
-      </div>
-      <div class="trust-body">
-        Body weight swings a kilo or two a day on water and food alone, so a
-        handful of readings can't separate a real trend from noise.
-        <b>{wv.weighInsNeeded} more</b> and this screen starts working.
-      </div>
-    {:else if $body.pace === 'stalled'}
-      <div class="trust-head">
-        Not losing at your planned pace.
-      </div>
-      <details class="trust-more"><summary>How sure is this?</summary><div class="trust-body">
-        Across {wv.n} weigh-ins your readings scatter <b>&plusmn;{dwt(wv.scatterKg)}</b>, which
-        puts the real rate between <b>{kg(wv.loKgPerWeek)} {wv.loKgPerWeek >= 0 ? 'down' : 'up'}</b> and
-        <b>{kg(wv.hiKgPerWeek)} {wv.hiKgPerWeek >= 0 ? 'down' : 'up'}</b> a week. Your plan is
-        <b>{$body.target.planKgPerWeek != null ? dwt($body.target.planKgPerWeek, 2) : '—'} down</b> — outside that range. A little loss or none,
-        it isn't the plan.
-      </div>{@render foot()}</details>
-    {:else}
-      <div class="trust-head">
-        Can't call it yet — the noise is bigger than the signal.
-      </div>
-      <details class="trust-more"><summary>How sure is this?</summary><div class="trust-body">
-        Across {wv.n} weigh-ins your readings scatter <b>&plusmn;{dwt(wv.scatterKg)}</b>
-        around the trend line. That puts the real rate somewhere between
-        <b>{kg(wv.loKgPerWeek)} {wv.loKgPerWeek >= 0 ? 'down' : 'up'}</b> and
-        <b>{kg(wv.hiKgPerWeek)} {wv.hiKgPerWeek >= 0 ? 'down' : 'up'}</b> per week —
-        a range that includes "no change at all", so any verdict below is a guess.
-        {#if wv.daysUntilAnswer}
-          Weighing most mornings, we'd know in about <b>{wv.daysUntilAnswer} days</b>.
-        {/if}
-      </div>{@render foot()}</details>
-    {/if}
-    {#if wv.state === 'not-enough'}{@render foot()}{/if}
-  </div>
-{/if}
 
 {#snippet foot()}
   <div class="trust-foot">
@@ -334,105 +254,90 @@
   {/if}
 </div>
 
-<!-- Fat or muscle: the screen's own question, then what to change and the habits under it. -->
-<h2 class="sec-hd">Fat or muscle?</h2>
-<div class="card verdict-card verdict-{tone}">
-  <div class="verdict-tone-bar"></div>
-  <div class="verdict-head">{verdict.headline}</div>
-  <div class="verdict-detail">{verdict.detail}</div>
-  <div class="verdict-conf">
-    Confidence: <strong>{verdict.confidence}</strong>
-    {#if verdict.confidence !== 'high'}
-      · more data sharpens this
-    {/if}
-  </div>
-</div>
+<!-- How was my week? An answer, not a detail. -->
+<h2 class="sec-hd">This week</h2>
+<WeeklyReview />
 
-{#if verdict.composition && verdict.composition.fatShare != null}
-  <div class="card">
-    <div class="card-lbl">Measured body composition</div>
-    <div class="comp-split">
-      <div class="comp-box">
-        <div class="comp-v good">{verdict.composition.fatKg > 0 ? '−' : '+'}{dwt(verdict.composition.fatKg)}</div>
-        <div class="comp-l">fat</div>
-      </div>
-      <div class="comp-box">
-        <div class="comp-v" class:bad={verdict.composition.leanKg > 0.5}>
-          {verdict.composition.leanKg > 0 ? '−' : '+'}{dwt(verdict.composition.leanKg)}
+<!-- The rest, one row each, named for what it answers and drawn when opened. -->
+<h2 class="sec-hd">Details</h2>
+<DetailRow title="Fat or muscle?" hint="Whether it's fat coming off, and what to change">
+  <div class="card verdict-card verdict-{tone}">
+    <div class="verdict-tone-bar"></div>
+    <div class="verdict-head">{verdict.headline}</div>
+    <div class="verdict-detail">{verdict.detail}</div>
+    <div class="verdict-conf">
+      Confidence: <strong>{verdict.confidence}</strong>
+      {#if verdict.confidence !== 'high'}
+        · more data sharpens this
+      {/if}
+    </div>
+  </div>
+  
+  {#if verdict.composition && verdict.composition.fatShare != null}
+    <div class="card">
+      <div class="card-lbl">Measured body composition</div>
+      <div class="comp-split">
+        <div class="comp-box">
+          <div class="comp-v good">{verdict.composition.fatKg > 0 ? '−' : '+'}{dwt(verdict.composition.fatKg)}</div>
+          <div class="comp-l">fat</div>
         </div>
-        <div class="comp-l">lean mass</div>
+        <div class="comp-box">
+          <div class="comp-v" class:bad={verdict.composition.leanKg > 0.5}>
+            {verdict.composition.leanKg > 0 ? '−' : '+'}{dwt(verdict.composition.leanKg)}
+          </div>
+          <div class="comp-l">lean mass</div>
+        </div>
+        <div class="comp-box">
+          <div class="comp-v">{Math.round(verdict.composition.fatShare * 100)}%</div>
+          <div class="comp-l">of loss was fat</div>
+        </div>
       </div>
-      <div class="comp-box">
-        <div class="comp-v">{Math.round(verdict.composition.fatShare * 100)}%</div>
-        <div class="comp-l">of loss was fat</div>
+      <div class="comp-bar">
+        <div class="comp-bar-fat" style="width:{Math.round(verdict.composition.fatShare * 100)}%"></div>
+      </div>
+      <div class="comp-foot">
+        Over {verdict.composition.spanDays} days, measured — not inferred.
       </div>
     </div>
-    <div class="comp-bar">
-      <div class="comp-bar-fat" style="width:{Math.round(verdict.composition.fatShare * 100)}%"></div>
+  {/if}
+  
+  {#if verdict.levers.length > 0}
+    <div class="card">
+      <div class="card-lbl">What to change</div>
+      {#each verdict.levers as lever, i}
+        <div class="lever">
+          <span class="lever-n">{i + 1}</span>
+          <span class="lever-t">{lever}</span>
+        </div>
+      {/each}
     </div>
-    <div class="comp-foot">
-      Over {verdict.composition.spanDays} days, measured — not inferred.
-    </div>
-  </div>
-{/if}
-
-{#if verdict.levers.length > 0}
+  {/if}
+  
   <div class="card">
-    <div class="card-lbl">What to change</div>
-    {#each verdict.levers as lever, i}
-      <div class="lever">
-        <span class="lever-n">{i + 1}</span>
-        <span class="lever-t">{lever}</span>
+    <div class="card-lbl">Last 14 days</div>
+    <div class="stat-grid">
+      <div class="stat">
+        <div class="stat-v">{liftingSessions14}</div>
+        <div class="stat-l">lifting sessions</div>
+        <div class="stat-hint">6+ is the target</div>
       </div>
-    {/each}
-  </div>
-{/if}
-
-<div class="card">
-  <div class="card-lbl">Last 14 days</div>
-  <div class="stat-grid">
-    <div class="stat">
-      <div class="stat-v">{liftingSessions14}</div>
-      <div class="stat-l">lifting sessions</div>
-      <div class="stat-hint">6+ is the target</div>
-    </div>
-    <div class="stat">
-      <div class="stat-v">{sportSessions14}</div>
-      <div class="stat-l">sport / cardio</div>
-      <div class="stat-hint">from your watch</div>
-    </div>
-    <div class="stat">
-      <div class="stat-v">{proteinAdherence.hit}<span class="stat-sub">/{proteinAdherence.logged || 0}</span></div>
-      <div class="stat-l">protein days hit</div>
-      <div class="stat-hint">of days you logged</div>
-    </div>
-    <div class="stat">
-      <div class="stat-v">{$body.target.target ?? '—'}</div>
-      <div class="stat-l">kcal a day</div>
-      <div class="stat-hint">this week's target</div>
+      <div class="stat">
+        <div class="stat-v">{sportSessions14}</div>
+        <div class="stat-l">sport / cardio</div>
+        <div class="stat-hint">from your watch</div>
+      </div>
+      <div class="stat">
+        <div class="stat-v">{proteinAdherence.hit}<span class="stat-sub">/{proteinAdherence.logged || 0}</span></div>
+        <div class="stat-l">protein days hit</div>
+        <div class="stat-hint">of days you logged</div>
+      </div>
+      <div class="stat">
+        <div class="stat-v">{$body.target.target ?? '—'}</div>
+        <div class="stat-l">kcal a day</div>
+        <div class="stat-hint">this week's target</div>
+      </div>
     </div>
   </div>
-</div>
-
-<h2 class="sec-hd">Your weeks</h2>
-<!-- Where in the week the food goes, and what the scale does with it. -->
-<WeekShape />
-
-<!-- The Sunday check-ins, kept: a private journal, a week at a time. -->
-<WeekJournal />
-
-<ProgressPhotos />
-
-<!-- Secondary detail, folded so the page stays trimmed to the essentials. -->
-<div class="card" style="margin-top:14px;cursor:pointer" onclick={() => showMore = !showMore} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); showMore = !showMore; } }}>
-  <div class="flex jb ac">
-    <div class="card-lbl" style="margin-bottom:0">More detail</div>
-    <span style="color:var(--muted);font-size:0.8125rem">{showMore ? 'Hide ▲' : 'Weekly review, the evidence, charts ▼'}</span>
-  </div>
-</div>
-{#if showMore}
-  <WeeklyReview />
-
   {#if verdict.composition && compositionSeries.fat.length >= 2}
     <div class="card">
       <div class="card-lbl">Fat mass vs lean mass</div>
@@ -454,8 +359,73 @@
       </div>
     {/each}
   </div>
-
-  {#if proteinSplit}
+</DetailRow>
+{#if wv}
+  <DetailRow title="How sure is the trend?" hint="How much your mornings let it say">
+    <div class="card trust-card" class:trust-solid={wv.state === 'answerable'}>
+      <div class="card-lbl">
+        {wv.state === 'answerable' ? '✓ This screen can answer you'
+          : $body.pace === 'stalled' || $body.pace === 'gaining' ? '◑ Enough to rule out your plan'
+          : '◔ Not enough to answer yet'}
+      </div>
+  
+      {#if wv.state === 'answerable'}
+        <div class="trust-head">
+          Your weight is going <strong>{rateWord} {kg(wv.rateKgPerWeek)}</strong> a week.
+        </div>
+        <div class="trust-body">
+          Your weigh-ins scatter about <b>&plusmn;{dwt(wv.scatterKg)}</b> around that line,
+          so the true rate is between <b>{kg(Math.min(Math.abs(wv.loKgPerWeek), Math.abs(wv.hiKgPerWeek)))}</b> and <b>{kg(Math.max(Math.abs(wv.loKgPerWeek), Math.abs(wv.hiKgPerWeek)))}</b> a week.
+          That range doesn't include zero — so this is a real trend, not scale noise.
+        </div>{@render foot()}
+      {:else if wv.state === 'not-enough'}
+        <div class="trust-head">
+          {wv.n} weigh-in{wv.n === 1 ? '' : 's'} isn't enough to tell you anything honest.
+        </div>
+        <div class="trust-body">
+          Body weight swings a kilo or two a day on water and food alone, so a
+          handful of readings can't separate a real trend from noise.
+          <b>{wv.weighInsNeeded} more</b> and this screen starts working.
+        </div>
+      {:else if $body.pace === 'stalled'}
+        <div class="trust-head">
+          Not losing at your planned pace.
+        </div>
+        <div class="trust-body">
+          Across {wv.n} weigh-ins your readings scatter <b>&plusmn;{dwt(wv.scatterKg)}</b>, which
+          puts the real rate between <b>{kg(wv.loKgPerWeek)} {wv.loKgPerWeek >= 0 ? 'down' : 'up'}</b> and
+          <b>{kg(wv.hiKgPerWeek)} {wv.hiKgPerWeek >= 0 ? 'down' : 'up'}</b> a week. Your plan is
+          <b>{$body.target.planKgPerWeek != null ? dwt($body.target.planKgPerWeek, 2) : '—'} down</b> — outside that range. A little loss or none,
+          it isn't the plan.
+        </div>{@render foot()}
+      {:else}
+        <div class="trust-head">
+          Can't call it yet — the noise is bigger than the signal.
+        </div>
+        <div class="trust-body">
+          Across {wv.n} weigh-ins your readings scatter <b>&plusmn;{dwt(wv.scatterKg)}</b>
+          around the trend line. That puts the real rate somewhere between
+          <b>{kg(wv.loKgPerWeek)} {wv.loKgPerWeek >= 0 ? 'down' : 'up'}</b> and
+          <b>{kg(wv.hiKgPerWeek)} {wv.hiKgPerWeek >= 0 ? 'down' : 'up'}</b> per week —
+          a range that includes "no change at all", so any verdict below is a guess.
+          {#if wv.daysUntilAnswer}
+            Weighing most mornings, we'd know in about <b>{wv.daysUntilAnswer} days</b>.
+          {/if}
+        </div>{@render foot()}
+      {/if}
+      {#if wv.state === 'not-enough'}{@render foot()}{/if}
+    </div>
+  </DetailRow>
+{/if}
+<DetailRow title="Your weeks" hint="Where the food goes in your week, and your Sunday notes">
+  <WeekShape />
+  <WeekJournal />
+</DetailRow>
+<DetailRow title="Photos and body fat" hint="Progress photos, and body fat from a photo">
+  <ProgressPhotos />
+</DetailRow>
+{#if proteinSplit}
+  <DetailRow title="Protein on gym days" hint="Whether training days run short of protein">
     <div class="card">
       <div class="card-lbl">Protein drops on the days you train</div>
       <div class="trust-body">
@@ -465,13 +435,13 @@
         <b>{proteinSplit.shortOfTargetG} g under</b> your {Math.round(proteinTargetG)} g target.
       </div>
     </div>
-  {/if}
-
-  {#if watchCheck && watchCheck.handLoggedDays > 0}
+  </DetailRow>
+{/if}
+{#if watchCheck && watchCheck.handLoggedDays > 0}
+  <DetailRow title="Does your watch agree?" hint="Your logged lifting days against the watch">
     <div class="card">
-      <div class="card-lbl">Does your watch agree?</div>
       <div class="trust-body">
-        The verdict above rests on <b>{watchCheck.handLoggedDays}</b> lifting
+        Fat or muscle rests on <b>{watchCheck.handLoggedDays}</b> lifting
         {watchCheck.handLoggedDays === 1 ? 'day' : 'days'} you logged in the last 28.
         Your watch independently recorded a session on
         <b>{watchCheck.confirmedDays}</b> of them.
@@ -481,7 +451,7 @@
         {/if}
       </div>
     </div>
-  {/if}
+  </DetailRow>
 {/if}
 
 <!-- What you've committed to: the next stop below you, the goal past it, the
@@ -527,12 +497,6 @@
   .cm-chip b{font-family:var(--font-display);font-size:1.25rem;font-weight:700;line-height:1;color:var(--text);white-space:nowrap}
   .cm-chip b.cm-todo{color:var(--muted);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border2)}
   :global(.cm-goal-in){text-align:center;min-width:0}
-  .trust-more{margin-top:8px}
-  .trust-more summary{cursor:pointer;font-size:0.8125rem;font-weight:700;color:var(--amber);list-style:none}
-  .trust-more summary::-webkit-details-marker{display:none}
-  .trust-more summary::after{content:' ▾'}
-  .trust-more[open] summary::after{content:' ▴'}
-  .trust-more .trust-body{margin-top:8px}
   /* The honesty card. Deliberately the first thing on the screen: it says how
      much weight to put on everything below it. */
   /* Cards carry their meaning in a faint wash of its colour, not a stripe. */

@@ -1,9 +1,9 @@
 <script lang="ts">
   // Progress's first answer: the line. Every morning on the scale as a dot,
   // the trend through them as the line (the same fit as every other screen,
-  // stores/body.ts), the goal when it's in reach of the picture, then the odds
-  // and how far along the way you are.
-  import { body, todayPulse, trendSeries } from '$lib/stores/body';
+  // stores/body.ts), the goal when it's in reach of the picture, then how far
+  // along the way you are. The odds and the pace are the hero's, above.
+  import { body, trendSeries } from '$lib/stores/body';
   import { changeWord, toUnit, unitWord, wtNum, wtShort, wtShortU, dwt } from '$lib/units';
   import { shiftYmd } from '$lib/date';
 
@@ -45,12 +45,6 @@
     };
   });
 
-  /** "around March", from the trend's own pace, only while it's coming off. */
-  const goalBy = $derived.by(() => {
-    if ($body.weeksToGoal == null || $body.weeksToGoal <= 0) return null;
-    const d = new Date(`${shiftYmd(Math.round($body.weeksToGoal * 7), new Date(`${$body.today}T12:00:00`))}T12:00:00`);
-    return d.toLocaleDateString(undefined, { month: 'long', year: d.getFullYear() === new Date().getFullYear() ? undefined : 'numeric' });
-  });
   const along = $derived.by(() => {
     const { firstKg, currentKg } = $body;
     if (firstKg == null || currentKg == null || goalKg == null || firstKg === goalKg) return null;
@@ -91,12 +85,7 @@
     <div class="wl-empty">Your line starts with two mornings on the scale.</div>
   {/if}
 
-  {#if $todayPulse.odds || goalBy}
-    <div class="wl-facts">
-      {#if $todayPulse.odds}<div class="wl-odds">{$todayPulse.odds.text}</div>{/if}
-      {#if goalBy && goalKg != null}<div>At this pace, {wtShortU(goalKg)} around <b>{goalBy}</b>.</div>{/if}
-    </div>
-  {/if}
+  <!-- The odds and the pace are in the hero above (2026-10-31): said once. -->
 
   {#if along}
     <div class="wl-bar" role="img" aria-label={`${Math.round(along.pct * 100)}% of the way to the goal`}>
@@ -124,8 +113,6 @@
   .wl-k-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.7}
   .wl-k-line{width:14px;height:2.5px;border-radius:2px;background:var(--amber);margin-left:8px}
   .wl-empty{font-size:0.8125rem;color:var(--muted);text-align:center;padding:26px 0 18px}
-  .wl-facts{margin-top:12px;display:grid;gap:3px;font-size:0.8125rem;line-height:1.45;color:var(--text)}
-  .wl-odds{font-weight:700}
   .wl-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:12px;overflow:hidden}
   .wl-bar-fill{height:100%;background:var(--amber);border-radius:3px}
   .wl-bar-t{font-size:0.6875rem;color:var(--muted);margin-top:4px}

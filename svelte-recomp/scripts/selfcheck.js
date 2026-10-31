@@ -5111,6 +5111,23 @@ check('account deletion has its own address, for Google Play', async () => {
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /<span>Delete my account<\/span>/, 'named as the menu names it');
 });
 
+check('Progress answers "am I getting there?" first, then fitter, this week, details, goals', async () => {
+  // The design review, 2026-10-31: 2.7 screens a stranger had to scroll
+  // through on faith. One question per screen, each number once, the rest one
+  // tap away in rows that say what they answer.
+  const { readFileSync } = await import('node:fs');
+  const page = readFileSync('src/routes/progress/+page.svelte', 'utf8');
+  const markup = page.slice(page.indexOf('</script>'));
+  const order = ['<PageHero', '<WeightLine', '{#if $stall}', 'Getting fitter?', '<WeeklyReview', '<DetailRow title="Fat or muscle?"', 'Goals and plans'];
+  const at = order.map((m) => markup.indexOf(m));
+  assert.ok(at.every((i) => i >= 0), `all there: ${order.filter((m, i) => at[i] < 0)}`);
+  assert.deepEqual([...at].sort((x, y) => x - y), at, 'in that order');
+  assert.match(markup, /<PageHero title="Progress" sub="Am I getting there\?"[^>]*odds=\{p\.odds\}/, 'the odds lead the page');
+  assert.doesNotMatch(markup, /showMore|More detail/, 'no catch-all fold');
+  assert.match(readFileSync('src/lib/components/DetailRow.svelte', 'utf8'), /\{#if open\}<div class="dr-body">\{@render children\(\)\}<\/div>\{\/if\}/, 'a closed row draws nothing');
+  assert.doesNotMatch(readFileSync('src/lib/components/WeightLine.svelte', 'utf8'), /odds\.text|At this pace/, 'the odds and the pace are said once, in the hero');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 
