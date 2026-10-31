@@ -137,6 +137,7 @@ jobs:
           ./gradlew bundlePlayRelease --no-daemon --stacktrace
           AAB=app/build/outputs/bundle/playRelease/app-play-release.aab
           unzip -p "$AAB" base/assets/capacitor.config.json | grep -q '"https://slimchance.app"'
+          unzip -p "$AAB" base/manifest/AndroidManifest.xml | grep -aq 'app\.slimchance'
           ! unzip -p "$AAB" base/manifest/AndroidManifest.xml | grep -aq 'REQUEST_INSTALL_PACKAGES'
           ! unzip -p "$AAB" base/manifest/AndroidManifest.xml | grep -aq 'USE_EXACT_ALARM'
           cp "$AAB" ../slimchance-play.aab

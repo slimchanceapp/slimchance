@@ -68,7 +68,12 @@ android {
     flavorDimensions 'store'
     productFlavors {
         sideload { dimension 'store' }
-        play { dimension 'store' }
+        // On Google Play the app is app.slimchance (2026-10-31): the package
+        // name is in every Play link and fixed at the first upload, so it
+        // carries the brand rather than a handle and the old name. The
+        // direct download keeps com.toxicminds.recompos: installed apps
+        // update in place only under the id they already have.
+        play { dimension 'store'; applicationId 'app.slimchance' }
     }
     buildFeatures { buildConfig true }
     buildTypes {

@@ -4103,7 +4103,7 @@ check('the Google Play build updates only through Play and loads slimchance.app'
   // keeps all three and its vercel.app address, where installs keep their data.
   const { readFileSync } = await import('node:fs');
   const gradle = readFileSync('android/app/build.gradle', 'utf8');
-  assert.match(gradle, /productFlavors \{\s+sideload \{ dimension 'store' \}\s+play \{ dimension 'store' \}/);
+  assert.match(gradle, /productFlavors \{\s+sideload \{ dimension 'store' \}[\s\S]*?play \{ dimension 'store'; applicationId 'app\.slimchance' \}/);
   assert.match(gradle, /replace\('"https:\/\/svelte-recomp\.vercel\.app"', '"https:\/\/slimchance\.app"'\)/);
   const play = readFileSync('android/app/src/play/AndroidManifest.xml', 'utf8');
   for (const p of ['REQUEST_INSTALL_PACKAGES', 'USE_EXACT_ALARM']) assert.match(play, new RegExp(`android\\.permission\\.${p}" tools:node="remove"`));
@@ -5086,6 +5086,20 @@ check('people are asked once, a few days in, whether Slim Chance is for them and
   assert.match(readFileSync('src/lib/components/FitAsk.svelte', 'utf8'), /answered = true;\s+try \{ localStorage\.setItem\(KEY/, 'asked once, even if the reason is skipped');
   assert.match(readFileSync('../supabase/migrations/20261031130000_fit_ask.sql', 'utf8'), /'fit', coalesce/, 'the Numbers page gets the answers in totals');
   assert.match(readFileSync('static/privacy.html', 'utf8'), /whether it's for you and what's in the way/, 'the privacy page says so');
+});
+
+check('on Google Play the app is app.slimchance; the direct download keeps its id', async () => {
+  // 2026-10-31: the package name is in every Play link and fixed at the first
+  // upload. Installed direct downloads update only under the id they have.
+  const { readFileSync } = await import('node:fs');
+  const gradle = readFileSync('android/app/build.gradle', 'utf8');
+  assert.match(gradle, /defaultConfig \{[\s\S]*?applicationId "com\.toxicminds\.recompos"/, 'the direct download keeps its id');
+  assert.match(gradle, /play \{ dimension 'store'; applicationId 'app\.slimchance' \}/);
+  assert.match(gradle, /sideload \{ dimension 'store' \}/, 'and the sideload flavour does not override it');
+  assert.match(readFileSync('../.github/workflows/build-app-apk.yml', 'utf8'), /grep -aq 'app\\\.slimchance'/, 'CI checks the bundle it uploads');
+  const hc = readFileSync('src/lib/health/healthConnect.ts', 'utf8');
+  assert.doesNotMatch(hc, /'com\.toxicminds\.recompos'/, 'the app asks its own id at runtime, so either build skips its own weigh-ins');
+  assert.match(hc, /scaleDays\(records, \(await App\.getInfo\(\)\)\.id\)/);
 });
 
 // Nothing may be reported until the async checks have actually settled.

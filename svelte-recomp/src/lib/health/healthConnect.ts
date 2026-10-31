@@ -676,9 +676,6 @@ export async function syncHealthConnect(
 }
 
 const WEIGHT_PERM = READ_PERMISSION.Weight;
-/** The app's own package (the iPhone app's bundle id too): it writes typed
- *  weigh-ins back to Health Connect, and must never read them in again. */
-const OWN_PACKAGE = 'com.toxicminds.recompos';
 /** The first native build that declares READ_WEIGHT. Older apps load this same
  *  web code, and must never request a permission their manifest lacks. */
 const SCALE_BUILD = 13;
@@ -725,7 +722,11 @@ async function syncAppleHealthWeights(uid: string): Promise<number> {
  *  none: a year at most, in one request, saved whole or not at all. */
 async function saveScaleRecords(uid: string, records: any[]): Promise<number> {
   const have = new Set((await db.table('weights').where('user_id').equals(uid).toArray()).map((w: any) => w.date));
-  const fresh = scaleDays(records, OWN_PACKAGE).filter((d) => !have.has(d.date));
+  // This app's own id, asked at runtime (the Play build's differs from the
+  // direct download's): it writes typed weigh-ins back to Health Connect and
+  // must never read them in again.
+  const { App } = await import('@capacitor/app');
+  const fresh = scaleDays(records, (await App.getInfo()).id).filter((d) => !have.has(d.date));
   await upsertRecords('weights', fresh.map((d) => ({
     user_id: uid, date: d.date, weight: d.kg, created_at: d.at, source: `health:${d.origin}`,
   })));
