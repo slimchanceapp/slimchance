@@ -5066,6 +5066,28 @@ check('each person’s first link tag is counted with the setup numbers, by tag,
   assert.match(readFileSync('static/privacy.html', 'utf8'), /\?from=/, 'the privacy page says so');
 });
 
+check('people are asked once, a few days in, whether Slim Chance is for them and what is in the way', async () => {
+  // 2026-10-31: of the strangers who logged anything, seven in eight left
+  // within four entries, and none said why.
+  const { fitAskDue, FIT_ANSWERS, FIT_REASONS } = await import('../src/lib/fit.ts');
+  const due = (joined, extra = {}) => fitAskDue({ joined, today: '2026-11-06', setupDone: true, answered: false, ...extra });
+  assert.equal(due('2026-11-05'), false, 'not on day two');
+  assert.equal(due('2026-11-04'), true, 'from day three');
+  assert.equal(due('2026-10-31'), true, 'to day seven');
+  assert.equal(due('2026-10-30'), false, 'not after the first week');
+  assert.equal(due('2026-11-04', { setupDone: false }), false, 'only after setup');
+  assert.equal(due('2026-11-04', { answered: true }), false, 'once');
+  const { readFileSync } = await import('node:fs');
+  const listed = readFileSync('src/lib/events.ts', 'utf8').match(/APP_EVENTS = \[([^\]]*)\]/)[1];
+  for (const x of [...FIT_ANSWERS, ...FIT_REASONS]) assert.ok(listed.includes(`'${x.event}'`), `${x.event} is a counted event`);
+  const today = readFileSync('src/routes/+page.svelte', 'utf8');
+  const slot = today.match(/<div class="next">([\s\S]*?)<\/div>\s*<!-- \/next -->/)?.[1] ?? '';
+  assert.ok(slot.indexOf('<FitAsk') > slot.indexOf('{#if lesson}') && slot.indexOf('<FitAsk') < slot.indexOf('{#if askToSave}'), 'in the one slot, before the save card and the first-week steps');
+  assert.match(readFileSync('src/lib/components/FitAsk.svelte', 'utf8'), /answered = true;\s+try \{ localStorage\.setItem\(KEY/, 'asked once, even if the reason is skipped');
+  assert.match(readFileSync('../supabase/migrations/20261031130000_fit_ask.sql', 'utf8'), /'fit', coalesce/, 'the Numbers page gets the answers in totals');
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /whether it's for you and what's in the way/, 'the privacy page says so');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

@@ -33,6 +33,7 @@
   import CoachNoticed from '$lib/components/CoachNoticed.svelte';
   import Commitments from '$lib/components/Commitments.svelte';
   import CoinSpin from '$lib/components/CoinSpin.svelte';
+  import FitAsk from '$lib/components/FitAsk.svelte';
   import { primaryActivity, trainedDates } from '$lib/health/exercise';
   import WeekCheckIn from '$lib/components/WeekCheckIn.svelte';
   import BackRebuild from '$lib/components/BackRebuild.svelte';
@@ -313,6 +314,8 @@
       </div>
     </div>
   {/if}
+  <!-- Days 3 to 7, once: is it for them, and what's in the way (lib/fit). -->
+  <FitAsk />
   {#if askToSave}
     <div class="card sv">
       <p class="sv-t"><b>Keep what you've started.</b> This trial lives on this device only. Save it with an email and it's yours on any phone.</p>

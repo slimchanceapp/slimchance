@@ -236,6 +236,7 @@ only user-entered types are ever written back
 overlapping active-calorie records are not double-counted (302≠604)
 p05 ignores the single lowest outlier the old code used
 pace is judged against the plan, only where the interval allows
+people are asked once, a few days in, whether Slim Chance is for them and what is in the way
 percentile handles empty and single-value input
 period-aware weight learns the person’s own swing, and says only that it’s learning before three cycles
 personas read the same as last time, or the change was meant

@@ -3,6 +3,7 @@
   // what broke for them. Totals only, from owner_metrics (migration
   // 20261029100000_app_events), which answers only the accounts in app_owners;
   // anyone else gets nothing. Not linked from the app: the owner keeps the URL.
+  import { FIT_ANSWERS, FIT_REASONS } from '$lib/fit';
   import { supabase } from '$lib/db/client';
   import PageHero from '$lib/components/PageHero.svelte';
 
@@ -18,6 +19,8 @@
     errors: Array<{ message: string; times: number; people: number; last: string }>;
     /** The same steps per link tag (migration 20261031120000_came_from). */
     by_from?: Array<{ from: string; joined: number; setup: number; weighed: number; three_of_seven: number; week: number; month: number }>;
+    /** People per answer to "Is Slim Chance for you?" (migration 20261031130000_fit_ask). */
+    fit?: Record<string, number>;
   }
 
   const SPANS = [30, 90, 365] as const;
@@ -87,6 +90,14 @@
       <p class="nb-foot nb-from">{g.setup} finished setup · {g.three_of_seven} weighed in on 3 of their first 7 days · {g.week} back after a week · {g.month} after four</p>
     {/each}
     <p class="nb-foot">A link like slimchance.app/?from=r-loseit-1 tags everyone who arrives by it; the first tag a person brings is theirs.</p>
+  </section>
+
+  <section class="card" aria-label="Is it for them?">
+    <div class="card-lbl">Is it for them? · asked on days 3 to 7</div>
+    {#each FIT_ANSWERS as a}
+      <div class="nb-pair"><span>{a.label}</span><b>{m.fit?.[a.event] ?? 0}</b></div>
+    {/each}
+    <p class="nb-foot">What's in the way: {FIT_REASONS.map((r) => `${r.label.toLowerCase()} ${m!.fit?.[r.event] ?? 0}`).join(' · ')}</p>
   </section>
 
   <section class="card" aria-label="New people per week">

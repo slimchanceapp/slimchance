@@ -1,6 +1,7 @@
 // Where new people give up, counted in our own database, no trackers:
 // one row per person, event and day, through note_event (migrations
-// 20261029100000_app_events, 20261030120000_reminders, 20261030180000_plus_interest),
+// 20261029100000_app_events, 20261030120000_reminders, 20261030180000_plus_interest,
+// 20261031130000_fit_ask),
 // which ignores any
 // name not on its list.
 // owner_metrics turns them into the Numbers page. Never throws, never waits:
@@ -8,7 +9,7 @@
 import { supabase } from '$lib/db/client';
 
 /** Keep equal to the list in note_event (selfcheck holds them together). */
-export const APP_EVENTS = ['open', 'setup_1', 'setup_2', 'setup_3', 'setup_done', 'reminder_push', 'reminder_failed', 'reminder_calendar', 'plus_yes', 'plus_no'] as const;
+export const APP_EVENTS = ['open', 'setup_1', 'setup_2', 'setup_3', 'setup_done', 'reminder_push', 'reminder_failed', 'reminder_calendar', 'plus_yes', 'plus_no', 'fit_yes', 'fit_unsure', 'fit_no', 'why_logging', 'why_scale', 'why_plan', 'why_confusing', 'why_broken', 'why_other'] as const;
 export type AppEvent = (typeof APP_EVENTS)[number];
 
 const sent = new Set<string>();
