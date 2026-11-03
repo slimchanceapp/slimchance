@@ -354,6 +354,7 @@ the summary describes what was actually built
 the summary reads like a message, and carries the real numbers
 the surplus stays lean rather than sprinting
 the text-size setting is wired end to end
+the theme switch turns light on at once, not after a restart
 the training reminder comes at the session's own time, and not once you have trained
 the update dot never says "up to date" while the phone app is behind
 the user's own sport name and time are used, never a hardcoded club

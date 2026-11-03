@@ -500,7 +500,9 @@
   function toggleTheme() {
     const html = document.documentElement;
     const isLight = html.getAttribute('data-theme') === 'light';
-    html.toggleAttribute('data-theme', !isLight);
+    // toggleAttribute(name, true) sets data-theme="", which no style matches:
+    // dark to light did nothing until a restart (found 2026-11-03).
+    if (isLight) html.removeAttribute('data-theme'); else html.setAttribute('data-theme', 'light');
     localStorage.setItem('theme', isLight ? 'dark' : 'light');
   }
 

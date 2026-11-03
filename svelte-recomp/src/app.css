@@ -22,22 +22,22 @@
    "look here", and never red for a bad week. Solid surfaces, nothing
    blurred, nothing floats on glass. */
 :root{
-  /* Black and gold (2026-11-03: the owner found the navy dull; a coin brand
-     reads best on black). Warm blacks, so the gold doesn't look brassy. */
-  --bg:#000000;--bg2:#121110;--bg3:#1B1A17;
-  --border:#282520;--border2:#3A352C;
-  --text:#F3EEE3;--muted:#A69F90;
-  --brass:#D4AC48;
+  /* Navy and brass. Black and gold was tried on 2026-11-03 and read flatter
+     and duller on the phone (the owner), so it went back the same day. */
+  --bg:#101826;--bg2:#182337;--bg3:#1E2B42;
+  --border:#2A3854;--border2:#3A4B6E;
+  --text:#EDE7DA;--muted:#9AA6B8;
+  --brass:#C9A54E;
   /* Verdict tones. */
-  --led-good:#4FB59A;--led-ok:#D4AC48;--led-warn:#DD7F4E;--led-bad:#E0605A;
+  --led-good:#4FB59A;--led-ok:#7FA7D9;--led-warn:#DD7F4E;--led-bad:#E0605A;
   /* Interactive accent = brass. (Named --amber for history: every page already
      reads it, so the whole app re-themes from here.) */
-  --amber:#D4AC48;--amber2:#EDCB6E;--ab:rgba(212,172,72,.14);
+  --amber:#C9A54E;--amber2:#E2C47A;--ab:rgba(201,165,78,.12);
   --red:#E0605A;--rb:rgba(224,96,90,.12);
   --green:#4FB59A;--green2:#7DCBB5;--gb:rgba(79,181,154,.12);
   --blue:#7FA7D9;--bb:rgba(127,167,217,.12);
-  --purple:#D4AC48;--pb:rgba(212,172,72,.14);
-  --grad-amber:linear-gradient(180deg,#E6C266,#C99E3A);
+  --purple:#C9A54E;--pb:rgba(201,165,78,.12);
+  --grad-amber:linear-gradient(180deg,#D3B05C,#C29B44);
   --grad-green:linear-gradient(180deg,#5DC1A6,#45A98F);
   /* Legacy glass tokens, now solid: components that used them get panels. */
   --glass:var(--bg2);--glass-2:var(--bg3);--glass-brd:var(--border);

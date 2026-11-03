@@ -5213,8 +5213,8 @@ check('the odds coins flip in and land as they light, and the theme is black and
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins i\.on\{[^}]*animation:ro-flip/);
   const css = readFileSync('src/app.css', 'utf8');
-  assert.match(css, /--bg:#000000;/, 'black, truly (the owner: "the black is not black enough")');
-  assert.match(css, /--amber:#D4AC48;/, 'and gold');
+  // Black and gold was tried and reverted the same day: navy and brass it is.
+  assert.match(css, /--bg:#101826;/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{\*\{animation-duration:\.001ms/, 'still off for anyone who turns motion off');
 });
 
@@ -5261,6 +5261,15 @@ check('the Slim Chance track: ten coins to the goal, the healthy line as a place
   assert.doesNotMatch(ui, /obese|overweight|underweight/i, 'no category words');
   const progress = readFileSync('src/routes/progress/+page.svelte', 'utf8');
   assert.ok(progress.indexOf('<SlimTrack') > progress.indexOf('<WeightLine') && progress.indexOf('<SlimTrack') < progress.indexOf('Getting fitter?'), 'on Progress, under the line');
+});
+
+check('the theme switch turns light on at once, not after a restart', async () => {
+  // 2026-11-03: toggleAttribute('data-theme', true) set it to "", which no
+  // style matches, so dark to light did nothing until the app restarted.
+  const { readFileSync } = await import('node:fs');
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  assert.doesNotMatch(layout, /toggleAttribute\('data-theme'/);
+  assert.match(layout, /if \(isLight\) html\.removeAttribute\('data-theme'\); else html\.setAttribute\('data-theme', 'light'\);/);
 });
 
 // Nothing may be reported until the async checks have actually settled.
