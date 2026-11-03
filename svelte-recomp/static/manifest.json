@@ -6,8 +6,8 @@
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#101826",
-  "theme_color": "#101826",
+  "background_color": "#0B0B0C",
+  "theme_color": "#0B0B0C",
   "description": "Honest odds on losing weight, for people doing it on their own. No streaks, no guilt.",
   "categories": ["health", "fitness", "lifestyle"],
   "icons": [

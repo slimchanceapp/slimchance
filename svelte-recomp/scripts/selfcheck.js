@@ -5206,6 +5206,17 @@ check('a meal photo waits for a few optional words before it goes', async () => 
   assert.match(fl, /description: mode === 'meal' \? \(words \?\? query\)\.trim\(\) \|\| undefined/, 'and the words go with it');
 });
 
+check('the odds coins flip in and land as they light, and the theme is black and gold', async () => {
+  // The owner, 2026-11-03: George's motion, "coins flipping and landing on the
+  // trend", and "the app colours are too dull".
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins i\.on\{[^}]*animation:ro-flip/);
+  const css = readFileSync('src/app.css', 'utf8');
+  assert.match(css, /--bg:#0B0B0C;/, 'black');
+  assert.match(css, /--amber:#D4AC48;/, 'and gold');
+  assert.match(css, /prefers-reduced-motion:reduce\)\{\*\{animation-duration:\.001ms/, 'still off for anyone who turns motion off');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 
