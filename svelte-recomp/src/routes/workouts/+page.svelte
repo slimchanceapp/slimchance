@@ -15,6 +15,7 @@
   import PageHero from '$lib/components/PageHero.svelte';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
+  import ProgramOffer from '$lib/components/ProgramOffer.svelte';
   import BackRebuild from '$lib/components/BackRebuild.svelte';
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/nextWeight';
   import { speak } from '$lib/stores/toast';
@@ -242,6 +243,10 @@
     return $_logs.find((r: any) => r.exercise_name === name && r.date === today) || null;
   }
 
+  /** A Quick Builder exercise in the shape the logger takes ("4 × 12" is its week). */
+  const asPlan = (ex: { name: string; muscle: string; sets: string; rest: string; tip?: string; vid?: string }): PlanExercise =>
+    ({ phase: '', name: ex.name, muscle: ex.muscle, w1: ex.sets, w2: ex.sets, rest: ex.rest, tip: ex.tip ?? '', vid: ex.vid });
+
   function parseSetsCount(w1: string): number {
     const m = /^(\d+)/.exec(w1 || '');
     return m ? parseInt(m[1], 10) : 3;
@@ -292,7 +297,7 @@
     logDrafts = { ...logDrafts, [name]: logDrafts[name].filter((_, i) => i !== idx) };
   }
 
-  async function saveLog(ex: PlanExercise) {
+  async function saveLog(ex: PlanExercise, key: string | null = sessionKey) {
     if (!uid) return;
     haptic('tap');
     const sets = (logDrafts[ex.name] || []).filter((s) => s.reps != null || s.weight_kg != null);
@@ -303,7 +308,7 @@
     try {
       await upsertRecord('workout_logs', {
         user_id: uid, date: today, exercise_name: ex.name,
-        session_key: sessionKey, sets, updated_at: new Date().toISOString(),
+        session_key: key, sets, updated_at: new Date().toISOString(),
       });
       logSavedMsg = { ...logSavedMsg, [ex.name]: 'Logged ✓' };
       setTimeout(() => { const m = { ...logSavedMsg }; delete m[ex.name]; logSavedMsg = m; }, 2500);
@@ -857,6 +862,76 @@
   });
 </script>
 
+<!-- One logger for every exercise: a session's, or one picked in the Quick
+     Builder (2026-11-03: a built session couldn't be logged at all). -->
+{#snippet exerciseLog(ex: PlanExercise, key: string | null)}
+  {@const last = lastLogFor(ex.name)}
+  {@const pr = personalRecord(ex.name)}
+  {@const suggestion = progressionSuggestion(ex)}
+  <!-- Whole row is the tap target — no more hunting the tiny toggle. -->
+  <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+  <div class="log-row log-row-tap" role="button" tabindex="0"
+    onclick={() => toggleLog(ex)}
+    onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLog(ex); } }}>
+    <div class="last-perf">
+      {#if last}Last time ({last.date}): {fmtSets(last.sets)}{:else}No history yet{/if}
+    </div>
+    <span class="log-toggle">
+      {expandedLog.has(ex.name) ? 'Hide log' : 'Log sets ✎'}
+    </span>
+  </div>
+  {#if suggestion}
+    <div class="suggestion-badge" class:up={suggestion.type === 'up'} class:deload={suggestion.type === 'deload'}>
+      {suggestion.type === 'up' ? '📈' : suggestion.type === 'deload' ? '⚠️' : '➡️'} {suggestion.text}
+    </div>
+  {/if}
+  {#if pr}
+    <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
+    <div class="pr-row pr-row-tap" role="button" tabindex="0"
+      onclick={() => toggleHistory(ex.name)}
+      onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHistory(ex.name); } }}>
+      <span class="pr-badge">🏆 PR: {pr.best.weight_kg}kg × {pr.best.reps} <span class="pr-date">({pr.date})</span></span>
+      <span class="log-toggle">
+        {expandedHistory.has(ex.name) ? 'Hide chart' : 'Progress 📈'}
+      </span>
+    </div>
+  {/if}
+  {#if expandedHistory.has(ex.name)}
+    {@const hist = historyFor(ex.name)}
+    <div class="history-chart">
+      <MiniChart data={hist.map((h) => ({ date: h.date, value: h.best.oneRM }))} color="var(--green, #2ecc71)" />
+      <div class="hc-label">Estimated 1-rep max over time (Epley formula)</div>
+    </div>
+  {/if}
+  {#if expandedLog.has(ex.name)}
+    {@const last = lastLogFor(ex.name)}
+    {@const bestSet = last ? bestSetOf(last.sets) : null}
+    <div class="log-form">
+      {#each logDrafts[ex.name] || [] as set, si}
+        <div class="log-set-row">
+          <span class="set-idx">Set {si + 1}</span>
+          <input type="number" inputmode="decimal" placeholder="kg" value={set.weight_kg ?? ''}
+            onchange={(e) => updateSetField(ex.name, si, 'weight_kg', (e.target as HTMLInputElement).value)} />
+          <span class="x">×</span>
+          <input type="number" inputmode="numeric" placeholder="reps" value={set.reps ?? ''}
+            onchange={(e) => updateSetField(ex.name, si, 'reps', (e.target as HTMLInputElement).value)} />
+          <span class="rm-set" onclick={() => removeSetRow(ex.name, si)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); removeSetRow(ex.name, si); } }}>✕</span>
+        </div>
+      {/each}
+      <div class="flex gap2" style="margin-top:6px">
+        <button class="btn bg_ bsm" onclick={() => addSetRow(ex.name)}>+ Set</button>
+        <button class="btn bg_ bsm" onclick={() => startRestTimer(ex)}>⏱ Rest {parseRestSeconds(ex.rest)}s</button>
+        <button class="btn bp bsm" onclick={() => saveLog(ex, key)}>Save log</button>
+      </div>
+      {#if logSavedMsg[ex.name]}
+        <div class="log-msg" class:err={logSavedMsg[ex.name].startsWith('Error')}>{logSavedMsg[ex.name]}</div>
+      {/if}
+      <PlateWarmupCalc targetKg={bestSet?.weight_kg ?? 40} />
+    </div>
+  {/if}
+{/snippet}
+
+
 {#if uid && $_schedule.length === 0}
 <!-- No week yet: the choice first, and no made-up week's numbers behind it. -->
 <PageHero title="Train" sub="Your week" />
@@ -880,6 +955,7 @@
 </div>
 
 {#if tab === 'upcoming'}
+
   {#snippet dayCard(day: ReturnType<typeof getWeekDates>[number], isToday: boolean)}
     <div class="card" style="padding:10px 12px">
       <div class="flex jb ac" style="margin-bottom:4px">
@@ -972,10 +1048,14 @@
             <div class="ex-tip">{ex.tip}</div>
           {/if}
           <VideoEmbed vid={ex.vid} />
+          {@render exerciseLog(asPlan(ex), 'custom')}
         </div>
       {/each}
     {/if}
   {/if}
+
+  <!-- Programs, at the bottom: offered, and put away with "Not now". -->
+  <ProgramOffer />
 
 {:else}
   <!-- What actually happened, day by day. Hand-logged sets and watch sessions
@@ -1186,70 +1266,7 @@
           <VideoEmbed vid={ex.vid} />
 
           {#if !editingSession}
-            {@const last = lastLogFor(ex.name)}
-            {@const pr = personalRecord(ex.name)}
-            {@const suggestion = progressionSuggestion(ex)}
-            <!-- Whole row is the tap target — no more hunting the tiny toggle. -->
-            <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-            <div class="log-row log-row-tap" role="button" tabindex="0"
-              onclick={() => toggleLog(ex)}
-              onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleLog(ex); } }}>
-              <div class="last-perf">
-                {#if last}Last time ({last.date}): {fmtSets(last.sets)}{:else}No history yet{/if}
-              </div>
-              <span class="log-toggle">
-                {expandedLog.has(ex.name) ? 'Hide log' : 'Log sets ✎'}
-              </span>
-            </div>
-            {#if suggestion}
-              <div class="suggestion-badge" class:up={suggestion.type === 'up'} class:deload={suggestion.type === 'deload'}>
-                {suggestion.type === 'up' ? '📈' : suggestion.type === 'deload' ? '⚠️' : '➡️'} {suggestion.text}
-              </div>
-            {/if}
-            {#if pr}
-              <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
-              <div class="pr-row pr-row-tap" role="button" tabindex="0"
-                onclick={() => toggleHistory(ex.name)}
-                onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleHistory(ex.name); } }}>
-                <span class="pr-badge">🏆 PR: {pr.best.weight_kg}kg × {pr.best.reps} <span class="pr-date">({pr.date})</span></span>
-                <span class="log-toggle">
-                  {expandedHistory.has(ex.name) ? 'Hide chart' : 'Progress 📈'}
-                </span>
-              </div>
-            {/if}
-            {#if expandedHistory.has(ex.name)}
-              {@const hist = historyFor(ex.name)}
-              <div class="history-chart">
-                <MiniChart data={hist.map((h) => ({ date: h.date, value: h.best.oneRM }))} color="var(--green, #2ecc71)" />
-                <div class="hc-label">Estimated 1-rep max over time (Epley formula)</div>
-              </div>
-            {/if}
-            {#if expandedLog.has(ex.name)}
-              {@const last = lastLogFor(ex.name)}
-              {@const bestSet = last ? bestSetOf(last.sets) : null}
-              <div class="log-form">
-                {#each logDrafts[ex.name] || [] as set, si}
-                  <div class="log-set-row">
-                    <span class="set-idx">Set {si + 1}</span>
-                    <input type="number" inputmode="decimal" placeholder="kg" value={set.weight_kg ?? ''}
-                      onchange={(e) => updateSetField(ex.name, si, 'weight_kg', (e.target as HTMLInputElement).value)} />
-                    <span class="x">×</span>
-                    <input type="number" inputmode="numeric" placeholder="reps" value={set.reps ?? ''}
-                      onchange={(e) => updateSetField(ex.name, si, 'reps', (e.target as HTMLInputElement).value)} />
-                    <span class="rm-set" onclick={() => removeSetRow(ex.name, si)} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); removeSetRow(ex.name, si); } }}>✕</span>
-                  </div>
-                {/each}
-                <div class="flex gap2" style="margin-top:6px">
-                  <button class="btn bg_ bsm" onclick={() => addSetRow(ex.name)}>+ Set</button>
-                  <button class="btn bg_ bsm" onclick={() => startRestTimer(ex)}>⏱ Rest {parseRestSeconds(ex.rest)}s</button>
-                  <button class="btn bp bsm" onclick={() => saveLog(ex)}>Save log</button>
-                </div>
-                {#if logSavedMsg[ex.name]}
-                  <div class="log-msg" class:err={logSavedMsg[ex.name].startsWith('Error')}>{logSavedMsg[ex.name]}</div>
-                {/if}
-                <PlateWarmupCalc targetKg={bestSet?.weight_kg ?? 40} />
-              </div>
-            {/if}
+            {@render exerciseLog(ex, sessionKey)}
           {/if}
         </div>
       {/each}

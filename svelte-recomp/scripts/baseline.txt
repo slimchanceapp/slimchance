@@ -69,11 +69,13 @@ a plan shows at its moment, the most specific moment first
 a planned meal is logged in one tap, at its planned grams, and ticks itself off
 a profile is only complete when TDEE can actually be computed
 a profile with zero logs still produces real targets and a real date
+a program offer can be put away, and found again
 a program session can never be saved over the user’s own plan
 a program starts on the coming Monday and counts weeks from it
 a reading dated today is fresh; older is stale; none is missing
 a reading far off the trend asks once before it bends five weeks of numbers
 a repeated AI estimate is a staple; a one-off still is not
+a session built in the Quick Builder is logged like any other
 a smart scale’s weigh-ins come in one a day, never our own, never asked of an old app
 a sport night is anyone’s sport: the plan for after it is named for no one sport
 a stalled trend leads the coach, and the log it contradicts is not praised

@@ -155,16 +155,6 @@
     <p class="br-goal">Your own plan is back. For the next two weeks use about 80% of your old loads, and keep the daily basics three times a week — they’re cheap insurance.</p>
     <button class="btn bg_ bsm" disabled={busy} onclick={() => saveProgram(null)}>Close the program</button>
   </section>
-{:else if !compact && hasGymDays}
-  <section class="br br-offer card">
-    <span class="br-eyebrow">Programs</span>
-    <h2 class="br-phase">Coming back from a back injury?</h2>
-    <p class="br-goal">Back Rebuild: six weeks in three phases. It takes over your gym days, paces itself on how your back feels each morning, and gives you your own plan back at the end.</p>
-    <div class="br-actions">
-      <button class="btn bp bsm" disabled={busy} onclick={() => saveProgram({ id: 'back-rebuild', start: nextMonday(today) })}>Start {startLabel}</button>
-      <button class="btn bg_ bsm" disabled={busy} onclick={() => saveProgram({ id: 'back-rebuild', start: today })}>Start today</button>
-    </div>
-  </section>
 {/if}
 
 <Modal open={showDaily} onclose={() => (showDaily = false)}>

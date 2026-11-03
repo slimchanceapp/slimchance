@@ -5155,6 +5155,31 @@ check('a planned meal is logged in one tap, at its planned grams, and ticks itse
   assert.ok(food.indexOf('<FoodLogger') < food.indexOf('<CoachPlan />'), 'the logger comes first on Food');
 });
 
+check('a session built in the Quick Builder is logged like any other', async () => {
+  // The owner, 2026-11-03: a gym Sunday followed a built session, and there was
+  // no way to log the weights against it.
+  const { readFileSync } = await import('node:fs');
+  const train = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  const markup = train.slice(train.indexOf('</script>'));
+  assert.ok(markup.indexOf('{#snippet exerciseLog(') < markup.indexOf('{#if'), 'one logger, at the top level, for every view');
+  assert.equal((markup.match(/\{@render exerciseLog\(/g) ?? []).length, 2, 'used by a session and by the builder');
+  assert.match(markup, /\{@render exerciseLog\(asPlan\(ex\), 'custom'\)\}/);
+  assert.match(train, /async function saveLog\(ex: PlanExercise, key: string \| null = sessionKey\)/);
+  assert.match(train, /session_key: key, sets,/);
+});
+
+check('a program offer can be put away, and found again', async () => {
+  // The owner, 2026-11-03: injury-free, the Back Rebuild offer had no way to
+  // go; and a back can flare up again.
+  const { readFileSync } = await import('node:fs');
+  const offer = readFileSync('src/lib/components/ProgramOffer.svelte', 'utf8');
+  assert.match(offer, /onclick=\{notNow\}>Not now</);
+  assert.match(offer, /\{#if away && !open\}\s*<button class="po-row" onclick=\{\(\) => \(open = true\)\}>/, 'put away, it is one line that opens it again');
+  assert.doesNotMatch(readFileSync('src/lib/components/BackRebuild.svelte', 'utf8'), /Coming back from a back injury\?/, 'the running program’s card no longer carries the offer');
+  const train = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  assert.ok(train.indexOf('<ProgramOffer />') > train.indexOf('<h3>Quick Builder</h3>'), 'at the bottom of the plan');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 
