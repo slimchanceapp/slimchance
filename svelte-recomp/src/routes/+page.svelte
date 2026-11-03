@@ -45,8 +45,7 @@
   import { badmintonRule } from '$lib/program';
   import { nowTick, todayDate } from '$lib/stores/refresh';
   import WeightInput from '$lib/components/WeightInput.svelte';
-  import Readout from '$lib/components/Readout.svelte';
-  import { wtNum } from '$lib/units';
+  import { wtNum, unitWord } from '$lib/units';
 
   const dayIdx = $derived(new Date($nowTick).getDay());
   const today = $derived($todayDate);
@@ -134,6 +133,23 @@
   const p = $derived($todayPulse);
   // Before the first odds, the mornings still to go (the odds speak for themselves).
   const story = $derived(p.odds ? null : $body.weight?.state === 'not-enough' ? p.story : null);
+  // The chance as a count that rolls up, one coin landing per step; in the
+  // first week the coins count the mornings on the scale instead.
+  const lit = $derived(p.odds?.lit ?? Math.min(10, $body.weight?.n ?? 0));
+  let shown = $state(0);
+  $effect(() => {
+    const to = lit;
+    let k = 0;
+    shown = 0;
+    if (typeof matchMedia === 'function' && matchMedia('(prefers-reduced-motion: reduce)').matches) { shown = to; return; }
+    const id = setInterval(() => { k += 1; shown = Math.min(to, k); if (k >= to) clearInterval(id); }, 140);
+    return () => clearInterval(id);
+  });
+  const losing = $derived($body.goalKg != null && currentKg != null && $body.goalKg < currentKg && !$body.keepSince);
+  const chanceLine = $derived(!p.odds ? 'Each morning on the scale lights a coin.'
+    : !losing ? p.odds.text
+    : p.odds.lit >= 8 ? 'Not so slim.' : p.odds.lit >= 4 ? 'Too close to call: every morning sharpens it.' : 'Slim, for now.');
+  const turnIt = $derived(losing && p.odds && p.odds.lit <= 3 ? 'A week inside your budget turns it.' : null);
   const overCeiling = $derived(!!$line && !$line.misdrawn && $line.zone !== 'under');
   // A kind word, only when it's earned by showing up (src/lib/kind.ts).
   const kind = $derived(kindWord(($_weights as any[]).map((w) => w.date), today, mornings));
@@ -279,12 +295,23 @@
      number to pull the focus"). The number is the trend, never one morning's
      reading, which swings a kilo either way; the odds light up under it. Until
      today's reading is in, the box to type it sits right below. -->
-<div class="card mw">
-  {#if p.kg != null}<Readout value={wtNum(p.kg)} caption={p.caption} tone={p.tone} odds={p.odds} />{/if}
-  {#if story}<p class="mw-mean">{story}</p>{/if}
-  {#if todayWeighIn}
-    <p class="mw-done">This morning <b>{wtNum(+todayWeighIn.weight)}</b> ✓{#if p.odds && !kind}{' · '}{mornings.weighed} of {mornings.days} mornings this week{/if}</p>
+<!-- YOUR SLIM CHANCE (the owner, 2026-11-03, after George and Happy Scale:
+     the name made literal, lively, the hero of Today). The big number is the
+     chance the trend is really going the goal's way, counting up while gold
+     coins flip in and land; the card's colour is that chance's state. The
+     weight is underneath: the trend, and this morning's reading. -->
+<section class="hero hero-{p.odds ? p.tone : 'ok'}" aria-label="Your slim chance">
+  <span class="hero-eye">Your slim chance</span>
+  {#if p.odds}
+    <div class="hero-big"><b>{shown}</b><span>in 10</span></div>
   {:else}
+    <div class="hero-big"><b>{$body.weight?.weighInsNeeded ?? 7}</b><span>more mornings to your first chance</span></div>
+  {/if}
+  <div class="hero-coins" aria-hidden="true">{#each Array(10) as _, i}<i class:on={i < shown}></i>{/each}</div>
+  <p class="hero-line">{chanceLine}</p>
+  {#if p.odds}<p class="hero-sub">{p.story}{#if turnIt}{' '}{turnIt}{/if}</p>{:else if story}<p class="hero-sub">{story}</p>{/if}
+  <p class="hero-foot">{#if currentKg != null}{$body.weight?.trendKg != null ? 'Trend' : 'Average so far'} <b>{wtNum(currentKg)}</b> {unitWord()}{/if}{#if todayWeighIn}{' · '}this morning <b>{wtNum(+todayWeighIn.weight)}</b> ✓{/if}</p>
+  {#if !todayWeighIn}
     <label class="mw-lbl" for="ql-weight">This morning’s weight</label>
     <div class="mw-row">
       <WeightInput id="ql-weight" bind:kg={weightKg} hint={currentKg} label="This morning’s weight" onenter={() => saveEntry('weight')} />
@@ -293,8 +320,8 @@
     {#if saveMsg}<div class="mw-err">{saveMsg}</div>{/if}
     <p class="mw-hint">{#if lastWeighLabel}Last reading {lastWeighLabel}.{' '}{/if}Same time, before food or drink.</p>
   {/if}
-  {#if overCeiling}<p class="mw-ceil z-{$line!.zone}">Over your ceiling of {wtNum($line!.kg)}</p>{/if}
-</div>
+  {#if overCeiling}<p class="mw-ceil">Over your ceiling of {wtNum($line!.kg)}</p>{/if}
+</section>
 {#if kind}<p class="mw-kind">{kind}</p>{/if}
 {#if cheer}
   <button class="cheer" onclick={() => cheered(cheer.id)} aria-label="{cheer.text} Tap to put it away.">
@@ -470,8 +497,31 @@
   .mw-hint{font-size:0.75rem;color:var(--muted);margin-top:7px;line-height:1.45}
   .mw-err,.mw-msg{font-size:0.75rem;margin-top:6px;color:var(--led-good)}
   .mw-err,.mw-msg.bad{color:var(--led-bad)}
-  /* The big number sits in the card, not in a card of its own. */
-  .mw :global(.ro){background:none;border:none;padding:0 0 4px}
+  /* The hero: a gradient that is the chance's state (George's lively card),
+     white type, gold coins that flip in and land as the count rolls up. */
+  .hero{position:relative;overflow:hidden;border-radius:var(--r-lg);padding:16px 16px 14px;margin:0 0 14px;background:linear-gradient(135deg,#4263EB,#7048E8);color:#fff;isolation:isolate}
+  .hero-good{background:linear-gradient(135deg,#0CA678,#1C7ED6)}
+  .hero-ok,.hero-na{background:linear-gradient(135deg,#4263EB,#7048E8)}
+  .hero-warn{background:linear-gradient(135deg,#F76707,#D6336C)}
+  .hero::after{content:'';position:absolute;z-index:-1;right:-50px;top:-60px;width:190px;height:190px;border-radius:50%;background:rgba(255,255,255,.09)}
+  .hero-eye{font-size:0.75rem;font-weight:800;letter-spacing:.1em;text-transform:uppercase;opacity:.85}
+  .hero-big{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:2px 0 10px}
+  .hero-big b{font-family:var(--font-display);font-stretch:72%;font-size:5rem;line-height:.9;font-weight:800;font-variant-numeric:tabular-nums}
+  .hero-big span{font-size:1.125rem;font-weight:800;opacity:.92}
+  .hero-coins{display:flex;gap:6px;perspective:300px;margin-bottom:12px}
+  .hero-coins i{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.35)}
+  .hero-coins i.on{background:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#E67700);border-color:#FFE066;box-shadow:0 2px 6px rgba(0,0,0,.25);animation:hero-flip .5s var(--ease) both}
+  @keyframes hero-flip{0%{transform:translateY(-18px) rotateY(180deg);opacity:0}60%{transform:translateY(3px) rotateY(15deg);opacity:1}100%{transform:none}}
+  .hero-line{font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1.1;margin:0}
+  .hero-sub{font-size:0.875rem;line-height:1.45;margin:4px 0 0;opacity:.92}
+  .hero-foot{font-size:0.8125rem;margin:10px 0 0;opacity:.92}
+  .hero-foot b{font-family:var(--font-display);font-size:1.0625rem}
+  .hero .mw-lbl{color:rgba(255,255,255,.85)}
+  .hero .mw-hint{color:rgba(255,255,255,.82)}
+  .hero .mw-ceil{color:#FFE066}
+  .hero :global(input){background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.4);color:inherit}
+  .hero :global(input::placeholder){color:rgba(255,255,255,.65)}
+  .hero .btn.bp{background:#FCC419;color:#1A1300}
   .mw-lbl{display:block;font-family:var(--font-label);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 0 6px}
   .mw-done{font-size:0.875rem;color:var(--muted);margin:10px 0 0}
   .mw-done b{font-family:var(--font-display);font-size:1.125rem;color:var(--text)}

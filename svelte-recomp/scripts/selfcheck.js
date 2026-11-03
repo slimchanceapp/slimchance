@@ -3755,7 +3755,8 @@ check('Food, Train and Progress open on the same scoreboard hero; Today on the w
   const today = readFileSync('src/routes/+page.svelte', 'utf8');
   assert.doesNotMatch(today, /<PageHero /, 'Today opens on the weigh-in, not a page title');
   // The owner, 2026-11-03: "a big number to pull the focus", inside the weigh-in card.
-  assert.match(today, /<div class="card mw">\s*\{#if p\.kg != null\}<Readout /, 'the big trend number leads the weigh-in');
+  // Since the evening of 3 Nov: the chance is the big number ("Your slim chance").
+  assert.match(today, /<section class="hero hero-\{p\.odds \? p\.tone : 'ok'\}" aria-label="Your slim chance">/, 'the chance leads Today');
   assert.ok(!existsSync('src/lib/components/PulseOrb.svelte'));
 });
 
@@ -3789,7 +3790,8 @@ check('no hard-coded white text: it vanishes in the light theme', async () => {
     ...readdirSync('src/routes', { recursive: true }).filter((f) => f.endsWith('.svelte')).map((f) => `src/routes/${f}`),
   ].filter((f) => f.endsWith('.svelte'));
   // White is right only on a surface that is dark in both themes.
-  const darkSurface = /background:\s*(var\(--(red|led-bad)[,)]|rgba\(0,\s*0,\s*0)|crash-toast|swipe-delete|video/;
+  // The Today hero (2026-11-03) is a saturated gradient in both themes.
+  const darkSurface = /background:\s*(var\(--(red|led-bad)[,)]|rgba\(0,\s*0,\s*0|linear-gradient\(135deg,#[0-9A-F]{6},#[0-9A-F]{6}\))|crash-toast|swipe-delete|video/;
   const offenders = files.flatMap((f) => readFileSync(f, 'utf8').split('\n')
     .filter((l) => /color:\s?#fff(fff)?\b/.test(l) && !darkSurface.test(l))
     .map((l) => `${f}: ${l.trim().slice(0, 80)}`));
@@ -4605,7 +4607,7 @@ check('morning two reads the scale for a stranger, and one morning can\'t move t
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const story = \$derived\(p\.odds \? null : \$body\.weight\?\.state === 'not-enough' \? p\.story : null\)/, 'the first week leads with the mornings to the first odds');
   // Since 2026-11-03 Today's big number is the pulse's, whose caption says
   // "not a trend yet" until there is one.
-  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<Readout value=\{wtNum\(p\.kg\)\} caption=\{p\.caption\}/, '"trend" only once there is one');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /\$body\.weight\?\.trendKg != null \? 'Trend' : 'Average so far'/, '"trend" only once there is one');
   assert.match(readFileSync('src/lib/pulse.ts', 'utf8'), /not a trend yet/);
   const base = { today: '2026-10-30', kg: 93.0, prev: { date: '2026-10-29', kg: 92.4 }, trendKg: null, trendPrevKg: null,
     scatterKg: 0, intake: new Map(), weekdayOffsets: null, trained: new Set() };
