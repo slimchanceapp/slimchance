@@ -28,6 +28,7 @@
   import WeekJournal from '$lib/components/WeekJournal.svelte';
   import WeightLine from '$lib/components/WeightLine.svelte';
   import DetailRow from '$lib/components/DetailRow.svelte';
+  import SlimTrack from '$lib/components/SlimTrack.svelte';
   import { onMount, tick } from 'svelte';
   import { afterNavigate } from '$app/navigation';
   import { base } from '$app/paths';
@@ -200,6 +201,9 @@
   value={p.kg != null ? wtNum(p.kg) : '—'} caption={p.caption} story={p.story} odds={p.odds} />
 
 <WeightLine />
+
+<!-- The Slim Chance track: ten coins to the goal (src/lib/slimTrack.ts). -->
+<SlimTrack />
 
 {#snippet foot()}
   <div class="trust-foot">

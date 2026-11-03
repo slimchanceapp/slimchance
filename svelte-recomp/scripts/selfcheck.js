@@ -5244,6 +5244,25 @@ check('the watch reads as words on Today: how hard to train, beside the personâ€
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<span class="td-k">Body<\/span>/, 'a row in todayâ€™s plan');
 });
 
+check('the Slim Chance track: ten coins to the goal, the healthy line as a place, never a word', async () => {
+  const { slimTrack } = await import('../src/lib/slimTrack.ts');
+  const t = slimTrack({ startKg: 116, goalKg: 86, currentKg: 106.5, heightCm: 180 });
+  assert.equal(t.coins.length, 10);
+  assert.equal(t.landed, 3, '113, 110 and 107 are passed');
+  assert.equal(t.coins[3].next, true, '104 is in play');
+  assert.equal(t.healthyKg, 81, 'BMI 25 at 1.80 m');
+  assert.equal(t.healthyAt, null, 'below the goal, so off the track');
+  assert.equal(slimTrack({ startKg: 116, goalKg: 76, currentKg: 106.5, heightCm: 180 }).healthyAt, 0.875, 'on the track when the goal is past it');
+  assert.equal(t.bmi, 32.9);
+  assert.equal(slimTrack({ startKg: 70, goalKg: 76, currentKg: 73, heightCm: 180 }).landed, 5, 'a gain goal fills upward');
+  assert.equal(slimTrack({ startKg: 90, goalKg: 90, currentKg: 90, heightCm: 180 }), null);
+  const { readFileSync } = await import('node:fs');
+  const ui = readFileSync('src/lib/components/SlimTrack.svelte', 'utf8');
+  assert.doesNotMatch(ui, /obese|overweight|underweight/i, 'no category words');
+  const progress = readFileSync('src/routes/progress/+page.svelte', 'utf8');
+  assert.ok(progress.indexOf('<SlimTrack') > progress.indexOf('<WeightLine') && progress.indexOf('<SlimTrack') < progress.indexOf('Getting fitter?'), 'on Progress, under the line');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

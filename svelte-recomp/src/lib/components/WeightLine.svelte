@@ -45,12 +45,6 @@
     };
   });
 
-  const along = $derived.by(() => {
-    const { firstKg, currentKg } = $body;
-    if (firstKg == null || currentKg == null || goalKg == null || firstKg === goalKg) return null;
-    const pct = Math.max(0, Math.min(1, (firstKg - currentKg) / (firstKg - goalKg)));
-    return { pct, done: Math.abs(firstKg - currentKg), total: Math.abs(firstKg - goalKg) };
-  });
 </script>
 
 <div class="card wl">
@@ -87,16 +81,7 @@
 
   <!-- The odds and the pace are in the hero above (2026-10-31): said once. -->
 
-  {#if along}
-    <div class="wl-bar" role="img" aria-label={`${Math.round(along.pct * 100)}% of the way to the goal`}>
-      <div class="wl-bar-fill" style="width:{(along.pct * 100).toFixed(1)}%"></div>
-    </div>
-    <div class="flex jb wl-bar-t">
-      <span>{wtShortU($body.firstKg)} start</span>
-      <span>{dwt(along.done)} of {dwt(along.total)}</span>
-      <span>{wtShortU(goalKg)} goal</span>
-    </div>
-  {/if}
+  <!-- How far along is the Slim Chance track's job now (SlimTrack, 2026-11-03). -->
 </div>
 
 <style>
@@ -113,7 +98,4 @@
   .wl-k-dot{width:6px;height:6px;border-radius:50%;background:var(--muted);opacity:.7}
   .wl-k-line{width:14px;height:2.5px;border-radius:2px;background:var(--amber);margin-left:8px}
   .wl-empty{font-size:0.8125rem;color:var(--muted);text-align:center;padding:26px 0 18px}
-  .wl-bar{height:6px;border-radius:3px;background:var(--bg3);margin-top:12px;overflow:hidden}
-  .wl-bar-fill{height:100%;background:var(--amber);border-radius:3px}
-  .wl-bar-t{font-size:0.6875rem;color:var(--muted);margin-top:4px}
 </style>
