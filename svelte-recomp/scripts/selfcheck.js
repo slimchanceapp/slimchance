@@ -5196,6 +5196,16 @@ check('the morning notification takes a weight on the number pad', async () => {
   assert.match(readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8'), /android:name="\.QuickWeighActivity"\s+android:exported="false"/);
 });
 
+check('a meal photo waits for a few optional words before it goes', async () => {
+  // The owner, 2026-11-03: the words could only be typed before the photo, so
+  // in practice never.
+  const { readFileSync } = await import('node:fs');
+  const fl = readFileSync('src/lib/components/FoodLogger.svelte', 'utf8');
+  assert.match(fl, /if \(photoMode !== 'meal'\) \{ await readPhoto\(file, photoMode\); return; \}/, 'a label still goes at once');
+  assert.match(fl, /<input bind:value=\{snapWords\}/, 'the words box under the photo');
+  assert.match(fl, /description: mode === 'meal' \? \(words \?\? query\)\.trim\(\) \|\| undefined/, 'and the words go with it');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

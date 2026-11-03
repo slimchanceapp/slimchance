@@ -140,21 +140,33 @@
     fileInput?.click();
   }
 
+  // A meal photo waits for a few optional words before it goes (the owner,
+  // 2026-11-03: "before I could say a few words describing the food").
+  let snap = $state<string | null>(null);
+  let snapWords = $state('');
   async function onPhoto(e: Event) {
     const input = e.target as HTMLInputElement;
     const file = input.files?.[0];
     input.value = '';
-    if (file) await readPhoto(file, photoMode);
+    if (!file) return;
+    if (photoMode !== 'meal') { await readPhoto(file, photoMode); return; }
+    try { snap = await fileToDownscaledDataUrl(file, { maxEdge: 1024, quality: 0.85 }); snapWords = query.trim(); }
+    catch { notice = 'Couldn’t open that photo. Try another, or describe the food in words.'; }
+  }
+  function sendSnap() {
+    const image = snap;
+    snap = null;
+    if (image) readPhoto(image, 'meal', snapWords);
   }
 
-  async function readPhoto(photo: File | string, mode: 'meal' | 'label') {
+  async function readPhoto(photo: File | string, mode: 'meal' | 'label', words?: string) {
     retryPhoto = null;
     notice = ''; working = mode === 'label' ? 'Reading the label…' : 'Looking at your plate…';
     let image = typeof photo === 'string' ? photo : '';
     try {
       // A label needs legible small print; a plate doesn't.
       image ||= await fileToDownscaledDataUrl(photo as File, { maxEdge: mode === 'label' ? 1600 : 1024, quality: 0.85 });
-      const r = await estimateWithAI({ image, mode, description: mode === 'meal' ? query.trim() || undefined : undefined });
+      const r = await estimateWithAI({ image, mode, description: mode === 'meal' ? (words ?? query).trim() || undefined : undefined });
       if ('error' in r) {
         // A dish it can't place (a home-cooked one) is a question, not a dead
         // end: a few typed words go along with the same photo on the next try.
@@ -260,6 +272,16 @@
   </div>
   <input bind:this={fileInput} type="file" accept="image/*" capture="environment" onchange={onPhoto} hidden>
 
+  {#if snap && !working}
+    <div class="lg-snap">
+      <img src={snap} alt="Your meal" />
+      <div class="lg-snap-in">
+        <input bind:value={snapWords} placeholder="A few words, if you like: what it is, how much" aria-label="What's in the photo (optional)" enterkeyhint="send"
+          onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); sendSnap(); } }} />
+        <div class="lg-snap-row"><button class="btn bp bsm" onclick={sendSnap}>Estimate</button><button class="lg-snap-x" onclick={() => (snap = null)}>Cancel</button></div>
+      </div>
+    </div>
+  {/if}
   {#if working}<div class="lg-working" aria-live="polite"><span class="lg-dot"></span>{working}</div>{/if}
   {#if notice}<div class="lg-notice" aria-live="polite">{notice}</div>{/if}
   {#if retryPhoto && !working && !pending}
@@ -435,6 +457,12 @@
   @media (prefers-reduced-motion:reduce){.lg-dot{animation:none}}
   .lg-notice{font-size:0.8125rem;color:var(--text);padding:10px 4px 0;line-height:1.45}
   .lg-miss{display:flex;flex-direction:column;gap:6px;padding-top:10px}
+  .lg-snap{display:flex;gap:10px;align-items:flex-start;padding-top:10px}
+  .lg-snap img{width:72px;height:72px;object-fit:cover;border-radius:var(--r-md);flex-shrink:0}
+  .lg-snap-in{flex:1;min-width:0;display:flex;flex-direction:column;gap:8px}
+  .lg-snap-in input{width:100%}
+  .lg-snap-row{display:flex;align-items:center;gap:12px}
+  .lg-snap-x{background:none;border:none;font:inherit;font-size:0.8125rem;font-weight:700;color:var(--muted);cursor:pointer;text-decoration:underline}
   .lg-miss span{font-size:0.75rem;color:var(--muted)}
 
   .lg-protein{font-size:0.8125rem;color:var(--muted);padding:8px 8px 2px}
