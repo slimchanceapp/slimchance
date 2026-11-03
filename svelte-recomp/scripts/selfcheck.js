@@ -5229,6 +5229,20 @@ check('a day is celebrated for protein, or for a budget kept while fed enough, n
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /cheerFor\(\{/, 'Today shows it');
 });
 
+check('the watch reads as words on Today: how hard to train, beside the person’s own normal', async () => {
+  // The owner, 2026-11-03: the watch's data arrived every day and was shown nowhere.
+  const { readyToday } = await import('../src/lib/readiness.ts');
+  const week = Array.from({ length: 7 }, (_, i) => ({ date: `2026-10-2${i}`, sleep_hours: 7.5, resting_hr: 58, hrv: 45 }));
+  const good = readyToday({ date: '2026-11-03', sleep_hours: 7.8, resting_hr: 56, hrv: 48 }, week);
+  assert.equal(good?.tone, 'good');
+  assert.equal(good?.detail, 'slept 7.8 h · resting 56 (normal 58) · HRV 48 (normal 45)');
+  const tired = readyToday({ date: '2026-11-03', sleep_hours: 4.5, resting_hr: 66, hrv: 25 }, week);
+  assert.match(tired?.advice ?? '', /easy day|moderate/, 'a short night and a high resting rate ask for an easier day');
+  assert.equal(readyToday(undefined, week), null, 'nothing from the watch today, nothing said');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<span class="td-k">Body<\/span>/, 'a row in today’s plan');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

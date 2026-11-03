@@ -3,7 +3,9 @@
   // 2026-10-31). The weigh-in, then at most one next thing, then today's plan.
   // The scoreboard (the big number, the odds coins, the pace, the goal chips)
   // lives on Progress, so each number is said once.
-  import { liveWeights, liveSchedule, liveWorkoutSessions, liveSessionCompletions, liveDailySteps, liveWorkoutLogs, liveActivitySessions, liveDailyLogs, liveFoodLogs } from '$lib/stores/live';
+  import { liveWeights, liveSchedule, liveWorkoutSessions, liveSessionCompletions, liveDailySteps, liveWorkoutLogs, liveActivitySessions, liveDailyLogs, liveFoodLogs, liveBiometrics } from '$lib/stores/live';
+  import { readyToday } from '$lib/readiness';
+  import { shiftYmd } from '$lib/date';
   import { upsertRecord } from '$lib/stores/sync';
   import { userId, user, isTrial } from '$lib/stores/user';
   import { noteEvent } from '$lib/events';
@@ -177,6 +179,15 @@
 
   const _workoutLogs = liveWorkoutLogs();
   const _activity = liveActivitySessions();
+
+  // The watch made readable: how hard to train today, from last night's sleep,
+  // resting heart rate and HRV against the person's own last two weeks.
+  const _bio = liveBiometrics();
+  const ready = $derived.by(() => {
+    const rows = ($_bio as any[]) ?? [];
+    const since = shiftYmd(-14, new Date(`${today}T12:00:00`));
+    return readyToday(rows.find((b) => b.date === today), rows.filter((b) => b.date < today && b.date >= since));
+  });
 
   // Today's watch-recorded workout, if the watch caught one: a sport session
   // makes it a sport day for the plans.
@@ -393,6 +404,13 @@
   {:else if $coachOn && !planAhead}
     <a class="td-plan" href={`${base}/recipes`}>Let your coach plan the rest of your week ›</a>
   {/if}
+  {#if ready}
+    <div class="td-row" use:cardNav={`${base}/workouts`}>
+      <span class="td-k">Body</span>
+      <span class="td-v"><b class="rd rd-{ready.tone}">{ready.word}.</b> {ready.advice}</span>
+    </div>
+    <div class="td-sub">{ready.detail}</div>
+  {/if}
   <div class="td-row" use:cardNav={`${base}/workouts`}>
     <span class="td-k">{dayInfo.kind === 'gym' ? 'Gym' : dayInfo.kind === 'active' ? dayInfo.label : $_schedule.length ? 'Rest' : 'Move'}</span>
     <span class="td-v">
@@ -488,4 +506,8 @@
   .td-plan{display:block;margin:8px 0 0 88px;font-size:0.8125rem;font-weight:700;color:var(--amber);text-decoration:none}
   .td-go{color:var(--muted);font-size:1.25rem;line-height:1}
   .td-done{color:var(--led-good);font-weight:700;font-size:0.8125rem}
+  .td-v b.rd{font-family:var(--font-body);font-size:0.9375rem;font-weight:800}
+  .rd-good{color:var(--led-good)}
+  .rd-ok{color:var(--led-ok)}
+  .rd-warn{color:var(--led-warn)}
 </style>

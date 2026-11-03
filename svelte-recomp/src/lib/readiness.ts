@@ -63,6 +63,25 @@ export function computeReadiness(
   return { score, label, factors };
 }
 
+/** Readiness as words for Today's "Body" row (the owner, 2026-11-03: "I use
+ *  my watch a lot but I don't see you pulling data from it to make sense for
+ *  me"): how hard to train today, and the numbers behind it beside the
+ *  person's own normal of the last two weeks. */
+export function readyToday(today: BiometricEntry | undefined, history: BiometricEntry[]):
+  { word: ReadinessResult['label']; advice: string; detail: string; tone: 'good' | 'ok' | 'warn' } | null {
+  const r = computeReadiness(today, history);
+  if (!r || !today) return null;
+  const normal = (k: 'resting_hr' | 'hrv') => average(history.map((h) => h[k]).filter((v): v is number => v != null));
+  const bits: string[] = [];
+  if (today.sleep_hours != null) bits.push(`slept ${(+today.sleep_hours).toFixed(1)} h`);
+  const rhr = normal('resting_hr');
+  if (today.resting_hr != null) bits.push(`resting ${Math.round(today.resting_hr)}${rhr ? ` (normal ${Math.round(rhr)})` : ''}`);
+  const hrv = normal('hrv');
+  if (today.hrv != null) bits.push(`HRV ${Math.round(today.hrv)}${hrv ? ` (normal ${Math.round(hrv)})` : ''}`);
+  const advice = r.label === 'Great' || r.label === 'Good' ? 'Ready for a hard session.' : r.label === 'Fair' ? 'Train, but keep it moderate.' : 'An easy day: a walk or light work.';
+  return { word: r.label, advice, detail: bits.join(' · '), tone: r.label === 'Low' ? 'warn' : r.label === 'Fair' ? 'ok' : 'good' };
+}
+
 function average(nums: number[]): number | null {
   if (nums.length === 0) return null;
   return nums.reduce((s, n) => s + n, 0) / nums.length;

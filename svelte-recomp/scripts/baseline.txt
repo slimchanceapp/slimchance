@@ -359,6 +359,7 @@ the user's own sport name and time are used, never a hardcoded club
 the user’s own plan comes back, untouched, after week 6
 the usual breakfast is never logged twice
 the usual breakfast is the one eaten most mornings, at its latest portion
+the watch reads as words on Today: how hard to train, beside the person’s own normal
 the weather in words: the daytime odds outrank the day’s code
 the week is the budget: today’s share is what’s left, spread evenly
 the week under review is the one that just ended, on every asking day
