@@ -34,6 +34,7 @@ a clean steady loss is called answerable, with the right sign
 a column that only appears in a later row still gets a header
 a comma or a quote in a food name cannot corrupt the CSV
 a daily digest says what broke, in totals, and only new errors raise the alarm
+a day is celebrated for protein, or for a budget kept while fed enough, never for eating too little
 a day is stored on the device once: server-numbered rows are kept only as the server returned them
 a day with nothing logged is neither room nor debt in the week’s budget
 a day’s share of the week is worked out in one place

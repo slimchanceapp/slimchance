@@ -24,6 +24,8 @@
   import { todaysMeals, mealAsFoods, type PlanMeal } from '$lib/mealPlan';
   import { saveFoods } from '$lib/foodLog';
   import { kindWord } from '$lib/kind';
+  import { cheerFor } from '$lib/cheer';
+  import { CUT_FLOOR } from '$lib/tdee';
   import { lessonFor } from '$lib/lessons';
   import { editing } from '$lib/commitments';
   import { sportOf } from '$lib/plans';
@@ -238,6 +240,18 @@
   const plan = $derived($dayOne);
   const step = $derived(plan != null && $body.weight?.trendKg == null ? plan.steps.find((s) => !s.done && s.key !== 'weigh') ?? null : null);
 
+  // A celebration earned today (src/lib/cheer.ts), shown once, then put away.
+  const CHEERS_KEY = 'recompos.cheers';
+  let seenCheers = $state(new Set<string>((() => { try { return JSON.parse(localStorage.getItem(CHEERS_KEY) ?? '[]'); } catch { return []; } })()));
+  const cheer = $derived(cheerFor({
+    today, hour: nowHour, seen: seenCheers, proteinG: coachTodayProtein, proteinTargetG: $body.proteinTargetG,
+    kcal: coachTodayKcal, dayKcal: planKcal ?? todayShare, floorKcal: CUT_FLOOR[$body.profile?.gender === 'female' ? 'female' : 'male'],
+  }));
+  function cheered(id: string) {
+    seenCheers = new Set([...seenCheers, id].slice(-20));
+    try { localStorage.setItem(CHEERS_KEY, JSON.stringify([...seenCheers])); } catch { /* back next visit */ }
+  }
+
   // A lesson on the day it's needed, shown until "Got it" (src/lib/lessons.ts).
   const LESSONS_KEY = 'recompos.lessons';
   let seenLessons = $state(new Set<string>((() => { try { return JSON.parse(localStorage.getItem(LESSONS_KEY) ?? '[]'); } catch { return []; } })()));
@@ -271,6 +285,12 @@
   {#if overCeiling}<p class="mw-ceil z-{$line!.zone}">Over your ceiling of {wtNum($line!.kg)}</p>{/if}
 </div>
 {#if kind}<p class="mw-kind">{kind}</p>{/if}
+{#if cheer}
+  <button class="cheer" onclick={() => cheered(cheer.id)} aria-label="{cheer.text} Tap to put it away.">
+    <span class="cheer-burst" aria-hidden="true">{#each Array(8) as _, i}<i style="--a:{i * 45}deg"></i>{/each}</span>
+    <span class="cheer-t">{cheer.text}</span>
+  </button>
+{/if}
 
 {#if ($_profile as any)?.cycle_aware}
   <!-- Period-aware weight (Settings): one tap marks the first day. -->
@@ -438,6 +458,14 @@
   .mw-done{font-size:0.875rem;color:var(--muted);margin:10px 0 0}
   .mw-done b{font-family:var(--font-display);font-size:1.125rem;color:var(--text)}
   .mw-ceil{font-size:0.875rem;font-weight:700;margin:6px 0 0}
+  /* A celebration: a gold burst, then the line; a tap puts it away. */
+  .cheer{position:relative;display:flex;align-items:center;gap:12px;width:100%;text-align:left;font:inherit;cursor:pointer;margin:0 0 14px;padding:12px 14px;
+    background:color-mix(in srgb,var(--amber) 14%,var(--bg2));border:1px solid color-mix(in srgb,var(--amber) 45%,transparent);border-radius:var(--r-md);animation:fadeUp .5s var(--ease) both}
+  .cheer-burst{position:relative;width:28px;height:28px;flex-shrink:0}
+  .cheer-burst::after{content:'';position:absolute;inset:8px;border-radius:50%;background:var(--amber)}
+  .cheer-burst i{position:absolute;left:12px;top:12px;width:4px;height:4px;border-radius:50%;background:var(--amber2);animation:cheer-pop .9s var(--ease) both}
+  @keyframes cheer-pop{from{transform:rotate(var(--a)) translateY(0);opacity:1}to{transform:rotate(var(--a)) translateY(-16px);opacity:0}}
+  .cheer-t{font-size:0.875rem;font-weight:700;line-height:1.45;color:var(--text)}
   .mw-ceil.z-over{color:var(--led-warn)}
   .mw-ceil.z-well-over{color:var(--led-bad)}
   .mw-mean{font-size:0.9375rem;line-height:1.45;color:var(--text);margin:6px 0 0}

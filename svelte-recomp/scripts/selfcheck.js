@@ -5212,9 +5212,21 @@ check('the odds coins flip in and land as they light, and the theme is black and
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins i\.on\{[^}]*animation:ro-flip/);
   const css = readFileSync('src/app.css', 'utf8');
-  assert.match(css, /--bg:#0B0B0C;/, 'black');
+  assert.match(css, /--bg:#000000;/, 'black, truly (the owner: "the black is not black enough")');
   assert.match(css, /--amber:#D4AC48;/, 'and gold');
   assert.match(css, /prefers-reduced-motion:reduce\)\{\*\{animation-duration:\.001ms/, 'still off for anyone who turns motion off');
+});
+
+check('a day is celebrated for protein, or for a budget kept while fed enough, never for eating too little', async () => {
+  const { cheerFor } = await import('../src/lib/cheer.ts');
+  const base = { today: '2026-11-03', hour: 20, seen: new Set(), proteinG: 90, proteinTargetG: 150, kcal: 1600, dayKcal: 1700, floorKcal: 1500 };
+  assert.match(cheerFor({ ...base, proteinG: 152 })?.text ?? '', /Protein hit: 152 g/);
+  assert.equal(cheerFor(base)?.id, 'day:2026-11-03', 'inside the budget and above the floor');
+  assert.equal(cheerFor({ ...base, kcal: 1200 }), null, 'under the floor is never celebrated');
+  assert.equal(cheerFor({ ...base, hour: 14 }), null, 'a day is judged in the evening');
+  assert.equal(cheerFor({ ...base, seen: new Set(['day:2026-11-03']) }), null, 'once a day');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /cheerFor\(\{/, 'Today shows it');
 });
 
 // Nothing may be reported until the async checks have actually settled.

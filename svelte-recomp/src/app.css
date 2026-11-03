@@ -24,8 +24,8 @@
 :root{
   /* Black and gold (2026-11-03: the owner found the navy dull; a coin brand
      reads best on black). Warm blacks, so the gold doesn't look brassy. */
-  --bg:#0B0B0C;--bg2:#161513;--bg3:#201E1A;
-  --border:#2C2924;--border2:#3E3930;
+  --bg:#000000;--bg2:#121110;--bg3:#1B1A17;
+  --border:#282520;--border2:#3A352C;
   --text:#F3EEE3;--muted:#A69F90;
   --brass:#D4AC48;
   /* Verdict tones. */
