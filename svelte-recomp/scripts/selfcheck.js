@@ -5278,7 +5278,7 @@ check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');
   const today = readFileSync('src/routes/+page.svelte', 'utf8');
-  assert.match(today, /'A slim chance, for now\.'/);
+  assert.match(today, /'Your chance of slimming is low right now\.'/, 'the subject is the chance (the owner\'s wording, 2026-11-03)');
   assert.doesNotMatch(today, /'Slim, for now\.'|'Not so slim\.'/);
 });
 

@@ -150,7 +150,9 @@
     : !losing ? p.odds.text
     // Said of the chance, never of the body: "Slim, for now" read as "you're
     // slim" next to a weight (the owner, 2026-11-03).
-    : p.odds.lit >= 8 ? 'Better odds than the name suggests.' : p.odds.lit >= 4 ? 'Too close to call: every morning sharpens it.' : 'A slim chance, for now.');
+    : p.odds.lit >= 8 ? 'Your chance of slimming looks great. Right on track!'
+    : p.odds.lit >= 4 ? 'Your chance of slimming is a coin toss. Every morning sharpens it.'
+    : 'Your chance of slimming is low right now.');
   const turnIt = $derived(losing && p.odds && p.odds.lit <= 3 ? 'A week inside your budget turns it.' : null);
   const overCeiling = $derived(!!$line && !$line.misdrawn && $line.zone !== 'under');
   // A kind word, only when it's earned by showing up (src/lib/kind.ts).
