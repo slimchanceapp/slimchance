@@ -115,18 +115,23 @@ public class MomentReceiver extends BroadcastReceiver {
      * at once if it's running, and show it was taken.
      */
     private static void act(Context ctx, Intent intent) {
-        SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
-        String date = intent.getStringExtra("date"), key = intent.getStringExtra("key");
-        if (date == null || key == null) return;
         Bundle in = RemoteInput.getResultsFromIntent(intent);
         CharSequence typed = in != null ? in.getCharSequence(INPUT) : null;
+        act(ctx, intent.getAction(), intent.getStringExtra("date"), intent.getStringExtra("key"), typed);
+    }
+
+    /** One answer from the notification, typed in its reply or on the number
+     *  pad (QuickWeighActivity): checked, queued for the app, and the
+     *  notification shown again with what was done. */
+    static void act(Context ctx, String a, String date, String key, CharSequence typed) {
+        SharedPreferences p = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
+        if (a == null || date == null || key == null) return;
         JSONObject moment = momentJson(p, date, key);
         String noteKey = "note:" + date + ":" + key, actedKey = "acted:" + date + ":" + key;
         JSONObject acted = json(p.getString(actedKey, "{}"));
         try {
-            JSONObject item = new JSONObject().put("id", System.currentTimeMillis() + "-" + intent.getAction().hashCode())
+            JSONObject item = new JSONObject().put("id", System.currentTimeMillis() + "-" + a.hashCode())
                 .put("date", date).put("at", java.time.Instant.now().toString());
-            String a = intent.getAction();
             String farKey = "far:" + date + ":" + key;
             if (ACT_WEIGHT.equals(a)) {
                 // In the person's own unit: the briefing says which (kg, lb or
@@ -220,6 +225,15 @@ public class MomentReceiver extends BroadcastReceiver {
             .addRemoteInput(in.build())
             .setAllowGeneratedReplies(false)
             .build();
+    }
+
+    /** "Log weight" that opens the number pad (QuickWeighActivity) instead of
+     *  the typed reply, whose keyboard Android won't let an app choose. */
+    private static NotificationCompat.Action padAction(Context ctx, MomentClock.Moment m, String unit) {
+        Intent i = new Intent(ctx, QuickWeighActivity.class).putExtra("date", m.date).putExtra("key", m.key).putExtra("unit", unit)
+            .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        PendingIntent pi = PendingIntent.getActivity(ctx, 3, i, PendingIntent.FLAG_IMMUTABLE | PendingIntent.FLAG_UPDATE_CURRENT);
+        return new NotificationCompat.Action.Builder(0, "Log weight", pi).build();
     }
 
     private static JSONObject momentJson(SharedPreferences p, String date, String key) {
@@ -356,8 +370,10 @@ public class MomentReceiver extends BroadcastReceiver {
         if (actions != null) {
             if (actions.optBoolean("weigh") && !acted.has("weight")) {
                 String u = actions.optString("unit", "kg");
-                n.addAction(inputAction(ctx, ACT_WEIGHT, m, "Log weight",
-                    "st".equals(u) ? "Weight in st and lb, like 17 9" : "lb".equals(u) ? "Weight in lb" : "Weight in kg", null));
+                // kg and lb on the number pad; stone keeps the typed reply,
+                // since the pad has no space for "17 9".
+                if ("st".equals(u)) n.addAction(inputAction(ctx, ACT_WEIGHT, m, "Log weight", "Weight in st and lb, like 17 9", null));
+                else n.addAction(padAction(ctx, m, u));
                 buttons.add("Log weight");
             }
             if (actions.optBoolean("back") && !acted.has("back")) {

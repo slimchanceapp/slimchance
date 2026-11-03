@@ -5180,6 +5180,22 @@ check('a program offer can be put away, and found again', async () => {
   assert.ok(train.indexOf('<ProgramOffer />') > train.indexOf('<h3>Quick Builder</h3>'), 'at the bottom of the plan');
 });
 
+check('the morning notification takes a weight on the number pad', async () => {
+  // The owner, 2026-11-03: "the numbers are bigger and I'm sleepy". The typed
+  // reply opens the full keyboard and no app may choose otherwise, so "Log
+  // weight" opens a small dialog on the number pad, saving through the same act().
+  const { readFileSync } = await import('node:fs');
+  const dir = 'android/app/src/main/java/com/toxicminds/recompos/';
+  const pad = readFileSync(dir + 'QuickWeighActivity.java', 'utf8');
+  assert.match(pad, /InputType\.TYPE_CLASS_NUMBER \| InputType\.TYPE_NUMBER_FLAG_DECIMAL/);
+  assert.match(pad, /MomentReceiver\.act\(this, MomentReceiver\.ACT_WEIGHT, date, key, typed\)/, 'one path: the same checks as the typed reply');
+  assert.match(pad, /SOFT_INPUT_STATE_ALWAYS_VISIBLE/, 'the pad is up at once');
+  const rx = readFileSync(dir + 'MomentReceiver.java', 'utf8');
+  assert.match(rx, /if \("st"\.equals\(u\)\) n\.addAction\(inputAction\([^;]*\);\s+else n\.addAction\(padAction\(ctx, m, u\)\);/, 'kg and lb on the pad, stone typed');
+  assert.match(rx, /PendingIntent\.getActivity\(ctx, 3, i, PendingIntent\.FLAG_IMMUTABLE/, 'opened straight from the notification, no trampoline');
+  assert.match(readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8'), /android:name="\.QuickWeighActivity"\s+android:exported="false"/);
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

@@ -113,6 +113,16 @@
         </activity>
 
         <!-- Health Connect permissions rationale (Android 14+) -->
+        <!-- "Log weight" from the morning notification, on the number pad. -->
+        <activity
+            android:name=".QuickWeighActivity"
+            android:exported="false"
+            android:theme="@style/QuickWeigh"
+            android:excludeFromRecents="true"
+            android:taskAffinity=""
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="stateAlwaysVisible" />
+
         <activity-alias
             android:name="ViewPermissionUsageActivity"
             android:exported="true"
