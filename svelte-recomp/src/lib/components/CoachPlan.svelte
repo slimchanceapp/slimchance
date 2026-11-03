@@ -11,7 +11,9 @@
   import { supabase } from '$lib/db/client';
   import { CUT_FLOOR } from '$lib/tdee';
   import { shiftYmd } from '$lib/date';
-  import { planFoods, usualFoods, planDayKcal, checkPlan, type CheckedPlan } from '$lib/mealPlan';
+  import { planFoods, usualFoods, planDayKcal, checkPlan, todaysMeals, mealAsFoods, type CheckedPlan, type PlanMeal } from '$lib/mealPlan';
+  import { saveFoods } from '$lib/foodLog';
+  import { userId } from '$lib/stores/user';
   import { coachPlan } from '$lib/stores/coachPlan';
 
   const _logs = liveFoodLogs();
@@ -55,6 +57,22 @@
     busy = false;
   }
 
+  // One line a day, the first open (2026-11-03: the whole week as a list
+  // pushed the logger off the screen).
+  let openDay = $state<string | null>(null);
+  const shown = $derived(openDay ?? plan?.days[0]?.date ?? '');
+  // Today's meals tick off as they're logged; "Eaten" logs one in a tap.
+  const todayDone = $derived(todaysMeals(plan, today, (($_logs as any[]) ?? []).filter((f) => f.date === today && f.name).map((f) => f.name)));
+  let eating = $state<string | null>(null);
+  async function eat(m: PlanMeal) {
+    const uid = $userId;
+    if (!uid || eating) return;
+    eating = m.time;
+    try { await saveFoods(uid, today, mealAsFoods(m, ($_logs as any[]) ?? [])); }
+    catch (e) { console.error('Eaten failed:', e); }
+    finally { eating = null; }
+  }
+
   const dayName = (s: string) => noon(s).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'short' });
 </script>
 
@@ -69,14 +87,22 @@
     {#if plan}
       {#each plan.days as d (d.date)}
         <div class="cp-day">
-          <div class="cp-dh"><b>{dayName(d.date)}</b><span>{d.kcal.toLocaleString()} kcal · {d.protein} g protein</span></div>
-          {#each d.meals as m}
-            <div class="cp-meal">
-              <span class="cp-t">{m.time}</span>
-              <span class="cp-i">{m.items.map((x) => `${x.grams} g ${x.food}`).join(' · ')}</span>
-              <span class="cp-n">{m.kcal} kcal · {m.protein} g</span>
-            </div>
-          {/each}
+          <button class="cp-dh" aria-expanded={shown === d.date} onclick={() => (openDay = shown === d.date ? '' : d.date)}>
+            <b>{dayName(d.date)}</b><span>{d.kcal.toLocaleString()} kcal · {d.protein} g protein</span>
+          </button>
+          {#if shown === d.date}
+            {#each d.meals as m, i}
+              {@const done = d.date === today && !!todayDone?.[i]?.done}
+              <div class="cp-meal" class:done>
+                <span class="cp-t">{m.time}</span>
+                <span class="cp-i">{m.items.map((x) => `${x.grams} g ${x.food}`).join(' · ')}</span>
+                <span class="cp-n">{m.kcal} kcal · {m.protein} g</span>
+                {#if d.date === today}
+                  {#if done}<span class="cp-tick" aria-label="logged">✓</span>{:else}<button class="cp-eat" onclick={() => eat(m)} disabled={eating != null}>{eating === m.time ? '…' : 'Eaten'}</button>{/if}
+                {/if}
+              </div>
+            {/each}
+          {/if}
         </div>
       {/each}
       {#if plan.note}<p class="cp-note">{plan.note}</p>{/if}
@@ -90,9 +116,13 @@
 <style>
   .cp-lead{font-size:0.875rem;line-height:1.5;color:var(--muted);margin:0 0 12px}
   .cp-day{padding:10px 0;border-top:1px solid var(--border)}
-  .cp-dh{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-bottom:6px;font-size:0.9375rem}
+  .cp-dh{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;width:100%;background:none;border:none;padding:0;font:inherit;font-size:0.9375rem;color:var(--text);text-align:left;cursor:pointer}
+  .cp-dh[aria-expanded='true']{margin-bottom:6px}
+  .cp-meal.done .cp-i{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border2)}
+  .cp-eat{grid-column:3;grid-row:1 / span 2;align-self:center;font:inherit;font-size:0.75rem;font-weight:800;color:var(--text);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:3px 10px;cursor:pointer}
+  .cp-tick{grid-column:3;grid-row:1 / span 2;align-self:center;color:var(--led-good);font-weight:800}
   .cp-dh span{font-size:0.8125rem;color:var(--muted);font-variant-numeric:tabular-nums}
-  .cp-meal{display:grid;grid-template-columns:3.2rem minmax(0,1fr);column-gap:8px;row-gap:1px;padding:4px 0;font-size:0.875rem}
+  .cp-meal{display:grid;grid-template-columns:3.2rem minmax(0,1fr) auto;column-gap:8px;row-gap:1px;padding:4px 0;font-size:0.875rem}
   .cp-t{font-weight:700;color:var(--text);font-variant-numeric:tabular-nums}
   .cp-i{color:var(--text);min-width:0}
   .cp-n{grid-column:2;font-size:0.75rem;color:var(--muted);font-variant-numeric:tabular-nums}

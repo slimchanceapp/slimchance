@@ -66,6 +66,7 @@ a page is called what its tab is called
 a phone's first sync reads a month back, so day one has a heart answer
 a photo races the Gemini models, so one stuck model costs a stagger, not the whole wait
 a plan shows at its moment, the most specific moment first
+a planned meal is logged in one tap, at its planned grams, and ticks itself off
 a profile is only complete when TDEE can actually be computed
 a profile with zero logs still produces real targets and a real date
 a program session can never be saved over the user’s own plan

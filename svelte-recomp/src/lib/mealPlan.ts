@@ -5,6 +5,7 @@
 // under the floor, over the day, short of protein, or names a food that
 // isn't in the table is refused. Pure; see selfcheck.js.
 import { BASE_FOODS } from './data/foods.ts';
+import type { NewFood } from './food.ts';
 
 /** Per 100 g (100 ml for drinks). */
 export interface PlanFood { name: string; kcal: number; protein: number }
@@ -71,6 +72,26 @@ export interface PlanItem { food: string; grams: number; kcal: number; protein: 
 export interface PlanMeal { time: string; kcal: number; protein: number; items: PlanItem[] }
 export interface PlanDay { date: string; kcal: number; protein: number; meals: PlanMeal[] }
 export interface CheckedPlan { ok: boolean; why: string | null; days: PlanDay[]; note: string }
+
+/** A planned meal as food rows at the planned grams, for one-tap "Eaten"
+ *  (the owner, 2026-11-03): kcal and protein as the plan worked them out;
+ *  carbs and fat per 100 g from the same food in the person's own log, else
+ *  the built-in table, else 0. Logged under the plan's own names, so the meal
+ *  ticks itself off. */
+export function mealAsFoods(meal: PlanMeal, logs: Array<{ name?: string | null; grams?: number | string | null; carbs_g?: number | string | null; fat_g?: number | string | null }>): NewFood[] {
+  const per100 = (name: string) => {
+    const k = name.trim().toLowerCase();
+    const row = logs.find((l) => l.name?.trim().toLowerCase() === k && Number(l.grams) > 0);
+    if (row) return { c: ((Number(row.carbs_g) || 0) / Number(row.grams)) * 100, f: ((Number(row.fat_g) || 0) / Number(row.grams)) * 100 };
+    const b = BASE_FOODS.find((x) => x.name.toLowerCase() === k);
+    return b ? { c: b.carbs_g, f: b.fat_g } : { c: 0, f: 0 };
+  };
+  const r1 = (x: number) => Math.round(x * 10) / 10;
+  return meal.items.map((x) => {
+    const m = per100(x.food);
+    return { name: x.food, grams: x.grams, kcal: x.kcal, protein_g: x.protein, carbs_g: r1((m.c * x.grams) / 100), fat_g: r1((m.f * x.grams) / 100), source: 'plan' };
+  });
+}
 
 /** Today's meals from the coach's plan, each ticked once all its foods are in
  *  today's log (by name, as the plan was made from the log's own names). */

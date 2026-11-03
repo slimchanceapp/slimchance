@@ -146,7 +146,7 @@
   let repeatingId = $state<string | null>(null);
 
   // Provenance as a quiet tag on the row, not words baked into its name.
-  const SOURCE_TAG: Record<string, string> = { ai: 'AI', offline: 'estimate', label: 'label' };
+  const SOURCE_TAG: Record<string, string> = { ai: 'AI', offline: 'estimate', label: 'label', plan: 'plan' };
   const sourceLabel = (f: any) => SOURCE_TAG[sourceOf(f) ?? ''] ?? '';
 
   /** Food logged on this page: FoodLogger (search, scan, photo, AI, quick
@@ -416,8 +416,6 @@
   </div>
 {/if}
 
-<CoachPlan />
-
 <FoodLogger logs={$_foodLogs as any[]} today={todayStr} onLog={logFoods}
   proteinLeft={Math.max(0, proteinTargetG - todayTotals.protein)} />
 
@@ -453,6 +451,10 @@
     <div style="font-size:0.75rem;color:var(--muted);text-align:center;padding:10px 0">No food logged today yet.</div>
   {/if}
 </div>
+
+<!-- The coach's plan comes after the logging: making it is occasional, logging
+     is every meal (2026-11-03). -->
+<CoachPlan />
 
 {#if foodEval.tone !== 'na'}
   <div class="card coach-card coach-{foodEval.tone}">

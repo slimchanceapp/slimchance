@@ -3752,7 +3752,10 @@ check('Food, Train and Progress open on the same scoreboard hero; Today on the w
   for (const page of ['recipes', 'workouts', 'progress']) {
     assert.match(readFileSync(`src/routes/${page}/+page.svelte`, 'utf8'), /<PageHero /, `${page} uses the PageHero, not a copy of one`);
   }
-  assert.doesNotMatch(readFileSync('src/routes/+page.svelte', 'utf8'), /<PageHero /, 'Today says each number once: the scoreboard is on Progress (2026-10-31)');
+  const today = readFileSync('src/routes/+page.svelte', 'utf8');
+  assert.doesNotMatch(today, /<PageHero /, 'Today opens on the weigh-in, not a page title');
+  // The owner, 2026-11-03: "a big number to pull the focus", inside the weigh-in card.
+  assert.match(today, /<div class="card mw">\s*\{#if p\.kg != null\}<Readout /, 'the big trend number leads the weigh-in');
   assert.ok(!existsSync('src/lib/components/PulseOrb.svelte'));
 });
 
@@ -4599,8 +4602,11 @@ check('morning two reads the scale for a stranger, and one morning can\'t move t
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/stores/body.ts', 'utf8'), /const currentKg = weight\?\.trendKg \?\? weight\?\.meanKg \?\? weight\?\.latestKg/);
   assert.match(readFileSync('src/lib/stores/dayOne.ts', 'utf8'), /currentWeightKg: \$body\.currentKg,/, 'day one asks the one current weight');
-  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const meaning = \$derived\(p\.odds\?\.text \?\? \(\$body\.weight\?\.state === 'not-enough' \? p\.story : null\)\)/, 'the first week leads with the mornings to the first odds');
-  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /\{#if currentKg != null && \$body\.weight\?\.trendKg != null\}\{' · '\}trend /, '"trend" only once there is one');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const story = \$derived\(p\.odds \? null : \$body\.weight\?\.state === 'not-enough' \? p\.story : null\)/, 'the first week leads with the mornings to the first odds');
+  // Since 2026-11-03 Today's big number is the pulse's, whose caption says
+  // "not a trend yet" until there is one.
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<Readout value=\{wtNum\(p\.kg\)\} caption=\{p\.caption\}/, '"trend" only once there is one');
+  assert.match(readFileSync('src/lib/pulse.ts', 'utf8'), /not a trend yet/);
   const base = { today: '2026-10-30', kg: 93.0, prev: { date: '2026-10-29', kg: 92.4 }, trendKg: null, trendPrevKg: null,
     scatterKg: 0, intake: new Map(), weekdayOffsets: null, trained: new Set() };
   const x = explainUp(base);
@@ -5126,6 +5132,27 @@ check('Progress answers "am I getting there?" first, then fitter, this week, det
   assert.doesNotMatch(markup, /showMore|More detail/, 'no catch-all fold');
   assert.match(readFileSync('src/lib/components/DetailRow.svelte', 'utf8'), /\{#if open\}<div class="dr-body">\{@render children\(\)\}<\/div>\{\/if\}/, 'a closed row draws nothing');
   assert.doesNotMatch(readFileSync('src/lib/components/WeightLine.svelte', 'utf8'), /odds\.text|At this pace/, 'the odds and the pace are said once, in the hero');
+});
+
+check('a planned meal is logged in one tap, at its planned grams, and ticks itself off', async () => {
+  // The owner, 2026-11-03: the coach's plan was "a long list, and then I have
+  // to scroll all the way down to do the thing I am supposed to do".
+  const { mealAsFoods, todaysMeals } = await import('../src/lib/mealPlan.ts');
+  const meal = { time: '15:00', kcal: 520, protein: 94, items: [
+    { food: 'Chicken breast, cooked', grams: 200, kcal: 330, protein: 62 },
+    { food: 'Mystery bowl', grams: 100, kcal: 190, protein: 32 }] };
+  const rows = mealAsFoods(meal, [{ name: 'chicken breast, cooked', grams: 100, carbs_g: 0, fat_g: 3.6 }]);
+  assert.deepEqual(rows.map((r) => [r.name, r.grams, r.kcal, r.protein_g, r.fat_g, r.source]),
+    [['Chicken breast, cooked', 200, 330, 62, 7.2, 'plan'], ['Mystery bowl', 100, 190, 32, 0, 'plan']],
+    'the plan’s numbers, carbs and fat from the person’s own log, and 0 where nothing is known');
+  const plan = { ok: true, why: null, note: '', days: [{ date: '2026-11-03', kcal: 520, protein: 94, meals: [meal] }] };
+  assert.deepEqual(todaysMeals(plan, '2026-11-03', rows.map((r) => r.name))?.map((m) => m.done), [true], 'logged under its own names, so it ticks off');
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['src/routes/+page.svelte', 'src/lib/components/CoachPlan.svelte']) {
+    assert.match(readFileSync(f, 'utf8'), /saveFoods\(uid, today, mealAsFoods\(/, `${f} logs a planned meal through the one way food is saved`);
+  }
+  const food = readFileSync('src/routes/recipes/+page.svelte', 'utf8');
+  assert.ok(food.indexOf('<FoodLogger') < food.indexOf('<CoachPlan />'), 'the logger comes first on Food');
 });
 
 // Nothing may be reported until the async checks have actually settled.

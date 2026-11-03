@@ -21,7 +21,8 @@
   import { dayOne } from '$lib/stores/dayOne';
   import { coachOn } from '$lib/stores/brain';
   import { coachPlan } from '$lib/stores/coachPlan';
-  import { todaysMeals } from '$lib/mealPlan';
+  import { todaysMeals, mealAsFoods, type PlanMeal } from '$lib/mealPlan';
+  import { saveFoods } from '$lib/foodLog';
   import { kindWord } from '$lib/kind';
   import { lessonFor } from '$lib/lessons';
   import { editing } from '$lib/commitments';
@@ -40,7 +41,8 @@
   import { badmintonRule } from '$lib/program';
   import { nowTick, todayDate } from '$lib/stores/refresh';
   import WeightInput from '$lib/components/WeightInput.svelte';
-  import { changeWord, wtNum } from '$lib/units';
+  import Readout from '$lib/components/Readout.svelte';
+  import { wtNum } from '$lib/units';
 
   const dayIdx = $derived(new Date($nowTick).getDay());
   const today = $derived($todayDate);
@@ -126,7 +128,9 @@
   // What this morning means once it's in: the odds, or in the first week the
   // mornings still to go until the first odds.
   const p = $derived($todayPulse);
-  const meaning = $derived(p.odds?.text ?? ($body.weight?.state === 'not-enough' ? p.story : null));
+  // Before the first odds, the mornings still to go (the odds speak for themselves).
+  const story = $derived(p.odds ? null : $body.weight?.state === 'not-enough' ? p.story : null);
+  const overCeiling = $derived(!!$line && !$line.misdrawn && $line.zone !== 'under');
   // A kind word, only when it's earned by showing up (src/lib/kind.ts).
   const kind = $derived(kindWord(($_weights as any[]).map((w) => w.date), today, mornings));
 
@@ -190,6 +194,15 @@
   const meals = $derived($coachOn ? todaysMeals($coachPlan, today, (($_food as any[]) ?? []).filter((f) => f.date === today && f.name).map((f) => f.name)) : null);
   const planKcal = $derived(meals ? meals.reduce((s, m) => s + m.kcal, 0) : null);
   const planAhead = $derived(!!$coachPlan?.days.some((d) => d.date >= today));
+  // "Eaten": a planned meal logged in one tap, at its planned grams (2026-11-03).
+  let eating = $state<string | null>(null);
+  async function eat(m: PlanMeal) {
+    if (!uid || eating) return;
+    eating = m.time;
+    try { await saveFoods(uid, today, mealAsFoods(m, ($_food as any[]) ?? [])); }
+    catch (e) { console.error('Eaten failed:', e); }
+    finally { eating = null; }
+  }
 
   // What KIND of day is today? A gym session, an ACTIVE day (badminton/
   // cardio with no barbell session), or a true rest day. Badminton days have
@@ -237,34 +250,27 @@
 
 <p class="dt">{dateLine}</p>
 
-<!-- MORNING WEIGH-IN. The trend is only as good as the mornings behind it — a
-     month of 13 weigh-ins left it a kilo wide either way — so the scale gets the
-     top of the screen until today's reading is in, then shrinks to its result. -->
-{#if todayWeighIn}
-  <div class="mw-res">
-    <div class="mw-done">Weighed <b>{wtNum(+todayWeighIn.weight)}</b> today{#if currentKg != null && $body.weight?.trendKg != null}{' · '}trend <b>{wtNum(currentKg)}</b> {changeWord()}{:else if currentKg != null && ($body.weight?.n ?? 0) > 1}{' · '}average so far <b>{wtNum(currentKg)}</b> {changeWord()}{/if}{#if $line && !$line.misdrawn}{' · '}ceiling <b class="mw-line z-{$line.zone}">{wtNum($line.kg)}</b>{/if}</div>
-    {#if p.odds}
-      <!-- The odds as ten coins, lighting one after another: the same coins the
-           first-odds lesson explains, in the pace's colour. -->
-      <div class="oc tone-{p.tone}" aria-hidden="true">{#each Array(10) as _, i}<i class:on={i < p.odds.lit} style="--i:{i}"></i>{/each}</div>
-    {/if}
-    {#if meaning}<p class="mw-mean">{meaning}{#if p.odds && !kind}{' '}{mornings.weighed} of {mornings.days} mornings this week.{/if}</p>{/if}
-    {#if kind}<p class="mw-kind">{kind}</p>{/if}
-  </div>
-{:else}
-  <div class="card mw">
-    <div class="mw-top">
-      <label class="card-lbl" for="ql-weight">Morning weigh-in</label>
-      {#if currentKg != null}<span class="mw-trend">trend <b>{wtNum(currentKg)}</b> {changeWord()}{#if $line && !$line.misdrawn}{' · '}ceiling <b class="mw-line z-{$line.zone}">{wtNum($line.kg)}</b>{/if}</span>{/if}
-    </div>
+<!-- MORNING WEIGH-IN, under one big number (the owner, 2026-11-03: "a big
+     number to pull the focus"). The number is the trend, never one morning's
+     reading, which swings a kilo either way; the odds light up under it. Until
+     today's reading is in, the box to type it sits right below. -->
+<div class="card mw">
+  {#if p.kg != null}<Readout value={wtNum(p.kg)} caption={p.caption} tone={p.tone} odds={p.odds} />{/if}
+  {#if story}<p class="mw-mean">{story}</p>{/if}
+  {#if todayWeighIn}
+    <p class="mw-done">This morning <b>{wtNum(+todayWeighIn.weight)}</b> ✓{#if p.odds && !kind}{' · '}{mornings.weighed} of {mornings.days} mornings this week{/if}</p>
+  {:else}
+    <label class="mw-lbl" for="ql-weight">This morning’s weight</label>
     <div class="mw-row">
       <WeightInput id="ql-weight" bind:kg={weightKg} hint={currentKg} label="This morning’s weight" onenter={() => saveEntry('weight')} />
       <button class="btn bp" onclick={() => saveEntry('weight')} disabled={saving || weightKg == null}>{saving ? 'Saving…' : 'Save'}</button>
     </div>
     {#if saveMsg}<div class="mw-err">{saveMsg}</div>{/if}
-    <p class="mw-hint">{#if lastWeighLabel}Last reading {lastWeighLabel}.{' '}{/if}Same time, before food or drink. One morning is noise; the trend — the line through five weeks of mornings — is the number.</p>
-  </div>
-{/if}
+    <p class="mw-hint">{#if lastWeighLabel}Last reading {lastWeighLabel}.{' '}{/if}Same time, before food or drink.</p>
+  {/if}
+  {#if overCeiling}<p class="mw-ceil z-{$line!.zone}">Over your ceiling of {wtNum($line!.kg)}</p>{/if}
+</div>
+{#if kind}<p class="mw-kind">{kind}</p>{/if}
 
 {#if ($_profile as any)?.cycle_aware}
   <!-- Period-aware weight (Settings): one tap marks the first day. -->
@@ -361,7 +367,7 @@
   {#if meals}
     <ul class="td-meals" aria-label="Your coach’s plan for today">
       {#each meals as m}
-        <li class:done={m.done}><span class="td-t">{m.time}</span><span class="td-i">{m.items.map((x) => `${x.grams} g ${x.food}`).join(' · ')}</span><span class="td-tick" aria-label={m.done ? 'logged' : undefined}>{m.done ? '✓' : ''}</span></li>
+        <li class:done={m.done}><span class="td-t">{m.time}</span><span class="td-i">{m.items.map((x) => `${x.grams} g ${x.food}`).join(' · ')}</span>{#if m.done}<span class="td-tick" aria-label="logged">✓</span>{:else}<button class="td-eat" onclick={() => eat(m)} disabled={eating != null}>{eating === m.time ? '…' : 'Eaten'}</button>{/if}</li>
       {/each}
     </ul>
   {:else if $coachOn && !planAhead}
@@ -420,28 +426,22 @@
   .ls-coin :global(.cspin *){animation-iteration-count:2}
   .ls-t{font-family:var(--font-display);font-size:1.25rem;font-weight:700;color:var(--text);margin-bottom:4px}
   .ls-b{font-size:0.875rem;line-height:1.5;color:var(--text);margin:0 0 10px}
-  /* Each half stays whole: with big text the trend drops under the label. */
-  .mw-top{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;column-gap:10px;row-gap:2px;margin-bottom:8px}
-  .mw-top .card-lbl{margin:0;white-space:nowrap}
-  .mw-trend{font-size:0.8125rem;color:var(--muted);white-space:nowrap}
-  .mw-trend b{font-family:var(--font-display);font-size:1.125rem;color:var(--text)}
   .mw-row{display:flex;gap:8px}
   .mw-row :global(input){flex:1;min-width:0;font-size:1.25rem;font-weight:700;text-align:center;font-variant-numeric:lining-nums tabular-nums}
   .mw-row .btn{flex-shrink:0;min-width:88px}
   .mw-hint{font-size:0.75rem;color:var(--muted);margin-top:7px;line-height:1.45}
   .mw-err,.mw-msg{font-size:0.75rem;margin-top:6px;color:var(--led-good)}
   .mw-err,.mw-msg.bad{color:var(--led-bad)}
-  .mw-res{margin:0 2px 14px}
-  .mw-done{font-size:0.8125rem;color:var(--muted)}
-  .mw-done b{font-family:var(--font-display);font-size:1.0625rem;color:var(--text)}
-  .oc{display:flex;gap:6px;margin:9px 0 2px}
-  .oc i{width:13px;height:13px;border-radius:50%;border:1.5px solid var(--border2)}
-  .oc i.on{background:var(--band);border-color:var(--band);animation:coin-in .35s var(--ease) both;animation-delay:calc(var(--i) * 70ms)}
-  @keyframes coin-in{from{transform:scale(.3);opacity:0}to{transform:scale(1);opacity:1}}
+  /* The big number sits in the card, not in a card of its own. */
+  .mw :global(.ro){background:none;border:none;padding:0 0 4px}
+  .mw-lbl{display:block;font-family:var(--font-label);font-size:0.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);margin:12px 0 6px}
+  .mw-done{font-size:0.875rem;color:var(--muted);margin:10px 0 0}
+  .mw-done b{font-family:var(--font-display);font-size:1.125rem;color:var(--text)}
+  .mw-ceil{font-size:0.875rem;font-weight:700;margin:6px 0 0}
+  .mw-ceil.z-over{color:var(--led-warn)}
+  .mw-ceil.z-well-over{color:var(--led-bad)}
   .mw-mean{font-size:0.9375rem;line-height:1.45;color:var(--text);margin:6px 0 0}
-  .mw-kind{font-size:0.875rem;line-height:1.45;color:var(--led-good);font-weight:700;margin:4px 0 0;animation:fadeUp .5s var(--ease) both}
-  .mw-line.z-over{color:var(--led-warn)}
-  .mw-line.z-well-over{color:var(--led-bad)}
+  .mw-kind{font-size:0.875rem;line-height:1.45;color:var(--led-good);font-weight:700;margin:-6px 2px 14px;animation:fadeUp .5s var(--ease) both}
   .td{padding:6px 14px}
   .td-row{display:flex;align-items:baseline;gap:12px;padding:9px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .td-row + .td-sub + .td-row,.td-meals + .td-row,.td-plan + .td-row{border-top:1px solid var(--border);margin-top:9px}
@@ -451,7 +451,9 @@
   .td-v b{font-family:var(--font-display);font-size:1.25rem;font-weight:700}
   .td-sub{font-size:0.75rem;color:var(--muted);margin:-6px 0 0 88px}
   .td-meals{list-style:none;margin:8px 0 0 88px;padding:0;display:grid;gap:6px}
-  .td-meals li{display:grid;grid-template-columns:2.9rem minmax(0,1fr) 1rem;gap:6px;font-size:0.8125rem;line-height:1.4;color:var(--text)}
+  .td-meals li{display:grid;grid-template-columns:2.9rem minmax(0,1fr) auto;align-items:start;gap:6px;font-size:0.8125rem;line-height:1.4;color:var(--text)}
+  .td-eat{font:inherit;font-size:0.75rem;font-weight:800;color:var(--text);background:var(--bg3);border:1px solid var(--border2);border-radius:999px;padding:3px 10px;cursor:pointer}
+  .td-eat:active{transform:scale(.95)}
   .td-meals li.done .td-i{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--border2)}
   .td-t{font-weight:700;font-variant-numeric:tabular-nums}
   .td-tick{color:var(--led-good);font-weight:800}
