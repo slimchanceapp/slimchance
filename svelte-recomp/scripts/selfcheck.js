@@ -5190,6 +5190,7 @@ check('the morning notification takes a weight on the number pad', async () => {
   assert.match(pad, /InputType\.TYPE_CLASS_NUMBER \| InputType\.TYPE_NUMBER_FLAG_DECIMAL/);
   assert.match(pad, /MomentReceiver\.act\(this, MomentReceiver\.ACT_WEIGHT, date, key, typed\)/, 'one path: the same checks as the typed reply');
   assert.match(pad, /SOFT_INPUT_STATE_ALWAYS_VISIBLE/, 'the pad is up at once');
+  assert.match(pad, /getLaunchIntentForPackage\(getPackageName\(\)\)/, 'then the app opens, to show the trend move (2026-11-03)');
   const rx = readFileSync(dir + 'MomentReceiver.java', 'utf8');
   assert.match(rx, /if \("st"\.equals\(u\)\) n\.addAction\(inputAction\([^;]*\);\s+else n\.addAction\(padAction\(ctx, m, u\)\);/, 'kg and lb on the pad, stone typed');
   assert.match(rx, /PendingIntent\.getActivity\(ctx, 3, i, PendingIntent\.FLAG_IMMUTABLE/, 'opened straight from the notification, no trampoline');

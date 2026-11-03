@@ -1,5 +1,6 @@
 package com.toxicminds.recompos;
 
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
@@ -85,6 +86,14 @@ public class QuickWeighActivity extends AppCompatActivity {
             return;
         }
         dialog.dismiss();
+        // Then the app, where the trend rolls and the coins flip in and land
+        // (the owner, 2026-11-03: "can the app open automatically and show me
+        // my trend").
+        Intent open = getPackageManager().getLaunchIntentForPackage(getPackageName());
+        if (open != null) {
+            open.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_REORDER_TO_FRONT);
+            startActivity(open);
+        }
         finish();
     }
 

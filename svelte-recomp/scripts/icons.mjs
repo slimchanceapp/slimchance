@@ -13,7 +13,8 @@ import { mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { crc32, deflateSync } from 'node:zlib';
 
-const NAVY = '#101826', RIM = '#8F7230', MILL = '#6B5523', FACE = '#C9A54E';
+// Black behind the coin since 2026-11-03 (the app went black and gold).
+const NAVY = '#000000', RIM = '#8F7230', MILL = '#6B5523', FACE = '#C9A54E';
 /** The S at font-size 38, centred on x 54, baseline 67.5 (108 units). */
 const S = 'M54.43 67.96Q51.97 67.96 49.8 67.52Q47.63 67.09 45.97 66.1Q44.32 65.12 43.37 63.49Q42.43 61.87 42.43 59.5Q42.43 59.36 42.43 59.18Q42.44 59.01 42.46 58.87H49.05Q49.03 58.99 49.02 59.16Q49.01 59.32 49.01 59.46Q49.01 60.65 49.63 61.39Q50.25 62.12 51.4 62.45Q52.55 62.78 54.07 62.78Q54.89 62.78 55.61 62.71Q56.33 62.63 56.91 62.44Q57.49 62.26 57.91 61.98Q58.34 61.69 58.56 61.29Q58.77 60.89 58.77 60.36Q58.77 59.46 58.11 58.91Q57.45 58.35 56.32 57.96Q55.19 57.57 53.78 57.24Q52.37 56.92 50.86 56.53Q49.35 56.14 47.94 55.56Q46.53 54.98 45.4 54.12Q44.27 53.25 43.61 51.94Q42.95 50.62 42.95 48.77Q42.95 46.7 43.82 45.21Q44.69 43.72 46.24 42.77Q47.79 41.83 49.8 41.38Q51.82 40.93 54.1 40.93Q56.33 40.93 58.3 41.39Q60.27 41.85 61.78 42.81Q63.29 43.77 64.15 45.25Q65.01 46.73 65.03 48.77V49.22H58.51V48.97Q58.51 48.09 58.03 47.41Q57.54 46.74 56.59 46.34Q55.64 45.94 54.25 45.94Q52.85 45.94 51.87 46.21Q50.89 46.48 50.39 46.99Q49.89 47.49 49.89 48.15Q49.89 48.98 50.55 49.52Q51.21 50.07 52.34 50.44Q53.47 50.81 54.88 51.13Q56.29 51.45 57.8 51.82Q59.31 52.2 60.72 52.75Q62.13 53.3 63.26 54.15Q64.39 55.01 65.05 56.26Q65.71 57.52 65.71 59.3Q65.71 62.4 64.25 64.31Q62.78 66.22 60.23 67.09Q57.68 67.96 54.43 67.96Z';
 /** The same S for the 24-unit mark: font-size 11.5, centred on x 12, baseline 16.3. */
@@ -43,6 +44,7 @@ const round = (n) => svg(n, n, `<circle cx="${n / 2}" cy="${n / 2}" r="${n / 2}"
 // the coin takes about the same share of those as of the icons above.
 const foreground = (n) => svg(n, n, at(n / 2, n / 2, (n * 25) / 108, COIN));
 const monochrome = (n) => svg(n, n, at(n / 2, n / 2, (n * 25) / 108, MARK, 12, 10.4));
+const background = (n) => svg(n, n, `<rect width="${n}" height="${n}" fill="${NAVY}"/>`);
 const badge = (n) => svg(n, n, at(n / 2, n / 2, (n * 10.4) / 24, MARK, 12, 10.4));
 const splash = (w, h, side) => svg(w, h, `<rect width="${w}" height="${h}" fill="${NAVY}"/>${at(w / 2, h / 2, (Math.min(w, h) * side) / 2, COIN)}`);
 
@@ -70,7 +72,8 @@ const jobs = [];
 for (const d of readdirSync(RES).filter((d) => /^mipmap-[a-z]+dpi$/.test(d))) {
   const [n] = sizeOf(`${RES}/${d}/ic_launcher.png`), [layer] = sizeOf(`${RES}/${d}/ic_launcher_foreground.png`);
   jobs.push([`${RES}/${d}/ic_launcher.png`, rounded(n), true], [`${RES}/${d}/ic_launcher_round.png`, round(n), true],
-    [`${RES}/${d}/ic_launcher_foreground.png`, foreground(layer), true], [`${RES}/${d}/ic_launcher_monochrome.png`, monochrome(layer), true]);
+    [`${RES}/${d}/ic_launcher_foreground.png`, foreground(layer), true], [`${RES}/${d}/ic_launcher_monochrome.png`, monochrome(layer), true],
+    [`${RES}/${d}/ic_launcher_background.png`, background(layer), false]);
 }
 for (const d of readdirSync(RES).filter((d) => d.startsWith('drawable'))) {
   const f = `${RES}/${d}/splash.png`;
