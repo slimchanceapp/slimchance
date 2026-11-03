@@ -2,8 +2,8 @@
 
 For people who don't know us. Each link carries its own tag, so the Numbers
 page shows each post as its own group ("By the link they came by"). Post
-where self-made apps are welcome (r/SideProject, r/androidapps, Product-free
-indie forums, a Discord you're in); r/loseit and r/fitness ban promotion, so
+where self-made apps are welcome (r/SideProject, r/androidapps, indie-maker
+forums, a Discord you're in); r/loseit and r/fitness ban promotion, so
 not there. If a place needs a different tag, any lowercase word works:
 `?from=<word>`.
 
