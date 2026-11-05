@@ -309,6 +309,7 @@ the briefing on the 1st points at the letter
 the briefing: weather in the title, the first job first, then the day, the food and the plan
 the build is stamped with its commit only when ship gives one
 the ceiling and the next stop are named for their direction everywhere the user reads
+the chance is honest: simulated people with a known truth get odds within about a coin of it
 the check-in nudge lands on that week’s target, inside the floor
 the chips carry the macros from the LATEST time you logged that food
 the coach brain has no reach: no tools, no one else's data, off until consent, capped, and it can only replace a message

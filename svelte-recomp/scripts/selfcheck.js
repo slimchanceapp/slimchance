@@ -5282,6 +5282,36 @@ check('the hero speaks of the chance, never of the body', async () => {
   assert.doesNotMatch(today, /'Slim, for now\.'|'Not so slim\.'/);
 });
 
+check('the chance is honest: simulated people with a known truth get odds within about a coin of it', async () => {
+  // Decision 0002 (2026-11-05): a coin is an honest chance. 1,500 made-up
+  // people with a known weekly rate, water that lingers for days, a heavier
+  // Monday and a quarter of mornings missed, through the app's own estimator:
+  // in every band with enough cases, what it said is within 1.5 coins of how
+  // often the true rate really was above the floor.
+  const { weightVerdict, chanceOf } = await import('../src/lib/insights.ts');
+  const DAY = 864e5; let seed = 42;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+  const bins = Array.from({ length: 10 }, () => ({ n: 0, hit: 0, p: 0 }));
+  for (let person = 0; person < 1500; person++) {
+    const rate = -0.4 + rnd() * 1.4, start = Date.UTC(2026, 0, 1, 12), days = 35 + Math.floor(rnd() * 30);
+    const pts = []; let e = 0;
+    for (let d = 0; d < days; d++) {
+      e = 0.6 * e + 0.8 * 0.7 * gauss();
+      const w = 100 - (rate / 7) * d + e + (new Date(start + d * DAY).getUTCDay() === 1 ? 0.4 : 0);
+      if (rnd() > 0.25) pts.push({ date: new Date(start + d * DAY).toISOString().slice(0, 10), weight: +w.toFixed(1) });
+    }
+    const p = chanceOf(weightVerdict(pts, start + (days - 1) * DAY), 'lose');
+    if (p == null) continue;
+    const b = bins[Math.min(9, Math.floor(p * 10))]; b.n++; b.p += p; if (rate > 0.15) b.hit++;
+  }
+  for (const [i, b] of bins.entries()) {
+    if (b.n < 40) continue;
+    const said = (b.p / b.n) * 10, truth = (b.hit / b.n) * 10;
+    assert.ok(Math.abs(said - truth) <= 1.5, `said ${said.toFixed(1)} in 10, truth ${truth.toFixed(1)} (band ${i})`);
+  }
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 
