@@ -304,8 +304,8 @@ transport "Streamable HTTP").
 
 ### What is weak, honestly
 
-- **Nobody knows it exists.** It is not listed in the public MCP registry
-  yet; listing it is an outward step for the owner to approve.
+- **Listed, but not yet found.** It is in the official MCP Registry (chapter
+  4 says why it waited); assistants' own directories are a separate step.
 - **It remembers nothing.** Each call sends the whole history again. A
   version connected to a Slim Chance account would need sign-in (OAuth 2.1)
   and a much bigger privacy decision.
@@ -407,24 +407,55 @@ though not fully yet. A real series of morning weights also turned out
 noisier than the simulator assumed, so with real people the problem is
 probably bigger, not smaller.
 
-### What we do with it
+### The fix, and the gate
 
-- **The fix is the next piece of work,** chosen by calibration on both noise
-  levels, and it lands with a new honesty check for the first weeks that
-  fails today. Every bug becomes a check first.
-- **The MCP server stays unlisted until the eval says the tool makes a model
-  better, not worse.** An eval used this way is a *gate*: a release waits on
-  a number, not on a feeling.
-- **The app's coins in the first two weeks get the same fix,** since the tool
-  and the app share one function. That is the upside of one source of truth:
-  one fix, everywhere.
+**Not from one person's data.** The first plan leaned on one real series of
+mornings for "how noisy real scales are". One person is not a population, so
+the fix was chosen to be honest across a whole grid instead: nine kinds of
+scale (day-to-day noise of 0.4, 0.7 or 1.0 kg; carry-over from one morning
+to the next of 0.2, 0.45 or 0.7), with the 0.35% weekend swing measured in
+1,421 smart-scale users in a European weight-loss trial (PLOS ONE, 2020),
+and three different populations of true rates. About 67,000 made-up people
+in all.
+
+**What changed** (`src/lib/insights.ts`):
+1. The margin of error assumes water carries over from day to day. A short
+   series starts by assuming a lot of carry-over, the careful end, and the
+   person's own mornings take over as they add up.
+2. The chance weighs the line against a plausible rate centred on its own
+   threshold, so no information is a coin toss and a month of mornings
+   outweighs it.
+
+**The check came first.** A new check simulates the first two weeks on all
+nine scales. It failed on the old code (confident coins 2.8 coins too sure)
+and passes now. The old long-series honesty check still passes. Exactly one
+of the app's stored personas reads differently: a newcomer on their seventh
+morning now hears "8 in 10 it's coming off" instead of "Almost certainly".
+
+**The gate, re-run with 200 made-up people:**
+
+| | Brier | Confident mistakes |
+|---|---|---|
+| Model alone | 0.174 | 21 |
+| Model with our tool | 0.172 | 13 |
+
+Average accuracy is a tie (the difference's 95% range runs from -0.018 to
++0.024), but the tool avoids 8 confident mistakes (95% range 2 to 14). With
+10 mornings or fewer it now helps (0.194 against 0.208); before the fix it
+hurt (0.258 against 0.204). A confident wrong answer is the one that does
+damage, so the gate passed, and the server is now listed in the official
+MCP Registry as `io.github.slimchanceapp/slimchance`.
+
+Why 200 and not 60: between two runs of the same 60 people, the model alone
+moved from 0.154 to 0.171 by chance. A gate needs a sample big enough that
+chance can't open it.
 
 ### What is weak, honestly
 
 - The made-up people are only as realistic as their noise. One real series
   can't stand for everyone.
-- 60 people is small for comparing a model with our maths; the 20,000-person
-  runs are what the conclusions rest on.
+- The gate's 200 people are enough for confident mistakes, not for a small
+  difference in average accuracy.
 - The model's answers vary from run to run, and an eval needs re-running when
   the model changes.
 
