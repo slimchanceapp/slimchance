@@ -212,8 +212,9 @@ active tab follow. Then put it back.
 Until now Slim Chance only worked if a stranger installed it, signed up and
 weighed in for a week, and of 59 who signed up none got that far in three
 days. Meanwhile millions of people already ask a general AI assistant "is my
-diet working?", and a language model is bad at exactly the sum this app does
-well: a trend through noisy mornings with an honest error bar.
+diet working?", and we assumed a language model is bad at the sum this app
+does: a trend through noisy mornings with an honest error bar. Chapter 4
+tested that assumption, and it was only half true.
 
 So the maths is now offered as a tool that any assistant can call, with no
 app, no account and nothing stored. The app becomes an engine, and the
