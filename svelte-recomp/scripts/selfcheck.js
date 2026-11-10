@@ -5417,6 +5417,28 @@ check('nothing promises a paid tier: Slim Chance is free, so no Plus label or su
     assert.doesNotMatch(readFileSync(f, 'utf8'), /Plus preview|Slim Chance Plus|optional Plus|subscription on its way|Part of Plus/i, f);
 });
 
+check('a stall with falling steps names moving less, from the same steps trend as the watch tool, and yes/no watch claims share one careful rule', async () => {
+  // 2026-11-10: the watch inside the app. The stall card reads the steps'
+  // trend from signals.ts (today, half walked, left out); "Getting fitter?"
+  // and body_signals both assume careful carry-over for a yes/no claim.
+  const { diagnoseStall } = await import('../src/lib/insights.ts');
+  const intake = new Map();
+  for (let k = 0; k < 35; k++) intake.set(new Date(Date.UTC(2026, 9, 7 + k)).toISOString().slice(0, 10), { kcal: 1900, items: 4 });
+  const base = { pace: 'stalled', intake, floorKcal: 1700, today: '2026-11-10' };
+  const falling = diagnoseStall({ ...base, steps: { direction: 'falling', perWeek: -650, mean: 6100 } });
+  assert.deepEqual(falling.clues.map((c) => c.id), ['moving-less']);
+  assert.match(falling.clues[0].detail, /falling, about 650 a week, to an average of 6,100/);
+  assert.match(falling.clues[0].detail, /daily walk/);
+  assert.equal(diagnoseStall({ ...base, steps: { direction: 'steady', perWeek: -50, mean: 8000 } }).clues.length, 0, 'steady steps: nothing to say');
+  assert.equal(diagnoseStall({ ...base, steps: { direction: 'unclear', perWeek: -900, mean: 7000 } }).clues.length, 0, 'too noisy to call is not a clue');
+  assert.equal(diagnoseStall({ ...base, pace: 'on-pace', steps: { direction: 'falling', perWeek: -650, mean: 6100 } }), null, 'losing anyway: no stall card');
+  const { readFileSync } = await import('node:fs');
+  const body = readFileSync('src/lib/stores/body.ts', 'utf8');
+  assert.match(body, /steps: signalTrend\('steps', .*filter\(\(\[d\]\) => d < \$body\.today\)/, 'the stall reads signals.ts, without today');
+  assert.match(readFileSync('src/lib/fitness.ts', 'utf8'), /fitWeightLine\([^;]*, 90, CAREFUL_CARRY\)/, 'Getting fitter? makes its yes/no claim the careful way');
+  assert.match(readFileSync('src/lib/signals.ts', 'utf8'), /fitWeightLine\(pts, asOfMs, undefined, CAREFUL_CARRY\)/);
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

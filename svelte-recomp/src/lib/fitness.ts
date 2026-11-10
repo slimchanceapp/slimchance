@@ -3,7 +3,7 @@
 // from the log, training days and steps. Each is said only when the data can
 // carry it, and the answer rests on the heart and the lifts. Pure; see
 // selfcheck.js.
-import { fitWeightLine } from './insights.ts';
+import { fitWeightLine, CAREFUL_CARRY } from './insights.ts';
 import type { StrengthTrend } from './strength.ts';
 import { shiftYmd } from './date.ts';
 
@@ -39,9 +39,11 @@ const thousands = (n: number) => String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ',')
  *  is the clearest sign of a fitter heart. */
 function heart(points: FitnessInput['restingHr'], today: string): FitnessSign | null {
   const asOf = Date.parse(`${today}T12:00:00`);
-  // ponytail: the weight line's own fit, reused as-is: a linear trend with an
+  // ponytail: the weight line's own fit, reused: a linear trend with an
   // interval widened for day-to-day carry-over. It never sees a weight here.
-  const line = fitWeightLine(points.filter((p) => p.bpm >= 30 && p.bpm <= 120).map((p) => ({ date: p.date, weight: p.bpm })), asOf, 90);
+  // "Sure" is a yes/no claim, so it assumes careful carry-over (CAREFUL_CARRY),
+  // the same rule as body_signals.
+  const line = fitWeightLine(points.filter((p) => p.bpm >= 30 && p.bpm <= 120).map((p) => ({ date: p.date, weight: p.bpm })), asOf, 90, CAREFUL_CARRY);
   if (!line || line.n < 21 || line.spanDays < 28) return null;
   const change = line.slopePerDay * line.spanDays;
   const sure = Math.abs(line.slopePerDay) > line.halfWidthPerDay;

@@ -6,7 +6,7 @@
 // Today-against-your-normal is a different question, answered by readiness.ts.
 // Pure; checked in selfcheck.js.
 
-import { fitWeightLine } from './insights.ts';
+import { fitWeightLine, CAREFUL_CARRY } from './insights.ts';
 
 export type SignalKind = 'resting_hr' | 'steps' | 'sleep_hours' | 'hrv';
 export interface SignalTrend {
@@ -19,7 +19,6 @@ export interface SignalTrend {
   text: string;
 }
 
-const CAREFUL_CARRY = 0.7;
 // Change per week too small to matter in practice, per signal.
 const BAND: Record<SignalKind, number> = { resting_hr: 0.5, steps: 300, sleep_hours: 0.1, hrv: 0.5 };
 const DP: Record<SignalKind, number> = { resting_hr: 1, steps: 0, sleep_hours: 1, hrv: 1 };

@@ -70,6 +70,11 @@ const MAX_FORECAST_DAYS = 60;
  *  Chosen 2026-11-10 by calibration across nine kinds of scale (selfcheck). */
 const CARRY_PRIOR = 0.7;
 const CARRY_PRIOR_WEIGHT = 10;
+/** A yes/no claim that a watch signal is changing (signals.ts, fitness.ts)
+ *  assumes at least this much carry-over, the careful end: the estimate reads
+ *  low until a series is long, and trusting it let a flat signal be called
+ *  rising or falling up to 14% of the time (2026-11-10). */
+export const CAREFUL_CARRY = 0.7;
 /** Before the line says much, a true rate is assumed to lie near the line the
  *  chance is about, within about 0.4 kg a week: so no information is a coin
  *  toss, and a week of noise can't produce a verdict (2026-11-10). */
@@ -493,7 +498,7 @@ export function recoveryCost(
 // Why the scale isn't moving
 // ---------------------------------------------------------------------------
 
-export interface StallClue { id: 'weekend' | 'training' | 'thin-days'; title: string; detail: string }
+export interface StallClue { id: 'weekend' | 'training' | 'thin-days' | 'moving-less'; title: string; detail: string }
 
 export interface StallDiagnosis {
   /** Average logged kcal on the days that count (≥ 800 kcal), over the trend
@@ -533,6 +538,9 @@ export function diagnoseStall(input: {
   trainingDays?: Iterable<string>;
   /** The week's shape (week.ts) — the same numbers the "Your week" card shows. */
   shape?: { weekdayKcal: number; weekendKcal: number; weekendGap: number } | null;
+  /** Daily steps' trend over the same weeks (signals.ts signalTrend), when a
+   *  watch or phone counts them. */
+  steps?: { direction: string; perWeek: number; mean: number } | null;
   windowDays?: number;
 }): StallDiagnosis | null {
   if (input.pace !== 'stalled' && input.pace !== 'gaining') return null;
@@ -574,7 +582,18 @@ export function diagnoseStall(input: {
     }
   }
 
-  // 3. Days that are only half there: they do wobble the ruler.
+  // 3. Moving less: when food is cut, everyday movement often drops without
+  //    anyone deciding it, and the burn drops with it (2026-11-10, the owner:
+  //    "use NEAT too"). Said only when the steps' own trend is sure of it.
+  if (input.steps?.direction === 'falling') {
+    const fmt = (n: number) => Math.round(n).toLocaleString('en-US');
+    clues.push({
+      id: 'moving-less', title: 'Moving less than you were',
+      detail: `Daily steps are falling, about ${fmt(Math.abs(input.steps.perWeek))} a week, to an average of ${fmt(input.steps.mean)} lately. When food is cut, the body often moves less without anyone noticing: a common hidden reason a loss slows. A daily walk is the easiest part to win back.`,
+    });
+  }
+
+  // 4. Days that are only half there: they do wobble the ruler.
   const thin = [...input.intake].filter(([d, v]) => inTrend(d) && v.items > 0 && v.items <= 2 && v.kcal < avg * 0.6).length;
   if (thin >= 3) {
     clues.push({

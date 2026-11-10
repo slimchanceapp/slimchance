@@ -21,6 +21,7 @@ import { resolveCalorieTarget, burnFloor, calcTdee, type LiveTargetResult, type 
 import { proteinTargetG, ageFrom } from '$lib/profile';
 import { parseCalorieTarget } from '$lib/coach';
 import { mondayOf, shiftYmd } from '$lib/date';
+import { signalTrend } from '$lib/signals';
 import { weekBudget, weekShape, type WeekBudget, type WeekShape } from '$lib/week';
 import { LINE_MARGIN_KG, lineState, type LineState } from '$lib/line';
 import { heldUnder, milestoneState, type MilestoneState } from '$lib/milestone';
@@ -208,10 +209,13 @@ export const scaleUp: Readable<UpExplained | null> = derived(
 
 /** Why the scale isn't moving — once, for Today and Progress alike. */
 export const stall: Readable<StallDiagnosis | null> = derived(
-  [body, liveWorkoutLogs(), liveActivitySessions(), shape],
-  ([$body, $logs, $activity, $shape]) => diagnoseStall({
+  [body, liveWorkoutLogs(), liveActivitySessions(), shape, liveDailySteps()],
+  ([$body, $logs, $activity, $shape, $steps]) => diagnoseStall({
     pace: $body.pace, intake: $body.intake, floorKcal: $body.floorKcal, today: $body.today,
     trainingDays: trainedDates([], ($activity as any[]) ?? [], ($logs as any[]) ?? []), shape: $shape,
+    // Today is only half walked, so the steps' trend ends yesterday.
+    steps: signalTrend('steps', [...(($steps as Map<string, number>) ?? new Map())].filter(([d]) => d < $body.today).map(([date, value]) => ({ date, value })),
+      Date.parse(`${shiftYmd(-1, new Date(`${$body.today}T12:00:00`))}T12:00:00`)),
   }),
 );
 
