@@ -89,6 +89,7 @@ a thin week omits sections instead of padding them with blanks
 a training day you have not trained on gets one reminder, before the evening goes
 a trial gets a smaller AI allowance, keeps no photos, and is deleted after 30 idle days
 a watch always beats the phone
+a watch beside the scale: each signal its own honest trend, the scale explained by steps, and no health score
 a watch session that duplicates hand-logged sets is dropped
 a watch sync saves only the days that changed
 a week that already got away from you is never made harder

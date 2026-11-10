@@ -18,6 +18,7 @@
 
 import { weightVerdict, chanceOf, type WeighIn } from './insights.ts';
 import { oddsOf } from './pulse.ts';
+import { signalTrend, together, type SignalKind, type SignalTrend } from './signals.ts';
 
 export const SUPPORTED = ['2025-11-25', '2025-06-18'];
 const LB = 2.20462;
@@ -70,6 +71,84 @@ const TOOL = {
   },
   annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
 };
+
+const series = (field: string, what: string) => ({
+  type: 'array', maxItems: MAX_READINGS, description: what,
+  items: { type: 'object', properties: { date: { type: 'string', description: 'YYYY-MM-DD' }, [field]: { type: 'number' } }, required: ['date', field] },
+});
+
+const SIGNALS_TOOL = {
+  name: 'body_signals',
+  title: 'Slim Chance: what the watch says beside the scale',
+  description:
+    'For people with a watch or fitness tracker: gives each daily signal its own honest trend over the last ' +
+    '5 weeks (rising, falling, steady, or too noisy to call), with a plain meaning: resting heart rate ' +
+    '(falling usually means fitness improving), daily steps (falling is a common hidden reason weight loss ' +
+    'slows), sleep hours and HRV. With morning weights too, it also gives the weight trend and says when the ' +
+    'watch explains the scale. Separate signals, not a health score; not medical advice. Needs 7 days of a ' +
+    'signal for its trend. Nothing is stored.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      resting_hr: series('bpm', 'Resting heart rate per day, beats per minute.'),
+      steps: series('steps', 'Steps per day.'),
+      sleep_hours: series('hours', 'Hours slept per night, dated by the morning.'),
+      hrv: series('ms', 'Heart rate variability per day, milliseconds (as the watch reports it).'),
+      weigh_ins: { ...TOOL.inputSchema.properties.weigh_ins, minItems: 0 },
+      unit: TOOL.inputSchema.properties.unit,
+    },
+  },
+  annotations: TOOL.annotations,
+};
+
+const FIELDS: Record<SignalKind, { field: string; min: number; max: number }> = {
+  resting_hr: { field: 'bpm', min: 25, max: 150 },
+  steps: { field: 'steps', min: 0, max: 100000 },
+  sleep_hours: { field: 'hours', min: 0, max: 16 },
+  hrv: { field: 'ms', min: 5, max: 300 },
+};
+
+/** The watch beside the scale: one trend per signal, and the weight when given. */
+export function bodySignals(args: any): ReturnType<typeof slimChance> {
+  const fail = (text: string) => ({ content: [{ type: 'text' as const, text }], isError: true });
+  const got: Partial<Record<SignalKind, { date: string; value: number }[]>> = {};
+  const dates: string[] = [];
+  for (const kind of Object.keys(FIELDS) as SignalKind[]) {
+    const list = args?.[kind];
+    if (list == null) continue;
+    const { field, min, max } = FIELDS[kind];
+    if (!Array.isArray(list) || list.length > MAX_READINGS) return fail(`${kind} must be a list of at most ${MAX_READINGS} {date, ${field}}.`);
+    const byDate = new Map<string, number>();
+    for (const r of list) {
+      const d = r?.date, v = Number(r?.[field]);
+      if (typeof d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(d) || isNaN(Date.parse(`${d}T12:00:00Z`))) return fail(`"${d}" in ${kind} is not a date like 2026-11-10.`);
+      if (!isFinite(v) || v < min || v > max) return fail(`${r?.[field]} is not a plausible ${kind.replace('_', ' ')}.`);
+      byDate.set(d, v);
+    }
+    got[kind] = [...byDate].map(([date, value]) => ({ date, value }));
+    dates.push(...byDate.keys());
+  }
+  const weights = Array.isArray(args?.weigh_ins) && args.weigh_ins.length ? slimChance({ weigh_ins: args.weigh_ins, unit: args?.unit }) : null;
+  if (weights?.isError) return weights;
+  if (!dates.length && !weights) return fail('Send at least one of resting_hr, steps, sleep_hours, hrv or weigh_ins.');
+  if (weights) dates.push(weights.structuredContent.as_of);
+  const asOf = dates.sort().at(-1)!;
+  const at = Date.parse(`${asOf}T12:00:00`);
+  const trends: Partial<Record<SignalKind, SignalTrend | null>> = {};
+  for (const kind of Object.keys(got) as SignalKind[]) trends[kind] = signalTrend(kind, got[kind]!, at);
+  const w = weights?.structuredContent ?? null;
+  const both = together(w?.chance_in_10 ?? null, trends);
+  const lines = [
+    w ? weights!.content[0].text.replace(/ This describes those readings, not a promise about the weeks ahead\.$/, '') : '',
+    ...(Object.keys(got) as SignalKind[]).map((k) => trends[k]?.text ?? `${k.replace('_', ' ')}: ${got[k]!.length} day${got[k]!.length === 1 ? '' : 's'} so far; 7 give a trend.`),
+    both ?? '',
+    'Separate signals over recent weeks, not a health score and not medical advice.',
+  ].filter(Boolean);
+  return {
+    content: [{ type: 'text', text: lines.join(' ') }],
+    structuredContent: { as_of: asOf, weight: w, signals: trends, together: both },
+  };
+}
 
 const WHAT = { lose: 'coming off', gain: 'going up', hold: 'holding' } as const;
 
@@ -152,14 +231,15 @@ export function handleMcp(msg: any, headers: { protocolVersion?: string | null }
         protocolVersion: SUPPORTED.includes(want) ? want : SUPPORTED[0],
         capabilities: { tools: {} },
         serverInfo: { name: 'slim-chance', title: 'Slim Chance', version: '1.0.0', websiteUrl: 'https://slimchance.app' },
-        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving. Ask the person for their recent morning weights with dates (a week or more), then call slim_chance. Nothing is stored.',
+        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Nothing is stored.',
       });
     }
     case 'ping': return ok({});
-    case 'tools/list': return ok({ tools: [TOOL] });
+    case 'tools/list': return ok({ tools: [TOOL, SIGNALS_TOOL] });
     case 'tools/call':
-      if (msg.params?.name !== TOOL.name) return err(200, msg.id, -32602, `Unknown tool: ${msg.params?.name}`);
-      return ok(slimChance(msg.params?.arguments ?? {}));
+      if (msg.params?.name === TOOL.name) return ok(slimChance(msg.params?.arguments ?? {}));
+      if (msg.params?.name === SIGNALS_TOOL.name) return ok(bodySignals(msg.params?.arguments ?? {}));
+      return err(200, msg.id, -32602, `Unknown tool: ${msg.params?.name}`);
     default: return err(404, msg.id, -32601, `Method not found: ${msg.method}`);
   }
 }

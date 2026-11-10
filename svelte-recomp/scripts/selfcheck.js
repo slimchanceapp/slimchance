@@ -5322,7 +5322,7 @@ check('any AI assistant can ask Slim Chance for the trend and the chance over MC
   assert.equal(newer.body.error.code, -32022, 'a newer client is told which versions to fall back to');
   assert.deepEqual(newer.body.error.data.supported, SUPPORTED);
   const list = handleMcp({ jsonrpc: '2.0', id: 3, method: 'tools/list' }, { protocolVersion: '2025-11-25' });
-  assert.deepEqual(list.body.result.tools.map((t) => t.name), ['slim_chance']);
+  assert.deepEqual(list.body.result.tools.map((t) => t.name), ['slim_chance', 'body_signals']);
   assert.equal(list.body.result.tools[0].annotations.readOnlyHint, true);
   assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).status, 404);
   assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).body.error.code, -32601);
@@ -5354,6 +5354,37 @@ check('any AI assistant can ask Slim Chance for the trend and the chance over MC
   const src = readFileSync('src/lib/mcp.ts', 'utf8');
   assert.doesNotMatch(src, /from '\$lib\/stores|supabase|dexie|fetch\(/i);
   assert.match(readFileSync('src/routes/mcp/+server.ts', 'utf8'), /export const prerender = false;/);
+});
+
+check('a watch beside the scale: each signal its own honest trend, the scale explained by steps, and no health score', async () => {
+  // The owner, 2026-11-10: "use resting heart rate and NEAT too". Separate
+  // signals from the same line fit as the weight (src/lib/signals.ts).
+  const { signalTrend, together } = await import('../src/lib/signals.ts');
+  const { bodySignals } = await import('../src/lib/mcp.ts');
+  const day = (k) => new Date(Date.UTC(2026, 9, 7 + k)).toISOString().slice(0, 10);
+  const wob = [1, -1, 0.5, -0.5, 0, 0.8, -0.8];
+  const steps = Array.from({ length: 35 }, (_, k) => ({ date: day(k), value: Math.round(8000 - 90 * k + 400 * wob[k % 7]) }));
+  const rhr = Array.from({ length: 35 }, (_, k) => ({ date: day(k), value: +(62 - 0.12 * k + wob[k % 7]).toFixed(0) }));
+  const flatHr = Array.from({ length: 35 }, (_, k) => ({ date: day(k), value: 58 + (k % 2) }));
+  const at = Date.parse(`${day(34)}T12:00:00`);
+  const st = signalTrend('steps', steps, at);
+  assert.equal(st.direction, 'falling', 'steps down ~630 a week');
+  assert.match(st.text, /hidden reason weight loss slows/);
+  assert.equal(signalTrend('resting_hr', rhr, at).direction, 'falling');
+  assert.equal(signalTrend('resting_hr', flatHr, at).direction, 'steady');
+  assert.equal(signalTrend('resting_hr', rhr.slice(-5), at), null, 'under 7 days: no trend');
+  assert.match(signalTrend('sleep_hours', steps.map((p) => ({ date: p.date, value: 5.9 + (p.value % 3) / 10 })), at).text, /short sleep/);
+  assert.match(together(2, { steps: st }), /moving less may be part of why/, 'a stall with falling steps is explained');
+  assert.equal(together(9, { steps: st }), null, 'losing anyway: nothing to explain');
+  // Over MCP, with a flat month on the scale.
+  const weigh_ins = steps.map((p, k) => ({ date: p.date, weight: +(92 + 0.3 * wob[k % 7]).toFixed(1) }));
+  const r = bodySignals({ weigh_ins, steps: steps.map((p) => ({ date: p.date, steps: p.value })), resting_hr: rhr.map((p) => ({ date: p.date, bpm: p.value })) });
+  assert.equal(r.structuredContent.signals.steps.direction, 'falling');
+  assert.match(r.content[0].text, /moving less may be part of why/);
+  assert.match(r.content[0].text, /not a health score and not medical advice/);
+  assert.doesNotMatch(JSON.stringify(r.structuredContent), /"score"/, 'no composite number');
+  assert.equal(bodySignals({}).isError, true);
+  assert.equal(bodySignals({ resting_hr: [{ date: '2026-11-01', bpm: 400 }] }).isError, true);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {
