@@ -257,7 +257,7 @@ percentile handles empty and single-value input
 period-aware weight learns the person’s own swing, and says only that it’s learning before three cycles
 personas read the same as last time, or the change was meant
 phone-only users get no false watch
-photos go to Gemini alone, and body photos only once Gemini is on its paid tier
+photos go to Gemini alone, and a body photo only to Gemini, for whoever Gemini may serve
 picks ONE source per day instead of summing (the double-count bug)
 poor protein adherence becomes a named lever
 preferred source wins even on a low-wear day

@@ -1477,7 +1477,7 @@ check('consent is asked at sign-up and records the privacy page it was given to'
   assert.match(gate, /onclick=\{start\} disabled=\{busy \|\| !consent\}/);
 });
 
-check('photos go to Gemini alone, and body photos only once Gemini is on its paid tier', async () => {
+check('photos go to Gemini alone, and a body photo only to Gemini, for whoever Gemini may serve', async () => {
   const { readFileSync } = await import('node:fs');
   const llm = readFileSync('../supabase/functions/_shared/llm.ts', 'utf8');
   assert.match(llm, /name: 'gemini', vision: true/);
@@ -1485,9 +1485,10 @@ check('photos go to Gemini alone, and body photos only once Gemini is on its pai
   assert.match(llm, /openAiCompatible\('pollinations', POLLINATIONS_URL, false,/);
   assert.match(llm, /const chain = a\.image \? geminiModels\.map\(geminiModel\) : PROVIDERS;\n  const providers = chain\.filter\(\(p\) => \(!a\.image \|\| p\.vision\)/, 'a photo races Gemini models only');
   const bf = readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8');
-  assert.ok(bf.indexOf('if (!GEMINI_PAID)') > 0 && bf.indexOf('if (!GEMINI_PAID)') < bf.indexOf('await ask('), 'refused before any provider sees it');
-  // Paid since 2026-10-28; the page says so, and where a body photo goes.
-  assert.match(readFileSync('static/privacy.html', 'utf8'), /Body fat from a photo:<\/strong> the photo goes only to Gemini's paid tier, never\nto the free gateways/);
+  assert.ok(bf.indexOf('if (!geminiFor(req))') > 0 && bf.indexOf('if (!geminiFor(req))') < bf.indexOf('await ask('), 'refused before any provider sees it');
+  // 2026-11-10: on the free tier too, for the EU, UK and Switzerland, Google's
+  // terms treat it as paid (not used to improve its products); the page says so.
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /Body fat from a photo:<\/strong> the photo goes only to Google's Gemini, never\nto the free gateways, and under Google's terms for the EU, the UK and Switzerland/);
 });
 
 check('a photo races the Gemini models, so one stuck model costs a stagger, not the whole wait', async () => {
@@ -5572,7 +5573,7 @@ check('on Gemini’s free tier only the owner uses Gemini; others’ typed food 
   assert.match(food, /if \(image && !gemini\) \{\s*return json\(\{ error: 'Reading photos is paused for now\./, 'a stranger\u2019s photo waits');
   assert.match(food, /const only = gemini \? body\?\.only : \['kilo', 'pollinations'\];/, 'their words go to the free text services');
   assert.match(readFileSync('../supabase/functions/generate-recipe/index.ts', 'utf8'), /only: geminiFor\(req\) \? body\?\.only : \['kilo', 'pollinations'\]/);
-  assert.match(readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8'), /if \(!GEMINI_PAID\) return json/, 'body photos: paid tier only, as promised');
+  assert.match(readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8'), /if \(!geminiFor\(req\)\) return json/, 'body photos: whoever Gemini may serve');
   assert.match(readFileSync('static/privacy.html', 'utf8'), /Under Google's terms for the EU, the UK and Switzerland, Google does\nnot use what is sent to improve its products/);
 });
 
