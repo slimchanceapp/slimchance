@@ -46,6 +46,28 @@ export const json = (body: unknown, status = 200) =>
  *  it ends the race instead of failing over to a provider that might guess. */
 export class Refusal extends Error {}
 
+/** Gemini answered "HTTP 402: prepayment credits are depleted". Every Gemini
+ *  model draws on the same prepaid balance, so nothing on Gemini works until
+ *  the owner tops it up; photos have no other reader (2026-11-10: the balance
+ *  ran out and the app said "try again in a minute"). */
+export const outOfCredit = (e: unknown): boolean =>
+  (((e as any)?.errors ?? []) as unknown[]).some((m) => /gemini[\w.-]*: HTTP 402/i.test(String(m)));
+
+/** A one-token look at the prepaid balance, for the daily health digest. */
+export async function geminiCredit(): Promise<'ok' | 'out of credit' | 'unknown'> {
+  if (!GEMINI_KEY) return 'unknown';
+  try {
+    const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODELS[0]}:generateContent`, {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'x-goog-api-key': GEMINI_KEY },
+      body: JSON.stringify({ contents: [{ parts: [{ text: 'Reply with: ok' }] }], generationConfig: { maxOutputTokens: 1 } }),
+      signal: AbortSignal.timeout(10_000),
+    });
+    return res.status === 402 ? 'out of credit' : res.ok ? 'ok' : 'unknown';
+  } catch {
+    return 'unknown';
+  }
+}
+
 export type Image = { mime: string; data: string };
 export const imageFrom = (v: unknown): Image | undefined => {
   const m = typeof v === 'string' ? v.match(/^data:(image\/[\w+.-]+);base64,(.+)$/s) : null;

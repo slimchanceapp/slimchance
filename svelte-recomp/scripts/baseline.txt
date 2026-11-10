@@ -403,6 +403,7 @@ weekend evenings: a slip is one meal, not the weekend
 weight GAIN implies maintenance below intake
 weight insight never throws on degenerate input
 weight rate, learned burn and targets are computed in one place
+when the AI’s prepaid credit runs out, photos say paused (no retry), the digest raises the alarm, and evals can’t use the app’s key
 while a program runs, Train names the day after the program’s session
 with the briefing on, the morning weigh-in and the weekend-plan pings fold into it
 with the hold on, the evening’s pings fold into it

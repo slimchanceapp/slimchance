@@ -4,6 +4,8 @@
 // .github/workflows/health-digest.yml, which emails the owner when something
 // new needs a look. SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected by
 // the platform; HEALTH_TOKEN is a project secret. A wrong token sees nothing.
+import { geminiCredit } from '../_shared/llm.ts';
+
 const BASE = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 const TOKEN = Deno.env.get('HEALTH_TOKEN') ?? '';
@@ -18,10 +20,11 @@ Deno.serve(async (req) => {
   if (!TOKEN || req.headers.get('x-health-token') !== TOKEN) return new Response('Not found', { status: 404 });
   const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
   try {
-    const [errors, events, ai] = await Promise.all([
+    const [errors, events, ai, credit] = await Promise.all([
       rest(`client_errors?select=fingerprint,message,kind,route,user_id&last_seen=gte.${since}`),
       rest(`app_events?select=event,user_id&at=gte.${since}`),
       rest(`ai_usage_global?select=bucket,calls&day=gte.${since.slice(0, 10)}`),
+      geminiCredit(),
     ]);
     // A kind of error is new when nobody had it before this window.
     const prints = [...new Set(errors.map((e) => e.fingerprint))];
@@ -44,6 +47,9 @@ Deno.serve(async (req) => {
       errors: errorsOut.sort((a, b) => Number(b.new) - Number(a.new) || b.people - a.people),
       events: Object.fromEntries(Object.entries(people).map(([k, v]) => [k, v.size])),
       ai: aiOut,
+      // Gemini's prepaid balance, checked with one token: photos, labels and
+      // the coach stop when it runs out (2026-11-10).
+      ai_credit: credit,
     });
   } catch (e) {
     return Response.json({ since, failed: String((e as Error)?.message ?? e) }, { status: 500 });

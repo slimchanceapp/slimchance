@@ -1,0 +1,902 @@
+[
+{
+"desc": "Chard, swiss, cooked, boiled, drained, without salt",
+"kcal100": 20.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 250
+},
+{
+"desc": "Beef, round, bottom round, roast, separable lean only, trimmed to 1/8\" fat, choice, raw",
+"kcal100": 140.0,
+"category": "Beef Products",
+"grams": 120
+},
+{
+"desc": "Pork, fresh, loin, blade (chops), boneless, separable lean only, boneless, cooked, broiled",
+"kcal100": 169.0,
+"category": "Pork Products",
+"grams": 80
+},
+{
+"desc": "Pie, fried pies, cherry",
+"kcal100": 316.0,
+"category": "Baked Products",
+"grams": 80
+},
+{
+"desc": "Beef, New Zealand, imported, cube roll, separable lean only, cooked, fast roasted",
+"kcal100": 239.0,
+"category": "Beef Products",
+"grams": 150
+},
+{
+"desc": "Beef, bottom sirloin, tri-tip roast, separable lean only, trimmed to 0\" fat, choice, cooked, roasted",
+"kcal100": 193.0,
+"category": "Beef Products",
+"grams": 200
+},
+{
+"desc": "Goose, domesticated, meat only, cooked, roasted",
+"kcal100": 238.0,
+"category": "Poultry Products",
+"grams": 250
+},
+{
+"desc": "Snacks, granola bar, KASHI TLC Bar, crunchy, mixed flavors",
+"kcal100": 446.0,
+"category": "Snacks",
+"grams": 100
+},
+{
+"desc": "Crustaceans, crayfish, mixed species, wild, cooked, moist heat",
+"kcal100": 82.0,
+"category": "Finfish and Shellfish Products",
+"grams": 150
+},
+{
+"desc": "Cheese, roquefort",
+"kcal100": 369.0,
+"category": "Dairy and Egg Products",
+"grams": 300
+},
+{
+"desc": "Nuts, acorns, dried",
+"kcal100": 509.0,
+"category": "Nut and Seed Products",
+"grams": 200
+},
+{
+"desc": "Lambsquarters, raw",
+"kcal100": 43.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 80
+},
+{
+"desc": "Alcoholic beverage, wine, table, all",
+"kcal100": 83.0,
+"category": "Beverages",
+"grams": 300
+},
+{
+"desc": "Beef, round, bottom round, roast, separable lean only, trimmed to 0\" fat, choice, cooked, roasted",
+"kcal100": 185.0,
+"category": "Beef Products",
+"grams": 100
+},
+{
+"desc": "Candies, MARS SNACKFOOD US, POP'ABLES SNICKERS Brand Bite Size Candies",
+"kcal100": 480.0,
+"category": "Sweets",
+"grams": 300
+},
+{
+"desc": "Beef, round, tip round, roast, separable lean only, trimmed to 0\" fat, select, cooked, roasted",
+"kcal100": 149.0,
+"category": "Beef Products",
+"grams": 100
+},
+{
+"desc": "Sausage, pork and beef, with cheddar cheese, smoked",
+"kcal100": 296.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 300
+},
+{
+"desc": "Beef, Australian, imported, grass-fed, ground, 85% lean / 15% fat, raw",
+"kcal100": 239.0,
+"category": "Beef Products",
+"grams": 250
+},
+{
+"desc": "Cereals, corn grits, white, regular and quick, enriched, dry",
+"kcal100": 370.0,
+"category": "Breakfast Cereals",
+"grams": 300
+},
+{
+"desc": "Scrapple, pork",
+"kcal100": 213.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 250
+},
+{
+"desc": "Pie fillings, canned, cherry",
+"kcal100": 115.0,
+"category": "Sweets",
+"grams": 250
+},
+{
+"desc": "Oil, cottonseed, salad or cooking",
+"kcal100": 884.0,
+"category": "Fats and Oils",
+"grams": 200
+},
+{
+"desc": "Mortadella, beef, pork",
+"kcal100": 311.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 80
+},
+{
+"desc": "Chicken, roasting, dark meat, meat only, cooked, roasted",
+"kcal100": 178.0,
+"category": "Poultry Products",
+"grams": 200
+},
+{
+"desc": "Beef, chuck, shoulder clod, top blade, steak, separable lean and fat, trimmed to 0\" fat, choice, cooked, grilled",
+"kcal100": 228.0,
+"category": "Beef Products",
+"grams": 150
+},
+{
+"desc": "Beverages, almond milk, chocolate, ready-to-drink",
+"kcal100": 50.0,
+"category": "Beverages",
+"grams": 200
+},
+{
+"desc": "Bacon, turkey, microwaved",
+"kcal100": 368.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 100
+},
+{
+"desc": "Alcoholic beverage, whiskey sour, canned",
+"kcal100": 119.0,
+"category": "Beverages",
+"grams": 100
+},
+{
+"desc": "Desserts, egg custard, baked, prepared-from-recipe",
+"kcal100": 104.0,
+"category": "Sweets",
+"grams": 150
+},
+{
+"desc": "Pork, fresh, loin, country-style ribs, separable lean and fat, bone-in, cooked, broiled",
+"kcal100": 260.0,
+"category": "Pork Products",
+"grams": 300
+},
+{
+"desc": "Beverages, tea, black, brewed, prepared with tap water",
+"kcal100": 1.0,
+"category": "Beverages",
+"grams": 80
+},
+{
+"desc": "Lamb, Australian, imported, fresh, composite of trimmed retail cuts, separable lean only, trimmed to 1/8\" fat, raw",
+"kcal100": 142.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 100
+},
+{
+"desc": "Lamb, New Zealand, imported, loin saddle, separable lean only, cooked, fast roasted",
+"kcal100": 162.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 150
+},
+{
+"desc": "Grapefruit, sections, canned, light syrup pack, solids and liquids",
+"kcal100": 60.0,
+"category": "Fruits and Fruit Juices",
+"grams": 200
+},
+{
+"desc": "Beef, loin, top loin steak, boneless, lip off, separable lean only, trimmed to 0\" fat, choice, cooked, grilled",
+"kcal100": 211.0,
+"category": "Beef Products",
+"grams": 80
+},
+{
+"desc": "Semolina, unenriched",
+"kcal100": 360.0,
+"category": "Cereal Grains and Pasta",
+"grams": 100
+},
+{
+"desc": "Orange juice, canned, unsweetened",
+"kcal100": 47.0,
+"category": "Fruits and Fruit Juices",
+"grams": 80
+},
+{
+"desc": "Beef, short loin, porterhouse steak, separable lean and fat, trimmed to 0\" fat, USDA choice, cooked, broiled",
+"kcal100": 283.0,
+"category": "Beef Products",
+"grams": 200
+},
+{
+"desc": "Potatoes, baked, skin, without salt",
+"kcal100": 198.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 120
+},
+{
+"desc": "Bread, pita, white, enriched",
+"kcal100": 275.0,
+"category": "Baked Products",
+"grams": 80
+},
+{
+"desc": "Plantains, green, boiled",
+"kcal100": 121.0,
+"category": "Fruits and Fruit Juices",
+"grams": 120
+},
+{
+"desc": "Pork, fresh, variety meats and by-products, chitterlings, raw",
+"kcal100": 182.0,
+"category": "Pork Products",
+"grams": 120
+},
+{
+"desc": "Tomato products, canned, sauce, with onions, green peppers, and celery",
+"kcal100": 41.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Lamb, shoulder, arm, separable lean only, trimmed to 1/4\" fat, choice, cooked, roasted",
+"kcal100": 192.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 250
+},
+{
+"desc": "Bread, multi-grain (includes whole-grain)",
+"kcal100": 265.0,
+"category": "Baked Products",
+"grams": 300
+},
+{
+"desc": "Pork, cured, ham with natural juices, shank, bone-in, separable lean and fat, unheated",
+"kcal100": 191.0,
+"category": "Pork Products",
+"grams": 200
+},
+{
+"desc": "Spinach, canned, regular pack, drained solids",
+"kcal100": 23.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Beef, ribeye cap steak, boneless, separable lean only, trimmed to 0\" fat, choice, raw",
+"kcal100": 187.0,
+"category": "Beef Products",
+"grams": 150
+},
+{
+"desc": "Pancakes, plain, dry mix, complete, prepared",
+"kcal100": 194.0,
+"category": "Baked Products",
+"grams": 250
+},
+{
+"desc": "Chicken, broilers or fryers, skin only, cooked, fried, batter",
+"kcal100": 394.0,
+"category": "Poultry Products",
+"grams": 100
+},
+{
+"desc": "Beverages, OCEAN SPRAY, Light Cranberry and Raspberry Flavored Juice",
+"kcal100": 26.0,
+"category": "Beverages",
+"grams": 300
+},
+{
+"desc": "Pasta, whole-wheat, dry (Includes foods for USDA's Food Distribution Program)",
+"kcal100": 352.0,
+"category": "Cereal Grains and Pasta",
+"grams": 150
+},
+{
+"desc": "Peanut spread, reduced sugar",
+"kcal100": 650.0,
+"category": "Legumes and Legume Products",
+"grams": 120
+},
+{
+"desc": "Mushrooms, canned, drained solids",
+"kcal100": 25.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 200
+},
+{
+"desc": "Corn, sweet, yellow, frozen, kernels cut off cob, unprepared (Includes foods for USDA's Food Distribution Program)",
+"kcal100": 88.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 80
+},
+{
+"desc": "Beef, tenderloin, roast, separable lean and fat, trimmed to 1/8\" fat, all grades, cooked, roasted",
+"kcal100": 324.0,
+"category": "Beef Products",
+"grams": 100
+},
+{
+"desc": "Beef, New Zealand, imported, brisket point end, separable lean only, raw",
+"kcal100": 125.0,
+"category": "Beef Products",
+"grams": 250
+},
+{
+"desc": "Chicken, broilers or fryers, wing, meat only, cooked, fried",
+"kcal100": 211.0,
+"category": "Poultry Products",
+"grams": 300
+},
+{
+"desc": "Water, non-carbonated, bottles, natural fruit flavors, sweetened with low calorie sweetener",
+"kcal100": 1.0,
+"category": "Beverages",
+"grams": 200
+},
+{
+"desc": "Pork, fresh, enhanced, loin, tenderloin, separable lean only, raw",
+"kcal100": 106.0,
+"category": "Pork Products",
+"grams": 250
+},
+{
+"desc": "Veal, shoulder, blade, separable lean and fat, cooked, roasted",
+"kcal100": 186.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 150
+},
+{
+"desc": "Cowpeas, catjang, mature seeds, raw",
+"kcal100": 343.0,
+"category": "Legumes and Legume Products",
+"grams": 100
+},
+{
+"desc": "Toppings, strawberry",
+"kcal100": 254.0,
+"category": "Sweets",
+"grams": 120
+},
+{
+"desc": "Pork, fresh, loin, top loin (roasts), boneless, separable lean and fat, cooked, roasted",
+"kcal100": 192.0,
+"category": "Pork Products",
+"grams": 80
+},
+{
+"desc": "Pork, cured, ham -- water added, whole, boneless, separable lean and fat, unheated",
+"kcal100": 121.0,
+"category": "Pork Products",
+"grams": 80
+},
+{
+"desc": "Potato pancakes",
+"kcal100": 268.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 120
+},
+{
+"desc": "Margarine-like, vegetable oil spread, 60% fat, stick/tub/bottle, without salt, with added vitamin D",
+"kcal100": 542.0,
+"category": "Fats and Oils",
+"grams": 200
+},
+{
+"desc": "Snacks, taro chips",
+"kcal100": 498.0,
+"category": "Snacks",
+"grams": 300
+},
+{
+"desc": "Beef, round, top round steak, boneless, separable lean and fat, trimmed to 0\" fat, all grades, cooked, grilled",
+"kcal100": 167.0,
+"category": "Beef Products",
+"grams": 250
+},
+{
+"desc": "Bagels, plain, enriched, with calcium propionate (includes onion, poppy, sesame), toasted",
+"kcal100": 287.0,
+"category": "Baked Products",
+"grams": 300
+},
+{
+"desc": "Lamb, New Zealand, imported, testes, raw",
+"kcal100": 68.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 100
+},
+{
+"desc": "Potatoes, boiled, cooked without skin, flesh, without salt",
+"kcal100": 86.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 200
+},
+{
+"desc": "Desserts, rennin, vanilla, dry mix",
+"kcal100": 383.0,
+"category": "Sweets",
+"grams": 250
+},
+{
+"desc": "Pork, fresh, shoulder, blade, boston (roasts), separable lean and fat, cooked, roasted",
+"kcal100": 269.0,
+"category": "Pork Products",
+"grams": 120
+},
+{
+"desc": "Beef, round, top round, separable lean and fat, trimmed to 1/8\" fat, prime, raw",
+"kcal100": 173.0,
+"category": "Beef Products",
+"grams": 120
+},
+{
+"desc": "Candies, halavah, plain",
+"kcal100": 469.0,
+"category": "Sweets",
+"grams": 120
+},
+{
+"desc": "Margarine-like, vegetable oil spread, 60% fat, stick/tub/bottle, with salt",
+"kcal100": 526.0,
+"category": "Fats and Oils",
+"grams": 100
+},
+{
+"desc": "Beef, cured, pastrami",
+"kcal100": 147.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 80
+},
+{
+"desc": "Chicken, roasting, dark meat, meat only, raw",
+"kcal100": 113.0,
+"category": "Poultry Products",
+"grams": 150
+},
+{
+"desc": "Strawberries, raw",
+"kcal100": 32.0,
+"category": "Fruits and Fruit Juices",
+"grams": 200
+},
+{
+"desc": "Sausage, turkey, fresh, cooked",
+"kcal100": 196.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 150
+},
+{
+"desc": "Potatoes, scalloped, home-prepared with margarine",
+"kcal100": 88.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Pork, fresh, loin, whole, separable lean and fat, cooked, roasted",
+"kcal100": 248.0,
+"category": "Pork Products",
+"grams": 250
+},
+{
+"desc": "Beef, rib, back ribs, bone-in, separable lean only, trimmed to 0\" fat, all grades, raw",
+"kcal100": 239.0,
+"category": "Beef Products",
+"grams": 80
+},
+{
+"desc": "Pickles, cucumber, sweet, low sodium (includes bread and butter pickles)",
+"kcal100": 122.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Hush puppies, prepared from recipe",
+"kcal100": 337.0,
+"category": "Baked Products",
+"grams": 200
+},
+{
+"desc": "Pork, cured, ham, boneless, low sodium, extra lean and regular, roasted",
+"kcal100": 165.0,
+"category": "Pork Products",
+"grams": 200
+},
+{
+"desc": "Pie crust, standard-type, frozen, ready-to-bake, unenriched",
+"kcal100": 457.0,
+"category": "Baked Products",
+"grams": 120
+},
+{
+"desc": "Beef, Australian, imported, Wagyu, loin, tenderloin steak/roast, boneless, separable lean only, Aust. marble score 9, raw",
+"kcal100": 237.0,
+"category": "Beef Products",
+"grams": 200
+},
+{
+"desc": "Shortening frying (heavy duty), palm (hydrogenated)",
+"kcal100": 884.0,
+"category": "Fats and Oils",
+"grams": 150
+},
+{
+"desc": "Margarine, 80% fat, tub, CANOLA HARVEST Soft Spread (canola, palm and palm kernel oils)",
+"kcal100": 730.0,
+"category": "Fats and Oils",
+"grams": 250
+},
+{
+"desc": "Pork, cured, ham and water product, slice, boneless, separable lean and fat, heated, pan-broil",
+"kcal100": 124.0,
+"category": "Pork Products",
+"grams": 80
+},
+{
+"desc": "Pheasant, raw, meat and skin",
+"kcal100": 181.0,
+"category": "Poultry Products",
+"grams": 80
+},
+{
+"desc": "Oil, vegetable, soybean, refined",
+"kcal100": 884.0,
+"category": "Fats and Oils",
+"grams": 80
+},
+{
+"desc": "Chard, swiss, cooked, boiled, drained, with salt",
+"kcal100": 20.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Mollusks, oyster, eastern, wild, cooked, moist heat",
+"kcal100": 102.0,
+"category": "Finfish and Shellfish Products",
+"grams": 300
+},
+{
+"desc": "Turkey, light or dark meat, smoked, cooked, skin and bone removed",
+"kcal100": 162.0,
+"category": "Poultry Products",
+"grams": 250
+},
+{
+"desc": "Lamb, New Zealand, imported, kidney, cooked, soaked and fried",
+"kcal100": 112.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 300
+},
+{
+"desc": "Taro, shoots, cooked, with salt",
+"kcal100": 14.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Snacks, granola bars, hard, plain",
+"kcal100": 471.0,
+"category": "Snacks",
+"grams": 300
+},
+{
+"desc": "Beef, round, bottom round roast, separable lean only, trimmed to 0\" fat, select, cooked, roasted",
+"kcal100": 169.0,
+"category": "Beef Products",
+"grams": 100
+},
+{
+"desc": "Nuts, mixed nuts, oil roasted, without peanuts, without salt added",
+"kcal100": 615.0,
+"category": "Nut and Seed Products",
+"grams": 120
+},
+{
+"desc": "Beef, Australian, imported, Wagyu, rib, small end rib steak/roast, boneless, separable lean only, Aust. marble score 4/5, raw",
+"kcal100": 234.0,
+"category": "Beef Products",
+"grams": 250
+},
+{
+"desc": "Spinach, frozen, chopped or leaf, cooked, boiled, drained, without salt",
+"kcal100": 34.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 250
+},
+{
+"desc": "Pate, goose liver, smoked, canned",
+"kcal100": 462.0,
+"category": "Sausages and Luncheon Meats",
+"grams": 300
+},
+{
+"desc": "Beef, chuck, top blade, separable lean and fat, trimmed to 0\" fat, all grades, cooked, broiled",
+"kcal100": 216.0,
+"category": "Beef Products",
+"grams": 80
+},
+{
+"desc": "Oil, sunflower, linoleic (less than 60%)",
+"kcal100": 884.0,
+"category": "Fats and Oils",
+"grams": 250
+},
+{
+"desc": "Jujube, raw",
+"kcal100": 79.0,
+"category": "Fruits and Fruit Juices",
+"grams": 300
+},
+{
+"desc": "Cinnamon buns, frosted (includes honey buns)",
+"kcal100": 452.0,
+"category": "Baked Products",
+"grams": 150
+},
+{
+"desc": "Pepperidge Farm, Goldfish, Baked Snack Crackers, Pizza",
+"kcal100": 469.0,
+"category": "Baked Products",
+"grams": 300
+},
+{
+"desc": "Fish oil, herring",
+"kcal100": 902.0,
+"category": "Fats and Oils",
+"grams": 150
+},
+{
+"desc": "Lamb, loin, separable lean and fat, trimmed to 1/4\" fat, choice, raw",
+"kcal100": 310.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 100
+},
+{
+"desc": "Cheese, pasteurized process, cheddar or American, low sodium",
+"kcal100": 376.0,
+"category": "Dairy and Egg Products",
+"grams": 80
+},
+{
+"desc": "Pectin, unsweetened, dry mix",
+"kcal100": 325.0,
+"category": "Sweets",
+"grams": 200
+},
+{
+"desc": "Pork, ground, 84% lean / 16% fat, cooked, pan-broiled",
+"kcal100": 301.0,
+"category": "Pork Products",
+"grams": 200
+},
+{
+"desc": "Beef, round, eye of round roast, boneless, separable lean and fat, trimmed to 0\" fat, all grades, raw",
+"kcal100": 124.0,
+"category": "Beef Products",
+"grams": 150
+},
+{
+"desc": "Dates, medjool",
+"kcal100": 277.0,
+"category": "Fruits and Fruit Juices",
+"grams": 100
+},
+{
+"desc": "Mollusks, oyster, Pacific, raw",
+"kcal100": 81.0,
+"category": "Finfish and Shellfish Products",
+"grams": 100
+},
+{
+"desc": "Prickly pears, raw",
+"kcal100": 41.0,
+"category": "Fruits and Fruit Juices",
+"grams": 100
+},
+{
+"desc": "Couscous, cooked",
+"kcal100": 112.0,
+"category": "Cereal Grains and Pasta",
+"grams": 150
+},
+{
+"desc": "Emu, oyster, raw",
+"kcal100": 141.0,
+"category": "Poultry Products",
+"grams": 100
+},
+{
+"desc": "KRAFT FREE Singles American Nonfat Pasteurized Process Cheese Product",
+"kcal100": 148.0,
+"category": "Dairy and Egg Products",
+"grams": 200
+},
+{
+"desc": "Potatoes, french fried, wedge cut, frozen, unprepared",
+"kcal100": 162.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 300
+},
+{
+"desc": "Pie, apple, commercially prepared, unenriched flour",
+"kcal100": 237.0,
+"category": "Baked Products",
+"grams": 80
+},
+{
+"desc": "Cereals ready-to-eat, MALT-O-MEAL, Honey Nut SCOOTERS",
+"kcal100": 387.0,
+"category": "Breakfast Cereals",
+"grams": 120
+},
+{
+"desc": "Turkey, back, from whole bird, meat only, with added solution, raw",
+"kcal100": 115.0,
+"category": "Poultry Products",
+"grams": 100
+},
+{
+"desc": "Pork, cured, feet, pickled",
+"kcal100": 140.0,
+"category": "Pork Products",
+"grams": 300
+},
+{
+"desc": "Fish, pout, ocean, cooked, dry heat",
+"kcal100": 102.0,
+"category": "Finfish and Shellfish Products",
+"grams": 300
+},
+{
+"desc": "Chicken, stewing, meat and skin, cooked, stewed",
+"kcal100": 285.0,
+"category": "Poultry Products",
+"grams": 300
+},
+{
+"desc": "Beverages, Whey protein powder isolate",
+"kcal100": 359.0,
+"category": "Beverages",
+"grams": 150
+},
+{
+"desc": "Lamb, New Zealand, imported, loin, boneless, separable lean only, cooked, fast roasted",
+"kcal100": 156.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 150
+},
+{
+"desc": "Snacks, potato chips, made from dried potatoes, cheese-flavor",
+"kcal100": 551.0,
+"category": "Snacks",
+"grams": 250
+},
+{
+"desc": "Mushrooms, portabella, raw",
+"kcal100": 22.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 300
+},
+{
+"desc": "Snacks, SUNKIST, SUNKIST Fruit Roll, strawberry, with vitamins A, C, and E",
+"kcal100": 342.0,
+"category": "Snacks",
+"grams": 300
+},
+{
+"desc": "Snacks, sesame sticks, wheat-based, unsalted",
+"kcal100": 541.0,
+"category": "Snacks",
+"grams": 100
+},
+{
+"desc": "Beef, New Zealand, imported, brisket navel end, separable lean only, cooked, braised",
+"kcal100": 265.0,
+"category": "Beef Products",
+"grams": 80
+},
+{
+"desc": "Cereals ready-to-eat, POST, ALPHA-BITS",
+"kcal100": 389.0,
+"category": "Breakfast Cereals",
+"grams": 200
+},
+{
+"desc": "Pork, fresh, shoulder, (Boston butt), blade (steaks), separable lean only, raw",
+"kcal100": 132.0,
+"category": "Pork Products",
+"grams": 100
+},
+{
+"desc": "Wheat flour, white (industrial), 15% protein, bleached, enriched",
+"kcal100": 362.0,
+"category": "Cereal Grains and Pasta",
+"grams": 200
+},
+{
+"desc": "Pork, cured, ham and water product, rump, bone-in, separable lean only, heated, roasted",
+"kcal100": 131.0,
+"category": "Pork Products",
+"grams": 200
+},
+{
+"desc": "Pork, fresh, variety meats and by-products, leaf fat, raw",
+"kcal100": 857.0,
+"category": "Pork Products",
+"grams": 100
+},
+{
+"desc": "Balsam-pear (bitter gourd), leafy tips, cooked, boiled, drained, with salt",
+"kcal100": 32.0,
+"category": "Vegetables and Vegetable Products",
+"grams": 150
+},
+{
+"desc": "Snacks, pita chips, salted",
+"kcal100": 457.0,
+"category": "Snacks",
+"grams": 200
+},
+{
+"desc": "Cereals ready-to-eat, QUAKER, CAP'N CRUNCH'S PEANUT BUTTER CRUNCH",
+"kcal100": 417.0,
+"category": "Breakfast Cereals",
+"grams": 150
+},
+{
+"desc": "Lamb, variety meats and by-products, spleen, cooked, braised",
+"kcal100": 156.0,
+"category": "Lamb, Veal, and Game Products",
+"grams": 250
+},
+{
+"desc": "Pancakes, plain, prepared from recipe",
+"kcal100": 227.0,
+"category": "Baked Products",
+"grams": 300
+},
+{
+"desc": "Veggie burgers or soyburgers, unprepared",
+"kcal100": 177.0,
+"category": "Legumes and Legume Products",
+"grams": 150
+},
+{
+"desc": "Candies, sesame crunch",
+"kcal100": 516.0,
+"category": "Sweets",
+"grams": 120
+},
+{
+"desc": "Chicken, broiler, rotisserie, BBQ, back meat only",
+"kcal100": 212.0,
+"category": "Poultry Products",
+"grams": 80
+},
+{
+"desc": "Rice, white, long-grain, parboiled, unenriched, cooked",
+"kcal100": 123.0,
+"category": "Cereal Grains and Pasta",
+"grams": 200
+}
+]

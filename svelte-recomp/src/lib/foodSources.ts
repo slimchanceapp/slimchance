@@ -49,7 +49,7 @@ export async function lookupBarcode(code: string, history: Candidate[]): Promise
 
 /** Ask the estimate-food edge function. Throws on transport failure or when
  *  every provider was down; returns `{ error }` for a reasoned refusal. */
-export async function estimateWithAI(body: { description?: string; image?: string; mode?: 'meal' | 'label' }): Promise<AiMeal | AiLabel | { error: string }> {
+export async function estimateWithAI(body: { description?: string; image?: string; mode?: 'meal' | 'label' }): Promise<AiMeal | AiLabel | { error: string; paused?: boolean }> {
   const { data, error } = await supabase.functions.invoke('estimate-food', { body, timeout: 50_000 });
   if (error) throw error;
   if (data?.error && /busy or down/i.test(data.error)) throw new Error(data.error);

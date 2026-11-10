@@ -13,11 +13,19 @@
 // 0.25 is a coin toss) and by confident mistakes (8+ in 10 when not truly
 // losing, or 2 or less when truly losing).
 //
-// Usage: set -a; . ~/.config/recompos/gemini-new.env; set +a; node scripts/eval-trend.mjs [people=40]
+// Usage: EVAL_GEMINI_API_KEY=… node scripts/eval-trend.mjs [people=40]   (key from a separate project)
 import { slimChance } from '../src/lib/mcp.ts';
 
-const KEY = process.env.GEMINI_API_KEY;
-if (!KEY) { console.error('GEMINI_API_KEY missing'); process.exit(1); }
+// Never on the app's own key (2026-11-10): an eval run on it used up the
+// prepaid credit and took photos and the coach down for everyone. Evals use
+// EVAL_GEMINI_API_KEY from a separate project with its own small budget, and
+// stop after EVAL_MAX_CALLS calls.
+const KEY = process.env.EVAL_GEMINI_API_KEY;
+if (!KEY) { console.error('EVAL_GEMINI_API_KEY missing: evals use their own key, never the app\'s.'); process.exit(1); }
+if (KEY === process.env.GEMINI_API_KEY) { console.error('That is the app\'s key. Evals use a separate project.'); process.exit(1); }
+let calls = 0;
+const MAX_CALLS = Number(process.env.EVAL_MAX_CALLS ?? 400);
+const spend = () => { if (++calls > MAX_CALLS) { console.error(`Stopped at ${MAX_CALLS} calls (EVAL_MAX_CALLS).`); process.exit(2); } };
 const MODEL = process.env.EVAL_MODEL ?? 'gemini-3.5-flash';
 const MCP = process.env.EVAL_MCP ?? 'https://slimchance.app/mcp';
 const N = Number(process.argv[2] ?? 40);
@@ -48,8 +56,10 @@ const question = (p) => `Here are someone's morning scale readings (date, kg):\n
 
 async function gemini(body) {
   for (let attempt = 0; attempt < 4; attempt++) {
+    spend();
     const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent`, {
       method: 'POST', headers: { 'content-type': 'application/json', 'x-goog-api-key': KEY }, body: JSON.stringify(body) });
+    if (r.status === 402) { console.error('This key is out of credit.'); process.exit(2); }
     if (r.status === 429 || r.status >= 500) { await new Promise((s) => setTimeout(s, 2000 * (attempt + 1))); continue; }
     const j = await r.json();
     if (!r.ok) throw new Error(`gemini ${r.status}: ${JSON.stringify(j).slice(0, 200)}`);

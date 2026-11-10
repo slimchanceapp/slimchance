@@ -5529,6 +5529,32 @@ check('a barcode Open Food Facts doesn’t know is asked of USDA’s branded foo
   assert.match(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /source === 'usda'\}USDA FoodData Central/);
 });
 
+check('when the AI’s prepaid credit runs out, photos say paused (no retry), the digest raises the alarm, and evals can’t use the app’s key', async () => {
+  // 2026-11-10: eval runs on the app's own Gemini key used up its prepaid
+  // credit; photos and the coach failed for the owner, the app said "try again
+  // in a minute", and nothing raised an alarm before he found it.
+  const { outOfCredit } = await import('../../supabase/functions/_shared/llm.ts');
+  const logged = { errors: ['gemini-3.5-flash: HTTP 402 Your prepayment credits are depleted.', 'gemini-3.1-flash-lite: HTTP 402 Your prepayment credits are depleted.'] };
+  assert.equal(outOfCredit(logged), true, 'the error as the function logged it');
+  assert.equal(outOfCredit({ errors: ['gemini-3.5-flash: HTTP 503 overloaded', 'kilo/x: HTTP 402 max_tokens is a paid feature'] }), false, 'busy, or another provider\u2019s 402, is not out of credit');
+  const { readFileSync } = await import('node:fs');
+  const fn = readFileSync('../supabase/functions/estimate-food/index.ts', 'utf8');
+  assert.match(fn, /if \(image && outOfCredit\(e\)\) \{\s*return json\(\{ error: 'Reading photos is paused for now\./);
+  assert.match(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /if \(r\.paused\) \{ notice = r\.error; return; \}/, 'no retry button for a paused reader');
+  const { digest } = await import('./health-digest.mjs');
+  const out = digest({ since: 'x', events: {}, ai: {}, errors: [], ai_credit: 'out of credit' });
+  assert.equal(out.alarm, true, 'the daily digest fails, and GitHub emails the owner');
+  assert.match(out.lines.join('\n'), /USED UP: photos, label reading and the coach are down/);
+  assert.equal(digest({ since: 'x', events: {}, ai: {}, errors: [], ai_credit: 'ok' }).alarm, false);
+  assert.match(readFileSync('../supabase/functions/health/index.ts', 'utf8'), /ai_credit: credit,/);
+  for (const f of ['scripts/eval-trend.mjs', 'scripts/eval-food.mjs']) {
+    const src = readFileSync(f, 'utf8');
+    assert.match(src, /const KEY = process\.env\.EVAL_GEMINI_API_KEY;/, `${f}: its own key`);
+    assert.doesNotMatch(src, /const KEY = process\.env\.GEMINI_API_KEY/, `${f}: never the app's`);
+    assert.match(src, /spend\(\);/, `${f}: a cap on calls`);
+  }
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

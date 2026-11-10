@@ -168,6 +168,9 @@
       image ||= await fileToDownscaledDataUrl(photo as File, { maxEdge: mode === 'label' ? 1600 : 1024, quality: 0.85 });
       const r = await estimateWithAI({ image, mode, description: mode === 'meal' ? (words ?? query).trim() || undefined : undefined });
       if ('error' in r) {
+        // Photo reading paused (the AI's credit ran out): trying the same photo
+        // again can't help, so no retry, just the way that still works.
+        if (r.paused) { notice = r.error; return; }
         // A dish it can't place (a home-cooked one) is a question, not a dead
         // end: a few typed words go along with the same photo on the next try.
         // A label it can't read needs a new photo, so that one isn't kept.

@@ -8,7 +8,7 @@
 //   POST {"image": …, "mode": "label"}                            per-100 g from a label
 //   add "only": ["pollinations"] to exercise one fallback on its own.
 
-import { ask, corsHeaders, extractJson, imageFrom, json, Refusal } from '../_shared/llm.ts';
+import { ask, corsHeaders, extractJson, imageFrom, json, outOfCredit, Refusal } from '../_shared/llm.ts';
 import { gate } from '../_shared/auth.ts';
 
 type Macros = { kcal: number; protein_g: number; carbs_g: number; fat_g: number };
@@ -117,6 +117,11 @@ Deno.serve(async (req: Request) => {
   } catch (e) {
     if (e instanceof Refusal) return json({ error: e.message });
     console.error('estimate-food failed', JSON.stringify((e as any)?.errors ?? String(e)));
+    // Only Gemini reads photos. With its prepaid credit used up, "try again"
+    // would be untrue: say it's paused, and that words still work.
+    if (image && outOfCredit(e)) {
+      return json({ error: 'Reading photos is paused for now. Type what you ate, or the numbers from the label, and it logs the same way.', paused: true, ms: Date.now() - started });
+    }
     // 200 with an error body: the client shows it and runs its own fallbacks.
     return json({ error: 'Every food-estimate service is busy or down right now.', ms: Date.now() - started });
   }
