@@ -34,7 +34,7 @@ WHAT IT DOES
 • When the scale goes up, it explains why from your own log: a big day of eating, a hard session, the weekday it always jumps.
 • A calorie budget for the week, learned from how you actually log. Rough logging is enough: a consistent log teaches it what your days really cost. One big meal costs something from the rest of the week; it doesn't break the week.
 • Today on one screen: the weigh-in, one next step, and today's plan.
-• An optional AI coach, free while in preview, that plans your next days inside your budget: never under a safe floor, and never a hard day to "pay back" an earlier one.
+• An optional AI coach that plans your next days from foods you already eat, inside your budget, and arranges your own training sessions over the week: never under a safe floor, never a hard day to "pay back" an earlier one, never an exercise you don't do.
 • Training that counts what your watch saw: gym sessions, walks and sport from Health Connect count as training days, even when you didn't type a set.
 • Getting fitter: resting heart rate, steps and training, beside the weight.
 • Two calm notes a day: a morning one when you first unlock your phone, and an evening one. They never ring or wake you.
@@ -52,8 +52,8 @@ YOUR DATA
 • Stored in the EU. Health Connect data is read only with your permission.
 • Open source (AGPL-3.0): github.com/slimchanceapp/slimchance
 
-FREE TO USE
-The core is free to use: the odds, the trend, the budget, food, training, the notes, import and export. Optional Plus extras are on their way; safety features stay free for everyone.
+FREE
+Everything is free: the odds, the trend, the budget, food, training, the coach, the notes, import and export. No subscription, no in-app purchases.
 
 Slim Chance is a tracker and a guide, not medical advice. If you have a medical condition, are pregnant or take medication that affects your weight, talk to your doctor before changing how you eat.
 ```
@@ -98,9 +98,9 @@ Slim Chance is a tracker and a guide, not medical advice. If you have a medical 
 - Users can ask to delete some of their data without deleting the account: **Yes** (any
   entry can be deleted in the app)
 
-**Data types.** Shared with third parties: **none** for every type. The AI and weather
-services (Google's Gemini, Kilo's gateway, Pollinations, Open-Meteo) only process a request
-on Slim Chance's behalf, which is not sharing in Play's terms; the privacy page names each.
+**Data types.** Shared with third parties: **none** for every type. The AI, food and weather
+services (Google's Gemini, Gemma on Cloudflare, Kilo's gateway, Pollinations, USDA FoodData
+Central, Open-Meteo) only process a request on Slim Chance's behalf, which is not sharing in Play's terms; the privacy page names each.
 
 | Category | Data type | What it is in Slim Chance | Required? | Ephemeral? | Purposes |
 |---|---|---|---|---|---|
