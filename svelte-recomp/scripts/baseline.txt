@@ -11,6 +11,7 @@ CI fails loudly rather than shipping an unsignable APK
 Epley e1RM levels different rep ranges
 Food, Train and Progress open on the same scoreboard hero; Today on the weigh-in
 Friday is the stronger signal: the weekend named, the plan, the reason, and the same line every week
+Gemini only where Google allows it, Gemma for everyone, the free text services only for typed food
 HRV below personal baseline lowers readiness
 Katch-McArdle: a body-fat % switches BMR to lean mass
 Kotlin modules follow their own Java target, not a hardcoded one
@@ -242,7 +243,6 @@ nothing in the weekly ritual assumes someone to send it to
 nothing is written for a permission that was not granted
 nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere
 nutrition patterns: low protein and a weekend blowout surface; the hour eaten is never judged
-on Gemini’s free tier only the owner uses Gemini; others’ typed food uses the free text services and their photos wait
 on Google Play the app is app.slimchance; the direct download keeps its id
 one definition of "trained today", and the watch counts
 one place says which phone this is, and Android-only parts ask for Android
@@ -257,7 +257,7 @@ percentile handles empty and single-value input
 period-aware weight learns the person’s own swing, and says only that it’s learning before three cycles
 personas read the same as last time, or the change was meant
 phone-only users get no false watch
-photos go to Gemini alone, and a body photo only to Gemini, for whoever Gemini may serve
+photos and body photos go to Gemini or Gemma, never through a free gateway
 picks ONE source per day instead of summing (the double-count bug)
 poor protein adherence becomes a named lever
 preferred source wins even on a low-wear day

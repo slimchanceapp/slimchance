@@ -1,0 +1,602 @@
+[
+{
+"code": "20995553",
+"country": "slovakia",
+"name": "\u0428\u043e\u043a\u043e\u043b\u0430\u0434 85% \u043a\u0430\u043a\u0430\u043e\u0432\u0430 \u043c\u0430\u0441\u0430",
+"image": "https://images.openfoodfacts.org/images/products/000/002/099/5553/nutrition_en.382.400.jpg",
+"kcal": 554.0,
+"protein": 11.5,
+"carbs": 19.9,
+"fat": 44.2
+},
+{
+"code": "5449000000286",
+"country": "slovakia",
+"name": "Coca Cola",
+"image": "https://images.openfoodfacts.org/images/products/544/900/000/0286/nutrition_en.48.400.jpg",
+"kcal": 45.0,
+"protein": 0.0,
+"carbs": 10.6,
+"fat": 0.0
+},
+{
+"code": "4056489346357",
+"country": "slovakia",
+"name": "Boisson \u00e0 l'amande, sans sucres",
+"image": "https://images.openfoodfacts.org/images/products/405/648/934/6357/nutrition_en.329.400.jpg",
+"kcal": 14.0,
+"protein": 0.5,
+"carbs": 0.0,
+"fat": 1.2
+},
+{
+"code": "4056489195917",
+"country": "slovakia",
+"name": "Jemn\u00e9 ovesn\u00e9 vlo\u010dky",
+"image": "https://images.openfoodfacts.org/images/products/405/648/919/5917/nutrition_en.139.400.jpg",
+"kcal": 372.0,
+"protein": 12.0,
+"carbs": 62.0,
+"fat": 5.7
+},
+{
+"code": "5411188116592",
+"country": "slovakia",
+"name": "Coconut",
+"image": "https://images.openfoodfacts.org/images/products/541/118/811/6592/nutrition_en.402.400.jpg",
+"kcal": 20.0,
+"protein": 0.1,
+"carbs": 2.7,
+"fat": 1.0
+},
+{
+"code": "20474478",
+"country": "slovakia",
+"name": "Peanut Butter",
+"image": "https://images.openfoodfacts.org/images/products/000/002/047/4478/nutrition_en.112.400.jpg",
+"kcal": 653.0,
+"protein": 23.1,
+"carbs": 12.0,
+"fat": 55.6
+},
+{
+"code": "4056489041320",
+"country": "slovakia",
+"name": "Bio napitak od zobi",
+"image": "https://images.openfoodfacts.org/images/products/405/648/904/1320/nutrition_en.223.400.jpg",
+"kcal": 37.0,
+"protein": 0.4,
+"carbs": 5.6,
+"fat": 1.2
+},
+{
+"code": "5411188099154",
+"country": "slovakia",
+"name": "Plain Yogurt",
+"image": "https://images.openfoodfacts.org/images/products/541/118/809/9154/nutrition_en.151.400.jpg",
+"kcal": 49.0,
+"protein": 4.0,
+"carbs": 2.2,
+"fat": 2.3
+},
+{
+"code": "40111216",
+"country": "slovakia",
+"name": "Bounty Coconut Milk Chocolate Bar 57 g",
+"image": "https://images.openfoodfacts.org/images/products/000/004/011/1216/nutrition_en.184.400.jpg",
+"kcal": 487.0,
+"protein": 3.7,
+"carbs": 58.9,
+"fat": 25.7
+},
+{
+"code": "20103644",
+"country": "slovakia",
+"name": "Coconut Milk k\u00f3kusz tej",
+"image": "https://images.openfoodfacts.org/images/products/000/002/010/3644/nutrition_en.314.400.jpg",
+"kcal": 207.0,
+"protein": 1.8,
+"carbs": 2.2,
+"fat": 21.0
+},
+{
+"code": "20320003",
+"country": "slovakia",
+"name": "",
+"image": "https://images.openfoodfacts.org/images/products/000/002/032/0003/nutrition_en.64.400.jpg",
+"kcal": 846.666666666667,
+"protein": 24.0,
+"carbs": 7.5,
+"fat": 56.0
+},
+{
+"code": "20144302",
+"country": "slovakia",
+"name": "Natural Yogur",
+"image": "https://images.openfoodfacts.org/images/products/000/002/014/4302/nutrition_es.108.400.jpg",
+"kcal": 75.0,
+"protein": 5.0,
+"carbs": 4.7,
+"fat": 3.8
+},
+{
+"code": "20724696",
+"country": "czech-republic",
+"name": "Amandes d\u00e9cortiqu\u00e9es",
+"image": "https://images.openfoodfacts.org/images/products/000/002/072/4696/nutrition_en.379.400.jpg",
+"kcal": 621.0,
+"protein": 24.5,
+"carbs": 4.8,
+"fat": 53.3
+},
+{
+"code": "3046920022651",
+"country": "czech-republic",
+"name": "Noir Intense",
+"image": "https://images.openfoodfacts.org/images/products/304/692/002/2651/nutrition_fr.241.400.jpg",
+"kcal": 566.0,
+"protein": 9.5,
+"carbs": 35.0,
+"fat": 41.0
+},
+{
+"code": "20022464",
+"country": "czech-republic",
+"name": "Extra Dark 74% Cocoa",
+"image": "https://images.openfoodfacts.org/images/products/000/002/002/2464/nutrition_en.305.400.jpg",
+"kcal": 571.0,
+"protein": 9.9,
+"carbs": 32.0,
+"fat": 42.0
+},
+{
+"code": "4014400400007",
+"country": "czech-republic",
+"name": "Toffifee 15er",
+"image": "https://images.openfoodfacts.org/images/products/401/440/040/0007/nutrition_en.664.400.jpg",
+"kcal": 521.0,
+"protein": 6.0,
+"carbs": 58.9,
+"fat": 29.0
+},
+{
+"code": "5411188115366",
+"country": "czech-republic",
+"name": "Alpro smooth subtle creamy oat",
+"image": "https://images.openfoodfacts.org/images/products/541/118/811/5366/nutrition_en.256.400.jpg",
+"kcal": 42.0,
+"protein": 0.8,
+"carbs": 6.0,
+"fat": 1.5
+},
+{
+"code": "8076802085738",
+"country": "czech-republic",
+"name": "Rigatoni Penne Rigate N\u00ba73",
+"image": "https://images.openfoodfacts.org/images/products/807/680/208/5738/nutrition_en.3600.400.jpg",
+"kcal": 359.0,
+"protein": 13.0,
+"carbs": 71.0,
+"fat": 2.0
+},
+{
+"code": "3046920029681",
+"country": "czech-republic",
+"name": "Excellence Noir D\u00e9licat Doux 85% Cacao",
+"image": "https://images.openfoodfacts.org/images/products/304/692/002/9681/nutrition_en.134.400.jpg",
+"kcal": 603.0,
+"protein": 8.9,
+"carbs": 19.0,
+"fat": 55.0
+},
+{
+"code": "20706852",
+"country": "czech-republic",
+"name": "Chocolate Mints - Zartbitter T\u00e4felchen Minze",
+"image": "https://images.openfoodfacts.org/images/products/000/002/070/6852/nutrition_en.157.400.jpg",
+"kcal": 461.0,
+"protein": 1.9,
+"carbs": 71.0,
+"fat": 18.0
+},
+{
+"code": "20621452",
+"country": "czech-republic",
+"name": "Special Flakes Red Berries",
+"image": "https://images.openfoodfacts.org/images/products/000/002/062/1452/nutrition_en.358.400.jpg",
+"kcal": 382.0,
+"protein": 8.9,
+"carbs": 77.5,
+"fat": 2.6
+},
+{
+"code": "3045140118502",
+"country": "czech-republic",
+"name": "Milka Tablette Noisette",
+"image": "https://images.openfoodfacts.org/images/products/304/514/011/8502/nutrition_fr.193.400.jpg",
+"kcal": 563.0,
+"protein": 8.2,
+"carbs": 47.0,
+"fat": 37.0
+},
+{
+"code": "4056489041313",
+"country": "czech-republic",
+"name": "Bio Organic Almond Drink",
+"image": "https://images.openfoodfacts.org/images/products/405/648/904/1313/nutrition_en.176.400.jpg",
+"kcal": 22.58604206145,
+"protein": 0.5,
+"carbs": 2.4,
+"fat": 1.2
+},
+{
+"code": "5411188120742",
+"country": "czech-republic",
+"name": "Mandel Vanille Geschmack",
+"image": "https://images.openfoodfacts.org/images/products/541/118/812/0742/nutrition_de.126.400.jpg",
+"kcal": 57.0,
+"protein": 3.0,
+"carbs": 6.7,
+"fat": 1.8
+},
+{
+"code": "7622210449283",
+"country": "germany",
+"name": "Prince",
+"image": "https://images.openfoodfacts.org/images/products/762/221/044/9283/nutrition_fr.746.400.jpg",
+"kcal": 467.0,
+"protein": 6.3,
+"carbs": 69.0,
+"fat": 17.0
+},
+{
+"code": "5449000214911",
+"country": "germany",
+"name": "Coca-Cola Original",
+"image": "https://images.openfoodfacts.org/images/products/544/900/021/4911/nutrition_en.134.400.jpg",
+"kcal": 42.0,
+"protein": 0.0,
+"carbs": 10.6,
+"fat": 0.0
+},
+{
+"code": "5449000214799",
+"country": "germany",
+"name": "Coca-Cola sans sucres",
+"image": "https://images.openfoodfacts.org/images/products/544/900/021/4799/nutrition_en.332.400.jpg",
+"kcal": 0.3,
+"protein": 0.0,
+"carbs": 0.0,
+"fat": 0.0
+},
+{
+"code": "80177173",
+"country": "germany",
+"name": "Nutella",
+"image": "https://images.openfoodfacts.org/images/products/000/008/017/7173/nutrition_en.493.400.jpg",
+"kcal": 539.0,
+"protein": 6.3,
+"carbs": 57.5,
+"fat": 30.9
+},
+{
+"code": "3046920022606",
+"country": "germany",
+"name": "Excellence 85% cacao",
+"image": "https://images.openfoodfacts.org/images/products/304/692/002/2606/nutrition_fr.263.400.jpg",
+"kcal": 584.0,
+"protein": 12.5,
+"carbs": 22.0,
+"fat": 46.0
+},
+{
+"code": "5410041001204",
+"country": "germany",
+"name": "Tuc Original",
+"image": "https://images.openfoodfacts.org/images/products/541/004/100/1204/nutrition_en.394.400.jpg",
+"kcal": 482.0,
+"protein": 8.3,
+"carbs": 67.0,
+"fat": 19.0
+},
+{
+"code": "20005733",
+"country": "germany",
+"name": "Cerneaux de Noix",
+"image": "https://images.openfoodfacts.org/images/products/000/002/000/5733/nutrition_en.606.400.jpg",
+"kcal": 712.0,
+"protein": 15.5,
+"carbs": 3.7,
+"fat": 69.1
+},
+{
+"code": "3168930010265",
+"country": "germany",
+"name": "cruesly m\u00e9lange de noix",
+"image": "https://images.openfoodfacts.org/images/products/316/893/001/0265/nutrition_fr.280.400.jpg",
+"kcal": 462.0,
+"protein": 8.5,
+"carbs": 57.0,
+"fat": 19.0
+},
+{
+"code": "3587220002252",
+"country": "germany",
+"name": "La g\u00e2che tranch\u00e9e",
+"image": "https://images.openfoodfacts.org/images/products/358/722/000/2252/nutrition_fr.255.400.jpg",
+"kcal": 341.0,
+"protein": 8.1,
+"carbs": 49.0,
+"fat": 12.0
+},
+{
+"code": "3017620429484",
+"country": "germany",
+"name": "Nutella",
+"image": "https://images.openfoodfacts.org/images/products/301/762/042/9484/nutrition_en.319.400.jpg",
+"kcal": 539.0,
+"protein": 6.3,
+"carbs": 57.5,
+"fat": 30.9
+},
+{
+"code": "59032823",
+"country": "germany",
+"name": "nutella",
+"image": "https://images.openfoodfacts.org/images/products/000/005/903/2823/nutrition_fr.142.400.jpg",
+"kcal": 539.0,
+"protein": 6.3,
+"carbs": 57.5,
+"fat": 30.9
+},
+{
+"code": "3046920028363",
+"country": "germany",
+"name": "Excellence 85% Cacao Rich Dark",
+"image": "https://images.openfoodfacts.org/images/products/304/692/002/8363/nutrition_en.434.400.jpg",
+"kcal": 584.0,
+"protein": 12.5,
+"carbs": 19.0,
+"fat": 46.0
+},
+{
+"code": "3017620425035",
+"country": "united-kingdom",
+"name": "Nutella",
+"image": "https://images.openfoodfacts.org/images/products/301/762/042/5035/nutrition_en.588.400.jpg",
+"kcal": 539.0,
+"protein": 6.3,
+"carbs": 57.5,
+"fat": 30.9
+},
+{
+"code": "5449000000996",
+"country": "united-kingdom",
+"name": "Coca-Cola Original",
+"image": "https://images.openfoodfacts.org/images/products/544/900/000/0996/nutrition_en.1173.400.jpg",
+"kcal": 42.4,
+"protein": 0.0,
+"carbs": 10.6,
+"fat": 0.0
+},
+{
+"code": "54491472",
+"country": "united-kingdom",
+"name": "Cola",
+"image": "https://images.openfoodfacts.org/images/products/000/005/449/1472/nutrition_en.626.400.jpg",
+"kcal": 44.0,
+"protein": 0.0,
+"carbs": 10.9,
+"fat": 0.0
+},
+{
+"code": "20267605",
+"country": "united-kingdom",
+"name": "Cashews",
+"image": "https://images.openfoodfacts.org/images/products/000/002/026/7605/nutrition_bg.611.400.jpg",
+"kcal": 600.0,
+"protein": 20.5,
+"carbs": 19.8,
+"fat": 47.6
+},
+{
+"code": "20047238",
+"country": "united-kingdom",
+"name": "Nuts Royal",
+"image": "https://images.openfoodfacts.org/images/products/000/002/004/7238/nutrition_en.671.400.jpg",
+"kcal": 648.0,
+"protein": 20.1,
+"carbs": 6.6,
+"fat": 58.3
+},
+{
+"code": "5411188124689",
+"country": "united-kingdom",
+"name": "Oat No Sugars",
+"image": "https://images.openfoodfacts.org/images/products/541/118/812/4689/nutrition_en.413.400.jpg",
+"kcal": 44.0,
+"protein": 0.8,
+"carbs": 6.4,
+"fat": 1.5
+},
+{
+"code": "5010029000016",
+"country": "united-kingdom",
+"name": "Weetabix",
+"image": "https://images.openfoodfacts.org/images/products/501/002/900/0016/nutrition_en.8.400.jpg",
+"kcal": 354.0,
+"protein": 11.0,
+"carbs": 68.0,
+"fat": 2.0
+},
+{
+"code": "87157215",
+"country": "united-kingdom",
+"name": "Tomato Ketchup",
+"image": "https://images.openfoodfacts.org/images/products/000/008/715/7215/nutrition_en.210.400.jpg",
+"kcal": 102.0,
+"protein": 1.2,
+"carbs": 23.2,
+"fat": 0.1
+},
+{
+"code": "3168930009078",
+"country": "united-kingdom",
+"name": "Flocons d'avoine compl\u00e8te",
+"image": "https://images.openfoodfacts.org/images/products/316/893/000/9078/nutrition_fr.184.400.jpg",
+"kcal": 395.0,
+"protein": 11.0,
+"carbs": 60.0,
+"fat": 8.0
+},
+{
+"code": "3229820787015",
+"country": "united-kingdom",
+"name": "Amande sans sucres",
+"image": "https://images.openfoodfacts.org/images/products/322/982/078/7015/nutrition_fr.232.400.jpg",
+"kcal": 25.0,
+"protein": 0.7,
+"carbs": 1.6,
+"fat": 1.7
+},
+{
+"code": "5000168198491",
+"country": "united-kingdom",
+"name": "Sabl\u00e9s Anglais L'Original",
+"image": "https://images.openfoodfacts.org/images/products/500/016/819/8491/nutrition_en.140.400.jpg",
+"kcal": 483.0,
+"protein": 7.0,
+"carbs": 63.6,
+"fat": 21.3
+},
+{
+"code": "5449000267412",
+"country": "united-kingdom",
+"name": "Coca-Cola go\u00fbt original",
+"image": "https://images.openfoodfacts.org/images/products/544/900/026/7412/nutrition_fr.117.400.jpg",
+"kcal": 42.0,
+"protein": 0.0,
+"carbs": 10.6,
+"fat": 0.0
+},
+{
+"code": "80042556",
+"country": "united-states",
+"name": "",
+"image": "https://images.openfoodfacts.org/images/products/000/008/004/2556/nutrition_en.451.400.jpg",
+"kcal": 26.0,
+"protein": 1.2,
+"carbs": 3.9,
+"fat": 0.2
+},
+{
+"code": "4008713756661",
+"country": "united-states",
+"name": "Copos de avena",
+"image": "https://images.openfoodfacts.org/images/products/400/871/375/6661/nutrition_es.67.400.jpg",
+"kcal": 375.0,
+"protein": 14.0,
+"carbs": 59.0,
+"fat": 7.0
+},
+{
+"code": "8076800195057",
+"country": "united-states",
+"name": "Spaghetti N\u00ba5",
+"image": "https://images.openfoodfacts.org/images/products/807/680/019/5057/nutrition_en.3664.400.jpg",
+"kcal": 359.0,
+"protein": 13.0,
+"carbs": 71.0,
+"fat": 2.0
+},
+{
+"code": "20005832",
+"country": "united-states",
+"name": "Dark chocolate 50% Cocoa",
+"image": "https://images.openfoodfacts.org/images/products/000/002/000/5832/nutrition_en.187.400.jpg",
+"kcal": 532.0,
+"protein": 4.7,
+"carbs": 52.2,
+"fat": 32.1
+},
+{
+"code": "3245550078674",
+"country": "united-states",
+"name": "SNACK POPP\u00c9",
+"image": "https://images.openfoodfacts.org/images/products/324/555/007/8674/nutrition_en.95.400.jpg",
+"kcal": 413.0,
+"protein": 18.0,
+"carbs": 56.0,
+"fat": 11.0
+},
+{
+"code": "8000500003787",
+"country": "united-states",
+"name": "Ferrero Rocher",
+"image": "https://images.openfoodfacts.org/images/products/800/050/000/3787/nutrition_de.411.400.jpg",
+"kcal": 603.0,
+"protein": 8.2,
+"carbs": 44.4,
+"fat": 42.7
+},
+{
+"code": "20000691",
+"country": "united-states",
+"name": "Raspberry conserve",
+"image": "https://images.openfoodfacts.org/images/products/000/002/000/0691/nutrition_de.35.400.jpg",
+"kcal": 239.0,
+"protein": 0.4,
+"carbs": 57.1,
+"fat": 0.2
+},
+{
+"code": "5000137487908",
+"country": "united-states",
+"name": "The Original Cracker",
+"image": "https://images.openfoodfacts.org/images/products/500/013/748/7908/nutrition_en.36.400.jpg",
+"kcal": 490.0,
+"protein": 7.2,
+"carbs": 62.0,
+"fat": 23.0
+},
+{
+"code": "7394376620157",
+"country": "united-states",
+"name": "Barista edition oat drink",
+"image": "https://images.openfoodfacts.org/images/products/739/437/662/0157/nutrition_en.7.400.jpg",
+"kcal": 61.0,
+"protein": 1.1,
+"carbs": 7.1,
+"fat": 3.0
+},
+{
+"code": "5036589255550",
+"country": "united-states",
+"name": "Yoghurt",
+"image": "https://images.openfoodfacts.org/images/products/503/658/925/5550/nutrition_en.12.400.jpg",
+"kcal": 72.0,
+"protein": 4.2,
+"carbs": 4.9,
+"fat": 3.8
+},
+{
+"code": "20403027",
+"country": "united-states",
+"name": "Thon entier au naturel",
+"image": "https://images.openfoodfacts.org/images/products/000/002/040/3027/nutrition_en.269.400.jpg",
+"kcal": 98.0,
+"protein": 26.0,
+"carbs": 0.0,
+"fat": 1.3
+},
+{
+"code": "5010029219494",
+"country": "united-states",
+"name": "Redy Brek",
+"image": "https://images.openfoodfacts.org/images/products/501/002/921/9494/nutrition_en.75.400.jpg",
+"kcal": 374.0,
+"protein": 12.0,
+"carbs": 58.0,
+"fat": 8.7
+}
+]

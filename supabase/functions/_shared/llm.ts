@@ -161,8 +161,14 @@ async function rediscover() {
 
 /** Try `models` in turn. Every model's failure is kept: the log used to show
  *  only the last one, which hid what the others had done. */
+// Every Gemini model draws on one prepaid balance: once it says the balance is
+// used up (HTTP 402), skip Gemini for ten minutes instead of asking again on
+// every call, so the next engine answers without the wait (2026-11-10).
+let geminiDryUntil = 0;
+
 async function geminiRun<T>(models: string[], a: Ask, parse: (t: string) => T, signal: AbortSignal) {
   if (!GEMINI_KEY) throw new Error('gemini: no key');
+  if (Date.now() < geminiDryUntil) throw new Error('gemini: HTTP 402 credit used up (remembered)');
   const fails: string[] = [];
   for (const model of models) {
     try {
@@ -174,6 +180,7 @@ async function geminiRun<T>(models: string[], a: Ask, parse: (t: string) => T, s
         body = await res.json().catch(() => ({}));
       }
       if (!res.ok) {
+        if (res.status === 402) geminiDryUntil = Date.now() + 10 * 60_000;
         fails.push(`${model}: HTTP ${res.status} ${scrub(body?.error?.message ?? '')}`);
         if (res.status === 404 && model === geminiModels.at(-1) && !rediscovered) await rediscover();
         continue;
@@ -195,7 +202,7 @@ const gemini: Provider = { name: 'gemini', vision: true, run: (a, parse, signal)
 // demand", the next two waiting out 20 s timeouts one model after another.)
 const geminiModel = (model: string): Provider => ({ name: 'gemini', vision: true, run: (a, parse, signal) => geminiRun([model], a, parse, signal) });
 
-function openAiCompatible(name: string, url: string, vision: boolean, models: (a: Ask) => string[], extra: Record<string, unknown> = {}): Provider {
+function openAiCompatible(name: string, url: string, vision: boolean, models: (a: Ask) => string[], extra: Record<string, unknown> = {}, headers: Record<string, string> = {}): Provider {
   return {
     name, vision,
     async run(a, parse, signal) {
@@ -207,7 +214,7 @@ function openAiCompatible(name: string, url: string, vision: boolean, models: (a
             : a.prompt;
           const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...headers },
             body: JSON.stringify({ model, messages: [{ role: 'user', content }], temperature: a.temperature ?? 0.2, ...extra }),
             signal: withTimeout(signal, (a.timeoutMs ?? (a.image ? 20_000 : 12_000)) + 8_000),
           });
@@ -228,8 +235,27 @@ function openAiCompatible(name: string, url: string, vision: boolean, models: (a
   };
 }
 
+// Google's open Gemma 4 (26B, 4B active, built from Gemini 3 research), run by
+// Cloudflare Workers AI (2026-11-10). Gemini's prepaid balance ran out, its free
+// tier may not serve users in the EU, and the owner won't pay; Gemma's licence
+// lets it serve everyone. The Workers Free plan's 10,000 neurons a day (about
+// 450 photos at $0.10/M in, $0.30/M out) cannot bill. Cloudflare keeps nothing
+// once it has answered and never trains on what it is sent. Always warm: no
+// cold starts. Thinking off: faster and cheaper. Off until both secrets exist.
+const CF_TOKEN: string = (globalThis as any).Deno?.env.get('CLOUDFLARE_AI_TOKEN') ?? '';
+const CF_ACCOUNT: string = (globalThis as any).Deno?.env.get('CLOUDFLARE_ACCOUNT_ID') ?? '';
+const GEMMA_MODEL = '@cf/google/gemma-4-26b-a4b-it';
+const gemma: Provider | null = CF_TOKEN && CF_ACCOUNT
+  ? openAiCompatible('gemma', `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/v1/chat/completions`, true,
+    () => [GEMMA_MODEL], { max_tokens: 1500, chat_template_kwargs: { enable_thinking: false } }, { Authorization: `Bearer ${CF_TOKEN}` })
+  : null;
+export const GEMMA_ON: boolean = !!gemma;
+/** The engines this server can use, for the health digest. */
+export const ENGINES: string[] = [GEMINI_KEY ? 'gemini' : '', gemma ? 'gemma' : ''].filter(Boolean);
+
 const PROVIDERS: Provider[] = [
   gemini,
+  ...(gemma ? [gemma] : []),
   openAiCompatible('kilo', KILO_URL, false, () => KILO_TEXT),
   // Its anonymous model reasons before answering and the tier caps output, so a
   // long answer (a recipe) came back empty with finish_reason "length" until
@@ -249,7 +275,7 @@ const PROVIDERS: Provider[] = [
 export const GEMINI_PAID: boolean = (globalThis as any).Deno?.env.get('GEMINI_TIER') === 'paid';
 
 export function ask<T>(a: Ask, parse: (text: string) => T, opts: Options = {}): Promise<{ value: T; provider: string }> {
-  const chain = a.image ? geminiModels.map(geminiModel) : PROVIDERS;
+  const chain = a.image ? [...geminiModels.map(geminiModel), ...(gemma ? [gemma] : [])] : PROVIDERS;
   const providers = chain.filter((p) => (!a.image || p.vision) && (!opts.only || opts.only.includes(p.name)));
   const stagger = opts.staggerMs ?? (a.image ? 9_000 : 6_000);
   const ctrl = new AbortController();

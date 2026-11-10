@@ -78,25 +78,28 @@ the app works offline. The app itself is served by Vercel.</p>
 <p>Only when you use the feature:</p>
 <ul>
 <li><strong>An AI estimate</strong> (food from a photo or a description, a recipe idea):
-sent to Google's Gemini API. Under Google's terms for the EU, the UK and Switzerland, Google does
-not use what is sent to improve its products, and keeps it only for a limited time, to detect misuse.
-Photos go only to Gemini. A text request (a description, a recipe) may go to Kilo's AI
-gateway or Pollinations when Gemini is busy. Slim Chance does not keep a photo sent only for an
+sent to Google's Gemini API or to Gemma, Google's open model, which Cloudflare runs for Slim
+Chance. Under Google's terms for the EU, the UK and Switzerland, Google does not use what is sent
+to Gemini to improve its products, and keeps it only for a limited time, to detect misuse.
+Cloudflare keeps nothing sent to Gemma once it has answered and never trains on it.
+Photos go only to Gemini or Gemma. A text request (a description, a recipe) may go to Kilo's AI
+gateway or Pollinations when both are busy. Slim Chance does not keep a photo sent only for an
 estimate.</li>
 <li><strong>The AI coach</strong>, only if you turn it on in Settings (it is off until you do):
-once each afternoon, a summary of your last two weeks goes to Google's Gemini so it can write
+once each afternoon, a summary of your last two weeks goes to Google's Gemini, or to Gemma on
+Cloudflare (which keeps nothing and never trains on it), so it can write
 that evening's message, or choose to send none, and notice one pattern. The summary holds your
 weight trend and morning weights, calories and protein per day, which days you trained and for
 how long, today's session, your written plans and reason, the names of foods you log most, and
-the notes the coach keeps about you. No photos and no name. It goes to Gemini only, never to
-the free gateways. The app checks every reply before showing it and drops any that invents a
+the notes the coach keeps about you. No photos and no name. It goes to Gemini or Gemma only,
+never to the free gateways. The app checks every reply before showing it and drops any that invents a
 number or says something it never would. When you ask it to plan your next days, it gets that
 week's calorie numbers, your protein target, the coach's notes and a table of foods with their
 calories: the app's own staples and the foods you log most. The app works out every number in
 the plan itself and refuses one that goes under its floor. The coach's notes are kept in your account and shown
 in Settings, where Forget clears them; turning the coach off stops it.</li>
-<li><strong>Body fat from a photo:</strong> the photo goes only to Google's Gemini, never
-to the free gateways, and under Google's terms for the EU, the UK and Switzerland, Google doesn't use it to improve its products.</li>
+<li><strong>Body fat from a photo:</strong> the photo goes only to Google's Gemini or to Gemma on
+Cloudflare, never to the free gateways. Under Google's terms for the EU, the UK and Switzerland, Google doesn't use it to improve its products; Cloudflare keeps nothing and never trains on it.</li>
 <li><strong>Food search and barcodes:</strong> your search words and scanned barcodes go to Open Food Facts. A barcode Open Food Facts doesn't know goes to USDA FoodData Central, the US government's food database: only the number, nothing about you.</li>
 <li><strong>The weather in the morning briefing:</strong> your approximate location,
 rounded to about a kilometre, goes to Open-Meteo. Slim Chance does not store it.</li>

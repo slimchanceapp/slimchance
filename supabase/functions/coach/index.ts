@@ -15,7 +15,7 @@
 //     and works out every number itself).
 
 import { ask, corsHeaders, extractJson, json } from '../_shared/llm.ts';
-import { gate, geminiFor } from '../_shared/auth.ts';
+import { gate, providersFor } from '../_shared/auth.ts';
 
 
 const SCHEMA = {
@@ -116,9 +116,9 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   const refused = await gate(req, 'ai');
   if (refused) return refused;
-  if (!geminiFor(req)) {
-    return json({ error: "The AI coach starts once Slim Chance's AI runs on its paid tier." }, 503);
-  }
+  // Gemini where Google allows it, else Gemma; never a free gateway (providersFor).
+  const only = providersFor(req, 'private');
+  if (!only.length) return json({ error: 'The AI coach is resting for now.' }, 503);
 
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Send JSON.' }, 400); }
@@ -133,7 +133,7 @@ Deno.serve(async (req: Request) => {
         ? { prompt: planPrompt(facts), schema: PLAN_SCHEMA, temperature: 0.4, timeoutMs: 30_000 }
         : { prompt: prompt(facts), schema: SCHEMA, temperature: 0.6, timeoutMs: 25_000 },
       planning ? parsePlan : parse,
-      { only: ['gemini'], deadlineMs: 40_000 },
+      { only, deadlineMs: 40_000 },
     );
     return json({ reply: value, provider, ms: Date.now() - started });
   } catch (e) {
