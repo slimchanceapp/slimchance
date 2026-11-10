@@ -133,7 +133,10 @@ function inWindow(points: WeighIn[], asOfMs: number, windowDays: number) {
     .sort((a, b) => a.t - b.t);
 }
 
-export function fitWeightLine(points: WeighIn[], asOfMs: number, windowDays = WINDOW_DAYS): WeightLine | null {
+/** `minCarry`: the least carry-over to assume. A yes/no claim about a
+ *  direction (signals.ts) assumes the careful end, 0.7, rather than trusting a
+ *  carry-over estimate that reads low until a series is long. */
+export function fitWeightLine(points: WeighIn[], asOfMs: number, windowDays = WINDOW_DAYS, minCarry = 0): WeightLine | null {
   const rows = inWindow(points, asOfMs, windowDays);
   const n = rows.length;
   if (n < 2) return null;
@@ -167,7 +170,7 @@ export function fitWeightLine(points: WeighIn[], asOfMs: number, windowDays = WI
   let lag = 0;
   for (let i = 0; i < n - 1; i++) lag += resid[i] * resid[i + 1];
   const rhoHat = sse > 0 ? Math.max(0, lag / sse) : 0;
-  const rho = Math.min(0.9, (Math.max(df, 0) * rhoHat + CARRY_PRIOR_WEIGHT * CARRY_PRIOR) / (Math.max(df, 0) + CARRY_PRIOR_WEIGHT));
+  const rho = Math.max(minCarry, Math.min(0.9, (Math.max(df, 0) * rhoHat + CARRY_PRIOR_WEIGHT * CARRY_PRIOR) / (Math.max(df, 0) + CARRY_PRIOR_WEIGHT)));
   const pow: number[] = [1];
   let sumR = 0, cRc = 0;
   for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {

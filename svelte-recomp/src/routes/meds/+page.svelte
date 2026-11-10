@@ -1,5 +1,5 @@
 <script lang="ts">
-  // The GLP-1 companion (a Plus extra; free while in preview): the medication
+  // The GLP-1 companion (free, like everything: decision 0001): the medication
   // as the person's prescriber set it, each dose with where it went in, and how
   // they feel. A tracker only: it keeps what the person types and never advises
   // a dose (src/lib/meds.ts).
@@ -159,9 +159,9 @@
   }
 </script>
 
-<PageHero title="Medication" sub="GLP-1 companion · Plus preview" />
+<PageHero title="Medication" sub="GLP-1 companion" />
 
-<p class="md-note">Part of Plus when it launches, free until then. A record for you and your doctor: it keeps what you type, and never advises a dose.</p>
+<p class="md-note">A record for you and your doctor: it keeps what you type, and never advises a dose.</p>
 
 {#if !med || editing}
   <div class="card">

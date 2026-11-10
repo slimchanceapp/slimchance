@@ -3917,17 +3917,6 @@ check('an iPhone home-screen app fills the screen: the status bar’s strip is m
   assert.ok(!/id="sync-dot"/.test(layout), 'one status dot in the top bar, not two');
 });
 
-check('public pages call the everyday app free to use, never the whole of it free', async () => {
-  // 2026-10-30, the owner: Plus extras will be paid, so "free, no premium tier"
-  // is wrong. Say what is free, and name Plus where the price is asked.
-  const { readdirSync, readFileSync } = await import('node:fs');
-  const pages = ['static/about/index.html', 'src/app.html', 'src/lib/components/AuthGate.svelte',
-    ...readdirSync('static/guides', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `static/guides/${d.name}/index.html`)];
-  for (const p of pages) assert.doesNotMatch(readFileSync(p, 'utf8'), /no premium|really free|\ba free\b|free and open source|Free ·|<td class="us">Free<\/td>/i, p);
-  const about = readFileSync('static/about/index.html', 'utf8');
-  assert.equal(about.match(/Slim Chance Plus, an optional subscription on its way/g)?.length, 2, 'the FAQ and its search snippet say the same');
-});
-
 check('the doctor report says what was recorded, and nothing the app concluded', async () => {
   // 2026-10-30: blood tests as typed beside the lab's own range, never judged;
   // a report the person shows or sends themselves.
@@ -5390,6 +5379,42 @@ check('a watch beside the scale: each signal its own honest trend, the scale exp
   assert.doesNotMatch(JSON.stringify(r.structuredContent), /"score"/, 'no composite number');
   assert.equal(bodySignals({}).isError, true);
   assert.equal(bodySignals({ resting_hr: [{ date: '2026-11-01', bpm: 400 }] }).isError, true);
+});
+
+check('the watch cries wolf no more than about one time in twenty: a flat signal is rarely called rising or falling', async () => {
+  // 2026-11-10: trusting the carry-over estimate (it reads low until a series
+  // is long) let a flat resting heart rate or step count be called rising or
+  // falling up to 14% of the time. A direction is a yes/no claim, so it now
+  // assumes the careful end of carry-over (signals.ts CAREFUL_CARRY).
+  const { signalTrend } = await import('../src/lib/signals.ts');
+  const DAY = 864e5; let worst = 0, at = '';
+  for (const [kind, base, sd] of [['resting_hr', 60, 1.5], ['resting_hr', 60, 3], ['steps', 8000, 3000]]) for (const r of [0.2, 0.5, 0.7]) {
+    let seed = 3;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    let n = 0, wrong = 0;
+    for (let person = 0; person < 300; person++) {
+      const days = 7 + Math.floor(rnd() * 29), start = Date.UTC(2026, 0, 1 + Math.floor(rnd() * 7), 12);
+      let e = sd * gauss(); const pts = [];
+      for (let d = 0; d < days; d++) {
+        e = r * e + Math.sqrt(1 - r * r) * sd * gauss();
+        if (rnd() < 0.9 || d === days - 1) pts.push({ date: new Date(start + d * DAY).toISOString().slice(0, 10), value: base + e });
+      }
+      const t = signalTrend(kind, pts, start + (days - 1) * DAY);
+      if (!t) continue;
+      n++; if (t.direction === 'rising' || t.direction === 'falling') wrong++;
+    }
+    if (wrong / n > worst) { worst = wrong / n; at = `${kind}, noise ${sd}, carry-over ${r}`; }
+  }
+  assert.ok(worst <= 0.06, `a flat signal was given a direction ${(worst * 100).toFixed(1)}% of the time (${at})`);
+});
+
+check('nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere', async () => {
+  // Decision 0001 (2026-11-05) dropped Plus; on 2026-11-10 the menu, the
+  // medication page and the landing page still announced it.
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['src/routes/+layout.svelte', 'src/routes/meds/+page.svelte', 'static/about/index.html', 'static/privacy.html'])
+    assert.doesNotMatch(readFileSync(f, 'utf8'), /Plus preview|Slim Chance Plus|optional Plus|subscription on its way|Part of Plus/i, f);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {

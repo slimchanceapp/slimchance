@@ -19,6 +19,7 @@ export interface SignalTrend {
   text: string;
 }
 
+const CAREFUL_CARRY = 0.7;
 // Change per week too small to matter in practice, per signal.
 const BAND: Record<SignalKind, number> = { resting_hr: 0.5, steps: 300, sleep_hours: 0.1, hrv: 0.5 };
 const DP: Record<SignalKind, number> = { resting_hr: 1, steps: 0, sleep_hours: 1, hrv: 1 };
@@ -53,7 +54,10 @@ const WORDS: Record<SignalKind, Record<SignalTrend['direction'], (x: number, m: 
 /** One signal's trend over the 5 weeks to asOf; null under 7 readings. */
 export function signalTrend(kind: SignalKind, points: { date: string; value: number }[], asOfMs: number): SignalTrend | null {
   const pts = points.filter((p) => p.value > 0).map((p) => ({ date: p.date, weight: p.value }));
-  const line = fitWeightLine(pts, asOfMs);
+  // A direction is a yes/no claim, so it assumes the careful end of day-to-day
+  // carry-over (0.7): measured 2026-11-10, trusting the estimate let a flat
+  // signal be called rising or falling up to 14% of the time.
+  const line = fitWeightLine(pts, asOfMs, undefined, CAREFUL_CARRY);
   if (!line || line.n < 7) return null;
   const used = pts.filter((p) => { const t = Date.parse(`${p.date}T12:00:00`); return t <= asOfMs + 86400000 && t >= asOfMs - 35 * 86400000; });
   const r = (x: number) => +x.toFixed(DP[kind]);

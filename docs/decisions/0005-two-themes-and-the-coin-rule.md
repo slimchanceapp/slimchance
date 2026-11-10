@@ -8,7 +8,9 @@
   phone's own setting; the switch overrides it.
 - **Coins mean the chance and nothing else**, and look the same everywhere
   they appear: the gold coin of Today's hero. Distance to the goal is a path
-  with a stop at every tenth. Counts are plain numbers.
+  with a stop at every tenth. Counts are plain numbers. This replaces the
+  earlier plan (2026-11-05) to put coins on Food and Train: those tabs show
+  counts, and a second meaning for coins is what this rule removes.
 
 ## Why
 The owner asked for something "happy, energetic and lively" (2026-11-05);

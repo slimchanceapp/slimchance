@@ -237,6 +237,7 @@ noise larger than the signal is refused, not guessed at
 nonsense heights do not count as complete
 nothing in the weekly ritual assumes someone to send it to
 nothing is written for a permission that was not granted
+nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere
 nutrition patterns: low protein and a weekend blowout surface; the hour eaten is never judged
 on Google Play the app is app.slimchance; the direct download keeps its id
 one definition of "trained today", and the watch counts
@@ -263,7 +264,6 @@ protein scales to GOAL weight, not current weight
 protein short with room to eat recommends protein
 protein-by-training-day ignores abandoned logging days
 protein-by-training-day stays silent without both sides
-public pages call the everyday app free to use, never the whole of it free
 quantities read the way people type them
 quick-log activity labels are the ones a human would expect
 readiness returns null with nothing logged
@@ -367,6 +367,7 @@ the user's own sport name and time are used, never a hardcoded club
 the user’s own plan comes back, untouched, after week 6
 the usual breakfast is never logged twice
 the usual breakfast is the one eaten most mornings, at its latest portion
+the watch cries wolf no more than about one time in twenty: a flat signal is rarely called rising or falling
 the watch reads as words on Today: how hard to train, beside the person’s own normal
 the way to the goal is a path, not coins: coins mean the chance, and the healthy line is a place, never a word
 the weather in words: the daytime odds outrank the day’s code
