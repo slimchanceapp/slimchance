@@ -99,6 +99,51 @@ ${JSON.stringify(facts)}
 Reply with JSON only: {"days":[{"date":"YYYY-MM-DD","meals":[{"time":"HH:MM","items":[{"food":"exact name from facts.foods","grams":0}]}]}],"note":"..."}`;
 }
 
+// The training week (pact m14, 2026-11-10): the person's own sessions, walks
+// and rest, arranged over the days left; src/lib/trainPlan.ts checks it.
+const TRAIN_SCHEMA = {
+  type: 'OBJECT',
+  properties: {
+    days: {
+      type: 'ARRAY',
+      items: {
+        type: 'OBJECT',
+        properties: {
+          date: { type: 'STRING' },
+          kind: { type: 'STRING', enum: ['session', 'walk', 'rest'] },
+          session: { type: 'STRING' },
+          minutes: { type: 'NUMBER' },
+          why: { type: 'STRING' },
+        },
+        required: ['date', 'kind', 'why'],
+      },
+    },
+    note: { type: 'STRING' },
+  },
+  required: ['days', 'note'],
+};
+
+function trainPrompt(facts: any): string {
+  return `You are the coach inside Slim Chance, an app for one person losing weight on their own. They asked you to arrange the rest of their training week. For each date in facts.days choose exactly one: one of their own sessions, a walk, or rest.
+Rules, always:
+- A session is one of facts.sessions, by its exact name. Never invent an exercise, a load, sets, reps or a new session.
+- At most facts.sessionsLeft sessions in all; fewer is fine.
+- Space sessions out: never two on consecutive days when the days allow it.
+- If facts.easyToday is true, facts.today is a walk or rest: their body asked for an easy day.
+- A walk has minutes, 15 to 60. Walks and rest belong between sessions; facts.doneDates shows what they already did this week.
+- why: a few plain words for each day, with no numbers. note: one or two warm sentences, no numbers, no medical advice, never shame.
+- facts.problem, when present, is why the app refused your last plan: fix that.
+Facts (JSON):
+${JSON.stringify(facts)}
+Reply with JSON only: {"days":[{"date":"YYYY-MM-DD","kind":"session|walk|rest","session":"exact name from facts.sessions, or empty","minutes":0,"why":"..."}],"note":"..."}`;
+}
+
+function parseTrain(text: string) {
+  const o = extractJson(text);
+  if (!o || !Array.isArray(o.days)) throw new Error('no training plan in the answer');
+  return o;
+}
+
 function parsePlan(text: string) {
   const o = extractJson(text);
   if (!o || !Array.isArray(o.days)) throw new Error('no plan in the answer');
@@ -126,13 +171,13 @@ Deno.serve(async (req: Request) => {
   if (!facts || typeof facts !== 'object' || JSON.stringify(facts).length > 20_000) return json({ error: 'Send the day\'s facts.' }, 400);
 
   const started = Date.now();
-  const planning = body?.mode === 'plan';
+  const mode = body?.mode === 'plan' ? 'plan' : body?.mode === 'train' ? 'train' : 'evening';
   try {
     const { value, provider } = await ask(
-      planning
-        ? { prompt: planPrompt(facts), schema: PLAN_SCHEMA, temperature: 0.4, timeoutMs: 30_000 }
+      mode === 'plan' ? { prompt: planPrompt(facts), schema: PLAN_SCHEMA, temperature: 0.4, timeoutMs: 30_000 }
+        : mode === 'train' ? { prompt: trainPrompt(facts), schema: TRAIN_SCHEMA, temperature: 0.4, timeoutMs: 30_000 }
         : { prompt: prompt(facts), schema: SCHEMA, temperature: 0.6, timeoutMs: 25_000 },
-      planning ? parsePlan : parse,
+      mode === 'plan' ? parsePlan : mode === 'train' ? parseTrain : parse,
       { only, deadlineMs: 40_000 },
     );
     return json({ reply: value, provider, ms: Date.now() - started });

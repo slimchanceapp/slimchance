@@ -13,6 +13,8 @@
   import db from '$lib/db/dexie';
   import MiniChart from '$lib/components/MiniChart.svelte';
   import PageHero from '$lib/components/PageHero.svelte';
+  import TrainPlan from '$lib/components/TrainPlan.svelte';
+  import { sessionsLeft } from '$lib/trainPlan';
   import { trainingTone } from '$lib/week';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
@@ -950,6 +952,12 @@
   ]} />
 
 <BackRebuild onOpenSession={(k) => (sessionKey = k)} />
+
+<!-- The coach arranges your own sessions over the days left (pact m14). -->
+<TrainPlan
+  sessions={[...new Set(schedule.filter((d: any) => isTrainingDay(d)).map((d: any) => sessionDisplayName(d)).filter(Boolean))]}
+  left={sessionsLeft(weeklyTarget, gymSessions7)}
+  doneDates={[...trainedDates]} />
 
 <div class="week-tabs">
   <button class="wtab" class:on={tab === 'upcoming'} onclick={() => tab = 'upcoming'}>Upcoming</button>

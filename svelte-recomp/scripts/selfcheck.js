@@ -5591,6 +5591,45 @@ check('Gemini only where Google allows it, Gemma for everyone, the free text ser
   assert.match(readFileSync('static/privacy.html', 'utf8'), /Cloudflare keeps nothing sent to Gemma once it has answered and never trains on it\./);
 });
 
+check('the coach arranges your own sessions over the week: never a new one, never too many, spaced out, easy when your body asks', async () => {
+  // Pact m14 (2026-11-10): "which of your own sessions go on which day, walks
+  // and rest, from your Train week and the watch. Never new exercises or loads."
+  const { checkTrainPlan, sessionsLeft } = await import('../src/lib/trainPlan.ts');
+  const f = { days: ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'], sessions: ['Lower', 'Badminton'], left: 2, easyToday: false, today: '2026-11-12' };
+  const good = { days: [
+    { date: '2026-11-12', kind: 'session', session: 'lower', why: 'Fresh legs today' },
+    { date: '2026-11-13', kind: 'walk', minutes: 30, why: 'Loosen up' },
+    { date: '2026-11-14', kind: 'session', session: 'Badminton', why: 'Your usual game' },
+    { date: '2026-11-15', kind: 'rest', why: 'Recover for Monday' }], note: 'A steady week.' };
+  const ok = checkTrainPlan(good, f);
+  assert.equal(ok.ok, true, ok.why ?? '');
+  assert.equal(ok.days[0].session, 'Lower', 'their own name, as they wrote it');
+  const with_ = (i, day) => ({ ...good, days: good.days.map((d, k) => (k === i ? day : d)) });
+  assert.match(checkTrainPlan(with_(0, { date: '2026-11-12', kind: 'session', session: 'Deadlifts 5x5', why: 'x' }), f).why, /isn't one of their sessions/, 'never a new exercise');
+  assert.match(checkTrainPlan(with_(1, { date: '2026-11-13', kind: 'session', session: 'Lower', why: 'x' }), f).why, /only 2 are left|back to back/, 'never more than is left');
+  const backToBack = { days: [
+    { date: '2026-11-12', kind: 'session', session: 'Lower', why: 'x' },
+    { date: '2026-11-13', kind: 'session', session: 'Badminton', why: 'x' },
+    { date: '2026-11-14', kind: 'walk', minutes: 30, why: 'x' },
+    { date: '2026-11-15', kind: 'rest', why: 'x' }], note: '' };
+  assert.match(checkTrainPlan(backToBack, f).why, /back to back/, 'spaced out when the days allow');
+  const crowded = { ...backToBack, days: backToBack.days.map((d, k) => (k === 2 ? { date: d.date, kind: 'session', session: 'Lower', why: 'x' } : d)) };
+  assert.equal(checkTrainPlan(crowded, { ...f, left: 3 }).ok, true, 'three in four days cannot all be apart, so back to back is allowed');
+  assert.match(checkTrainPlan(good, { ...f, easyToday: true }).why, /easy day/, 'an easy day when the body asks for one');
+  assert.match(checkTrainPlan(with_(1, { date: '2026-11-13', kind: 'walk', minutes: 120, why: 'x' }), f).why, /15 to 60/);
+  assert.equal(checkTrainPlan(with_(3, { date: '2026-11-15', kind: 'rest', why: 'Rest 2 days' }), f).days[3].why, '', 'no unchecked numbers in its words');
+  assert.equal(sessionsLeft(3, 1), 2);
+  assert.equal(sessionsLeft(2, 3), 0);
+  const { readFileSync } = await import('node:fs');
+  const coach = readFileSync('../supabase/functions/coach/index.ts', 'utf8');
+  assert.match(coach, /Never invent an exercise, a load, sets, reps or a new session\./);
+  assert.match(coach, /mode === 'train' \? \{ prompt: trainPrompt\(facts\), schema: TRAIN_SCHEMA/);
+  const card = readFileSync('src/lib/components/TrainPlan.svelte', 'utf8');
+  assert.match(card, /\{#if \$coachOn && sessions\.length && days\.length\}/, 'only for people who turned the coach on');
+  assert.match(card, /const checked = checkTrainPlan\(data\?\.reply/, 'every plan checked before it is shown');
+  assert.match(readFileSync('src/routes/workouts/+page.svelte', 'utf8'), /<TrainPlan\n  sessions=/);
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

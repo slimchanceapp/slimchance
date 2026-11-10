@@ -56,3 +56,4 @@ week.ts
 weekCheckIn.ts
 weeklyReview.ts
 weeklyShare.ts
+trainPlan.ts
