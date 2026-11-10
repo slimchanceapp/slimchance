@@ -296,7 +296,6 @@ the 4-day split alternates lower and upper
 the Food hero praises protein when it’s hit and never colours a day still in progress
 the GLP-1 companion keeps a record and never advises
 the Google Play build updates only through Play and loads slimchance.app
-the Slim Chance track: ten coins to the goal, the healthy line as a place, never a word
 the Stoic lines rotate by date, never at random, and each is sourced
 the Sunday check-ins become a journal, newest first, in the user’s words
 the Sunday review asks about the user’s own plan, in their words
@@ -344,7 +343,7 @@ the morning notification takes a weight on the number pad
 the morning rating decides progress, hold, or back off
 the native build number matches the gradle versionCode
 the odds are the verdict’s own interval, read against a loss that counts
-the odds coins flip in and land as they light, and the theme is black and gold
+the odds coins flip in and land as they light, and the themes are Deep and Daylight, following the phone
 the offline estimate understands a Slovak breakfast
 the old heavy session is not shown in the days before the start
 the privacy page names every outside service the code talks to
@@ -365,6 +364,7 @@ the user’s own plan comes back, untouched, after week 6
 the usual breakfast is never logged twice
 the usual breakfast is the one eaten most mornings, at its latest portion
 the watch reads as words on Today: how hard to train, beside the person’s own normal
+the way to the goal is a path, not coins: coins mean the chance, and the healthy line is a place, never a word
 the weather in words: the daytime odds outrank the day’s code
 the week is the budget: today’s share is what’s left, spread evenly
 the week under review is the one that just ended, on every asking day

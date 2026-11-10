@@ -69,17 +69,17 @@ export interface Odds {
 }
 
 /** A chance as coins of ten and one sentence. The middle is "too close to
- *  call", not a verdict: a first week can't know yet, and says so. The name's
- *  joke is told only when the odds are good: a stall never hears "slim" from
- *  its own app. */
-function oddsOf(p: number | null, what: string, joke = false): Odds | null {
+ *  call", not a verdict: a first week can't know yet, and says so. No joke on
+ *  the name: "Not so slim" beside a chance of slimming read backwards
+ *  (2026-11-10). */
+function oddsOf(p: number | null, what: string): Odds | null {
   if (p == null) return null;
   const lit = p >= 0.95 ? 10 : p < 0.05 ? 0 : Math.min(9, Math.max(1, Math.round(p * 10)));
   const text = (lit === 10 ? `Almost certainly ${what}.`
     : lit === 0 ? `Under 1 in 10 it’s ${what} right now.`
     : lit >= 7 ? `${lit} in 10 it’s ${what}.`
     : lit >= 4 ? `${lit} in 10 it’s ${what}: too close to call.`
-    : `${lit} in 10 it’s ${what} right now.`) + (joke && lit >= 8 ? ' Not so slim.' : '');
+    : `${lit} in 10 it’s ${what} right now.`);
   return { lit, text };
 }
 
@@ -166,7 +166,7 @@ export function pulse(i: PulseInput): Pulse {
   ];
   const odds = dir === 'gain' ? oddsOf(chanceOf(w, 'gain'), 'going up')
     : dir === 'maintain' ? oddsOf(chanceOf(w, 'hold'), 'holding')
-    : oddsOf(chanceOf(w, 'lose'), 'coming off', true);
+    : oddsOf(chanceOf(w, 'lose'), 'coming off');
   return { kg, caption, pct, tone, story, stats, odds };
 }
 

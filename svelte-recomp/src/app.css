@@ -22,23 +22,25 @@
    "look here", and never red for a bad week. Solid surfaces, nothing
    blurred, nothing floats on glass. */
 :root{
-  /* Navy and brass. Black and gold was tried on 2026-11-03 and read flatter
-     and duller on the phone (the owner), so it went back the same day. */
-  --bg:#101826;--bg2:#182337;--bg3:#1E2B42;
-  --border:#2A3854;--border2:#3A4B6E;
-  --text:#EDE7DA;--muted:#9AA6B8;
-  --brass:#C9A54E;
+  /* Deep (dark) and Daylight (light), picked by the owner on 2026-11-10 after
+     seeing both on the phone: livelier than the navy and brass before them
+     (George and Happy Scale were the reference: saturated, happy, clear).
+     Black and gold was tried on 2026-11-03 and reverted the same day. */
+  --bg:#100E26;--bg2:#1A1838;--bg3:#232048;
+  --border:#2E2B5C;--border2:#423E7A;
+  --text:#F4F2FF;--muted:#A9A5CF;
+  --brass:#FCC419;
   /* Verdict tones. */
-  --led-good:#4FB59A;--led-ok:#7FA7D9;--led-warn:#DD7F4E;--led-bad:#E0605A;
-  /* Interactive accent = brass. (Named --amber for history: every page already
+  --led-good:#20C997;--led-ok:#748FFC;--led-warn:#FF922B;--led-bad:#F06595;
+  /* Interactive accent. (Named --amber for history: every page already
      reads it, so the whole app re-themes from here.) */
-  --amber:#C9A54E;--amber2:#E2C47A;--ab:rgba(201,165,78,.12);
-  --red:#E0605A;--rb:rgba(224,96,90,.12);
-  --green:#4FB59A;--green2:#7DCBB5;--gb:rgba(79,181,154,.12);
-  --blue:#7FA7D9;--bb:rgba(127,167,217,.12);
-  --purple:#C9A54E;--pb:rgba(201,165,78,.12);
-  --grad-amber:linear-gradient(180deg,#D3B05C,#C29B44);
-  --grad-green:linear-gradient(180deg,#5DC1A6,#45A98F);
+  --amber:#FCC419;--amber2:#FFD43B;--ab:rgba(252,196,25,.14);
+  --red:#F06595;--rb:rgba(240,101,149,.12);
+  --green:#20C997;--green2:#63E6BE;--gb:rgba(32,201,151,.12);
+  --blue:#748FFC;--bb:rgba(116,143,252,.12);
+  --purple:#9775FA;--pb:rgba(151,117,250,.12);
+  --grad-amber:linear-gradient(180deg,#FFD43B,#FAB005);
+  --grad-green:linear-gradient(180deg,#38D9A9,#12B886);
   /* Legacy glass tokens, now solid: components that used them get panels. */
   --glass:var(--bg2);--glass-2:var(--bg3);--glass-brd:var(--border);
   --glass-hi:transparent;--glass-sheen:linear-gradient(transparent,transparent);
@@ -54,15 +56,13 @@
   --ease:cubic-bezier(.22,1,.36,1);
 }
 [data-theme="light"]{
-  --bg:#F1F2F4;--bg2:#ffffff;--bg3:#E6E8EC;--border:#D3D7DE;--border2:#BBC1CB;
-  --text:#101826;--muted:#4E5A6B;
-  --brass:#8A6A1F;
-  --led-good:#2C7F69;--led-ok:#3B6BA8;--led-warn:#B05A26;--led-bad:#B83A34;
-  --amber:#8A6A1F;--amber2:#6E5417;--ab:rgba(138,106,31,.10);
-  --red:#B83A34;--rb:rgba(184,58,52,.08);--green:#2C7F69;--gb:rgba(44,127,105,.08);
-  --blue:#3B6BA8;--bb:rgba(59,107,168,.08);
-  --purple:#8A6A1F;--pb:rgba(138,106,31,.08);
-  --grad-amber:linear-gradient(180deg,#9A7A2C,#8A6A1F);
+  --bg:#F6F7FB;--bg2:#FFFFFF;--bg3:#EEF0F8;--border:#E3E6F0;--border2:#C9CFE0;
+  --text:#141A33;--muted:#5B6380;--brass:#B7861F;
+  --led-good:#0CA678;--led-ok:#4263EB;--led-warn:#E8590C;--led-bad:#D6336C;
+  --amber:#4263EB;--amber2:#3B5BDB;--ab:rgba(66,99,235,.10);
+  --red:#D6336C;--rb:rgba(214,51,108,.08);--green:#0CA678;--gb:rgba(12,166,120,.08);
+  --blue:#4263EB;--bb:rgba(66,99,235,.08);--purple:#7048E8;--pb:rgba(112,72,232,.08);
+  --grad-amber:linear-gradient(180deg,#4C6EF5,#3B5BDB);
 }
 
 /* TEXT SIZE.

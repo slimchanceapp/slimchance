@@ -565,14 +565,15 @@ check('the hero reads the trend, the distance to the next stop, and a pace that 
   assert.doesNotMatch(pulse({ ...restart, weight: wv(88.5, 0.5), pace: 'on-pace' }).story, /water/, 'going down anyway: nothing to explain');
   // The odds, as coins of ten: the same interval as the verdict, read as the
   // chance of a loss that counts (over 0.15 kg a week). Sure either way is
-  // "almost certainly" or "under 1 in 10", the middle is "too close to call",
-  // and the name's joke comes only with good odds, never at a stall.
-  assert.deepEqual(down.odds, { lit: 10, text: 'Almost certainly coming off. Not so slim.' });
+  // "almost certainly" or "under 1 in 10", the middle is "too close to call".
+  // No joke on the name: "Not so slim" next to a chance of slimming read
+  // backwards (2026-11-10).
+  assert.deepEqual(down.odds, { lit: 10, text: 'Almost certainly coming off.' });
   assert.deepEqual(up.odds, { lit: 0, text: 'Under 1 in 10 it’s coming off right now.' });
   assert.deepEqual(early.odds, { lit: 4, text: '4 in 10 it’s coming off: too close to call.' }, 'a first week can’t know yet, and says so');
   assert.deepEqual(gentle.odds, { lit: 3, text: '3 in 10 it’s coming off right now.' }, 'a flat month: honest odds, no joke');
   assert.equal(pulse({ weight: { ...wv(90, 0.3, 0.4), state: 'too-noisy' }, pace: 'too-early', firstKg: 92, goalKg: 76, next: null }).odds.text,
-    '8 in 10 it’s coming off. Not so slim.');
+    '8 in 10 it’s coming off.');
   // A slow drift the interval is sure of (0.08 kg a week) is not "coming off":
   // it's the flat the stall check names, and the odds must not cheer it.
   const drift = pulse({ weight: wv(93.1, 0.08, 0.05), pace: 'stalled', firstKg: 113.5, goalKg: 76, next });
@@ -5214,14 +5215,19 @@ check('a meal photo waits for a few optional words before it goes', async () => 
   assert.match(fl, /description: mode === 'meal' \? \(words \?\? query\)\.trim\(\) \|\| undefined/, 'and the words go with it');
 });
 
-check('the odds coins flip in and land as they light, and the theme is black and gold', async () => {
+check('the odds coins flip in and land as they light, and the themes are Deep and Daylight, following the phone', async () => {
   // The owner, 2026-11-03: George's motion, "coins flipping and landing on the
   // trend", and "the app colours are too dull".
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins i\.on\{[^}]*animation:ro-flip/);
   const css = readFileSync('src/app.css', 'utf8');
-  // Black and gold was tried and reverted the same day: navy and brass it is.
-  assert.match(css, /--bg:#101826;/);
+  // Black and gold was tried and reverted the same day; navy and brass gave
+  // way on 2026-11-10 to Deep (dark) and Daylight (light), picked on the phone.
+  assert.match(css, /:root\{[^}]*--bg:#100E26;/);
+  assert.match(css, /\[data-theme="light"\]\{[^}]*--bg:#F6F7FB;/);
+  assert.doesNotMatch(css, /data-direction/, 'the try-out switch is gone');
+  // With two finished themes, a first launch follows the phone's own setting.
+  assert.match(readFileSync('src/app.html', 'utf8'), /!t && matchMedia\('\(prefers-color-scheme: light\)'\)\.matches/);
   assert.match(css, /prefers-reduced-motion:reduce\)\{\*\{animation-duration:\.001ms/, 'still off for anyone who turns motion off');
 });
 
@@ -5251,21 +5257,28 @@ check('the watch reads as words on Today: how hard to train, beside the person�
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<span class="td-k">Body<\/span>/, 'a row in today’s plan');
 });
 
-check('the Slim Chance track: ten coins to the goal, the healthy line as a place, never a word', async () => {
+check('the way to the goal is a path, not coins: coins mean the chance, and the healthy line is a place, never a word', async () => {
+  // 2026-11-10, the coin rule: Progress showed the chance as coins in its hero
+  // and the distance as ten more coins just under it ("2 of 10"), so "ten"
+  // meant two things on one screen. Coins are the chance; distance is a path.
   const { slimTrack } = await import('../src/lib/slimTrack.ts');
   const t = slimTrack({ startKg: 116, goalKg: 86, currentKg: 106.5, heightCm: 180 });
-  assert.equal(t.coins.length, 10);
-  assert.equal(t.landed, 3, '113, 110 and 107 are passed');
-  assert.equal(t.coins[3].next, true, '104 is in play');
+  assert.equal(t.stops.length, 10);
+  assert.equal(t.passed, 3, '113, 110 and 107 are passed');
+  assert.equal(t.stops[3].next, true, '104 is next');
+  assert.equal(t.at, 0.317, 'a third of the way');
   assert.equal(t.healthyKg, 81, 'BMI 25 at 1.80 m');
-  assert.equal(t.healthyAt, null, 'below the goal, so off the track');
-  assert.equal(slimTrack({ startKg: 116, goalKg: 76, currentKg: 106.5, heightCm: 180 }).healthyAt, 0.875, 'on the track when the goal is past it');
+  assert.equal(t.healthyAt, null, 'below the goal, so off the path');
+  assert.equal(slimTrack({ startKg: 116, goalKg: 76, currentKg: 106.5, heightCm: 180 }).healthyAt, 0.875, 'on the path when the goal is past it');
   assert.equal(t.bmi, 32.9);
-  assert.equal(slimTrack({ startKg: 70, goalKg: 76, currentKg: 73, heightCm: 180 }).landed, 5, 'a gain goal fills upward');
+  assert.equal(slimTrack({ startKg: 70, goalKg: 76, currentKg: 73, heightCm: 180 }).passed, 5, 'a gain goal fills upward');
+  assert.equal(slimTrack({ startKg: 100, goalKg: 90, currentKg: 101, heightCm: 180 }).at, 0, 'above the start is the start, not a negative path');
   assert.equal(slimTrack({ startKg: 90, goalKg: 90, currentKg: 90, heightCm: 180 }), null);
   const { readFileSync } = await import('node:fs');
   const ui = readFileSync('src/lib/components/SlimTrack.svelte', 'utf8');
   assert.doesNotMatch(ui, /obese|overweight|underweight/i, 'no category words');
+  const shown = ui.replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+  assert.doesNotMatch(shown, /coin|border-radius:50%/i, 'nothing on the path is, or is called, a coin');
   const progress = readFileSync('src/routes/progress/+page.svelte', 'utf8');
   assert.ok(progress.indexOf('<SlimTrack') > progress.indexOf('<WeightLine') && progress.indexOf('<SlimTrack') < progress.indexOf('Getting fitter?'), 'on Progress, under the line');
 });

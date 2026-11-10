@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="theme-color" content="#101826" />
+    <meta name="theme-color" content="#100E26" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Slim Chance" />
@@ -33,7 +33,10 @@
          synchronous, blocking, before the first frame. Wrapped in try/catch
          because a WebView with storage disabled must still boot. */
       try {
-        if (localStorage.getItem('theme') === 'light')
+        /* Light or dark: what they chose, else what the phone is set to
+           (2026-11-10: Daylight and Deep are a pair, so either is a home). */
+        var t = localStorage.getItem('theme');
+        if (t === 'light' || (!t && matchMedia('(prefers-color-scheme: light)').matches))
           document.documentElement.setAttribute('data-theme', 'light');
         var s = parseFloat(localStorage.getItem('uiScale'));
         if (s >= 1 && s <= 1.4)
@@ -49,11 +52,11 @@
          (CoinSpin.svelte, the same drawing). Here, so it shows before any
          script or stylesheet arrives. Transforms only: the compositor keeps
          it turning while the page underneath is busy. */
-      #boot{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#101826;transition:opacity .25s ease}
-      [data-theme="light"] #boot{background:#F1F2F4}
+      #boot{position:fixed;inset:0;z-index:9999;display:flex;align-items:center;justify-content:center;background:#100E26;transition:opacity .25s ease}
+      [data-theme="light"] #boot{background:#F6F7FB}
       #boot.out{opacity:0;pointer-events:none}
-      .cspin{display:block;color:#C9A54E;overflow:visible}
-      [data-theme="light"] .cspin{color:#8A6A1F}
+      .cspin{display:block;color:#FCC419;overflow:visible}
+      [data-theme="light"] .cspin{color:#B7861F}
       .cspin .cs-face,.cspin .cs-edge,.cspin .cs-floor{transform-box:fill-box;transform-origin:center}
       .cspin .cs-face{animation:cs-face 1.4s infinite}
       .cspin .cs-edge{animation:cs-edge 1.4s infinite}

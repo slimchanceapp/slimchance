@@ -202,7 +202,7 @@
 
 <WeightLine />
 
-<!-- The Slim Chance track: ten coins to the goal (src/lib/slimTrack.ts). -->
+<!-- The way to the goal: a path, not coins (src/lib/slimTrack.ts). -->
 <SlimTrack />
 
 {#snippet foot()}

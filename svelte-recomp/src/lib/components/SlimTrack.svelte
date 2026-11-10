@@ -1,44 +1,47 @@
 <script lang="ts">
-  // The Slim Chance track on Progress (src/lib/slimTrack.ts): ten coins from
-  // the first weigh-in to the goal. Passed ones flip in and land; the next one
-  // breathes, with the odds as they stand. The healthy-weight line is a mark
-  // on the track and a number, never a category word.
-  import { body, todayPulse } from '$lib/stores/body';
+  // The way to the goal on Progress (src/lib/slimTrack.ts): a path from the
+  // first weigh-in to the goal, filled as far as the trend has come, with a
+  // stop at every tenth. Not coins: coins mean the chance (the coin rule,
+  // 2026-11-10). The healthy-weight line is a mark on the path and a number,
+  // never a category word.
+  import { body } from '$lib/stores/body';
   import { slimTrack } from '$lib/slimTrack';
   import { wtShortU } from '$lib/units';
   const t = $derived(slimTrack({ startKg: $body.firstKg, goalKg: $body.goalKg, currentKg: $body.currentKg, heightCm: $body.profile?.heightCm ?? null }));
-  const next = $derived(t?.coins.find((c) => c.next) ?? null);
+  const next = $derived(t?.stops.find((s) => s.next) ?? null);
+  const pct = $derived(t ? Math.round(t.at * 100) : 0);
 </script>
 
 {#if t}
-  <section class="card st" aria-label="Your slim chance: {t.landed} of 10 coins landed">
-    <div class="st-head"><span class="card-lbl">Your slim chance</span><span class="st-n"><b>{t.landed}</b> of 10 coins</span></div>
-    <div class="st-track">
-      {#each t.coins as c, i}<i class:landed={c.landed} class:next={c.next} style="--i:{i}" title={wtShortU(c.kg)}></i>{/each}
-      {#if t.healthyAt != null}<span class="st-healthy" style="left:calc({t.healthyAt * 100}% - 5%)" title="Healthy weight starts here"></span>{/if}
+  <section class="card st" aria-label="Your way to {wtShortU($body.goalKg!)}: {pct}% of the way">
+    <div class="st-head"><span class="card-lbl">Your way to {wtShortU($body.goalKg!)}</span><span class="st-n"><b>{pct}%</b> of the way</span></div>
+    <div class="st-path">
+      <span class="st-fill" style="width:{t.at * 100}%"></span>
+      {#each t.stops as s, i}<i class:passed={s.passed} style="left:{(i + 1) * 10}%" title={wtShortU(s.kg)}></i>{/each}
+      {#if t.healthyAt != null}<span class="st-healthy" style="left:{t.healthyAt * 100}%" title="Healthy weight starts here"></span>{/if}
     </div>
     <div class="st-ends"><span>{wtShortU($body.firstKg!)} start</span><span>{wtShortU($body.goalKg!)} goal</span></div>
-    <p class="st-next">{#if next}Next coin at <b>{wtShortU(next.kg)}</b>. {$todayPulse.odds?.text ?? ''}{:else}All ten landed: you’re at your goal.{/if}</p>
+    <p class="st-next">{#if next}Next stop: <b>{wtShortU(next.kg)}</b>.{:else}You’re at your goal.{/if}</p>
     {#if t.bmi != null}
-      <p class="st-bmi">BMI {t.bmi}{#if t.healthyKg != null}{' · '}the healthy range starts at {wtShortU(t.healthyKg)}{#if t.healthyAt != null}, the mark on your track{/if}{/if}.</p>
+      <p class="st-bmi">BMI {t.bmi}{#if t.healthyKg != null}{' · '}the healthy range starts at {wtShortU(t.healthyKg)}{#if t.healthyAt != null}, the green mark on your path{/if}{/if}.</p>
     {/if}
   </section>
 {/if}
 
 <style>
-  .st-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:12px}
+  .st-head{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:14px}
   .st-head .card-lbl{margin:0}
   .st-n{font-size:0.8125rem;color:var(--muted)}
-  .st-n b{font-family:var(--font-display);font-size:1.25rem;color:var(--amber)}
-  .st-track{position:relative;display:grid;grid-template-columns:repeat(10,1fr);justify-items:center;padding:6px 0;perspective:300px}
-  .st-track::before{content:'';position:absolute;left:5%;right:5%;top:50%;height:2px;background:var(--border2);transform:translateY(-50%)}
-  .st-track i{position:relative;width:22px;height:22px;border-radius:50%;border:2px solid var(--border2);background:var(--bg2)}
-  .st-track i.landed{background:var(--amber);border-color:var(--amber);animation:st-land .6s var(--ease) both;animation-delay:calc(var(--i) * 80ms)}
-  .st-track i.next{border-color:var(--amber);animation:st-breathe 2.4s ease-in-out infinite}
-  .st-healthy{position:absolute;top:0;bottom:0;width:2px;background:var(--led-good);border-radius:1px}
-  .st-ends{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-top:6px}
+  .st-n b{font-family:var(--font-display);font-size:1.25rem;color:var(--text)}
+  .st-path{position:relative;height:12px;border-radius:6px;background:var(--bg3);margin:4px 0}
+  .st-fill{position:absolute;left:0;top:0;bottom:0;border-radius:6px;background:linear-gradient(90deg,var(--blue),var(--green));transform-origin:left;animation:st-grow .9s var(--ease) both}
+  /* Stops are ticks across the path, never round: round is a coin. */
+  .st-path i{position:absolute;top:-3px;width:2px;height:18px;margin-left:-1px;border-radius:1px;background:var(--border2)}
+  .st-path i:last-of-type{width:4px;margin-left:-4px}
+  .st-path i.passed{background:var(--bg2)}
+  .st-healthy{position:absolute;top:-6px;width:4px;height:24px;margin-left:-2px;border-radius:2px;background:var(--led-good)}
+  .st-ends{display:flex;justify-content:space-between;font-size:0.75rem;color:var(--muted);margin-top:8px}
   .st-next{font-size:0.875rem;line-height:1.45;color:var(--text);margin:10px 0 0}
   .st-bmi{font-size:0.8125rem;line-height:1.45;color:var(--muted);margin:6px 0 0}
-  @keyframes st-land{0%{transform:translateY(-14px) rotateY(180deg);opacity:0}60%{transform:translateY(2px) rotateY(20deg);opacity:1}100%{transform:none}}
-  @keyframes st-breathe{0%,100%{box-shadow:0 0 0 0 color-mix(in srgb,var(--amber) 40%,transparent)}50%{box-shadow:0 0 0 6px transparent}}
+  @keyframes st-grow{from{transform:scaleX(0)}to{transform:none}}
 </style>

@@ -81,7 +81,7 @@
 
   <!-- The odds and the pace are in the hero above (2026-10-31): said once. -->
 
-  <!-- How far along is the Slim Chance track's job now (SlimTrack, 2026-11-03). -->
+  <!-- How far along is the way-to-the-goal path's job now (SlimTrack). -->
 </div>
 
 <style>

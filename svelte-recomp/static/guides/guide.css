@@ -2,8 +2,8 @@
    declared 62%-85% wide, so headings come out at 85% and "Slim" asks for 62%). */
 @font-face{font-family:'Archivo';src:url('/fonts/archivo-latin.woff2') format('woff2');font-weight:100 900;font-stretch:62% 85%;font-display:swap}
 @font-face{font-family:'Atkinson Hyperlegible Next';src:url('/fonts/atkinson-latin.woff2') format('woff2');font-weight:200 800;font-display:swap}
-:root{--ink:#101826;--ink2:#182337;--rule:#2A3854;--chalk:#EDE7DA;--muted:#9AA6B8;--brass:#C9A54E;color-scheme:dark}
-@media (prefers-color-scheme:light){:root{--ink:#F1F2F4;--ink2:#FFFFFF;--rule:#D3D7DE;--chalk:#101826;--muted:#4E5A6B;--brass:#8A6A1F;color-scheme:light}}
+:root{--ink:#100E26;--ink2:#1A1838;--rule:#2E2B5C;--chalk:#F4F2FF;--muted:#A9A5CF;--brass:#FCC419;color-scheme:dark}
+@media (prefers-color-scheme:light){:root{--ink:#F6F7FB;--ink2:#FFFFFF;--rule:#E3E6F0;--chalk:#100E26;--muted:#5B6380;--brass:#B7861F;color-scheme:light}}
 *{box-sizing:border-box}
 body{margin:0;background:var(--ink);color:var(--chalk);font:1.0625rem/1.65 'Atkinson Hyperlegible Next',system-ui,sans-serif;font-variant-numeric:lining-nums}
 main{max-width:700px;margin:0 auto;padding-block:28px 64px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
