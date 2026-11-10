@@ -22,6 +22,7 @@ Samsung is recognised — the gap that broke the old regex
 Today shows one next thing at a time, and today’s plan
 Today stays calm: one card for the day, no cards that said a little each
 Today’s Focus is one voice, and silent on a good day
+Train turns orange only after a planned day passes without training, never on a Monday morning
 a Capacitor plugin proxy is never returned from an async function
 a Capacitor weekday is one ahead of a JS getDay()
 a bad weight is dropped, not published

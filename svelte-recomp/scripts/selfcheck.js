@@ -5292,6 +5292,21 @@ check('the theme switch turns light on at once, not after a restart', async () =
   assert.match(layout, /if \(isLight\) html\.removeAttribute\('data-theme'\); else html\.setAttribute\('data-theme', 'light'\);/);
 });
 
+check('Train turns orange only after a planned day passes without training, never on a Monday morning', async () => {
+  // 2026-11-10: "0 of 2 this week" was orange from Monday morning, before any
+  // session was due, because the colour only counted sessions done.
+  const { trainingTone } = await import('../src/lib/week.ts');
+  const monThu = [1, 4];
+  assert.equal(trainingTone(0, 2, monThu, 1), 'ok', 'Monday morning: nothing due yet');
+  assert.equal(trainingTone(0, 2, monThu, 2), 'warn', 'Tuesday after a missed Monday: look here');
+  assert.equal(trainingTone(1, 2, monThu, 2), 'ok', 'Monday done');
+  assert.equal(trainingTone(1, 2, monThu, 5), 'warn', 'Friday, Thursday missed');
+  assert.equal(trainingTone(2, 2, monThu, 5), 'good');
+  assert.equal(trainingTone(0, 1, [0], 6), 'ok', 'a Sunday session is not due on Saturday');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/routes/workouts/+page.svelte', 'utf8'), /return trainingTone\(gymSessions7, weeklyTarget,/);
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

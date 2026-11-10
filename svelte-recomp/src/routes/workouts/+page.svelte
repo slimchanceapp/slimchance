@@ -13,6 +13,7 @@
   import db from '$lib/db/dexie';
   import MiniChart from '$lib/components/MiniChart.svelte';
   import PageHero from '$lib/components/PageHero.svelte';
+  import { trainingTone } from '$lib/week';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
   import ProgramOffer from '$lib/components/ProgramOffer.svelte';
@@ -815,9 +816,10 @@
     return set.size;
   });
   const gymPct = $derived(Math.min(100, (gymSessions7 / weeklyTarget) * 100));
-  const gymTone: 'good' | 'ok' | 'warn' | 'bad' | 'na' = $derived(
-    gymSessions7 >= weeklyTarget ? 'good' : gymSessions7 >= Math.ceil(weeklyTarget / 2) ? 'ok' : gymSessions7 >= 1 ? 'warn' : 'bad'
-  );
+  const gymTone = $derived.by(() => {
+    void $nowTick;
+    return trainingTone(gymSessions7, weeklyTarget, schedule.filter((d: any) => isTrainingDay(d)).map((d: any) => d.day_of_week), new Date().getDay());
+  });
   // For a sport night the plan label is the generic "Cardio & Agility"; the
   // human name (e.g. "Badminton") lives at the head of the note.
   function sessionDisplayName(w: any): string {
