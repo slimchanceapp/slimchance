@@ -1,0 +1,30 @@
+# Lists the MCP server (svelte-recomp/src/lib/mcp.ts, live at
+# https://slimchance.app/mcp) in the official MCP Registry from server.json.
+# Run by hand after a change worth listing (bump "version" first). GitHub's
+# own sign-in proves the namespace (io.github.slimchanceapp), so no key exists
+# anywhere. Listed only after scripts/eval-trend.mjs showed the tool makes an
+# assistant's answers better, not worse (2026-11-10).
+name: Publish MCP server
+on: workflow_dispatch
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: The live server answers before it is listed
+        run: |
+          curl -sf -X POST https://slimchance.app/mcp -H 'Content-Type: application/json' \
+            -H 'MCP-Protocol-Version: 2025-11-25' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q '"slim_chance"'
+      - name: Install mcp-publisher (pinned, checksum verified)
+        env:
+          V: '1.8.6'
+        run: |
+          base="https://github.com/modelcontextprotocol/registry/releases/download/v$V"
+          curl -sfLO "$base/mcp-publisher_linux_amd64.tar.gz"
+          curl -sfL "$base/registry_${V}_checksums.txt" | grep ' mcp-publisher_linux_amd64.tar.gz$' | sha256sum -c -
+          tar xzf mcp-publisher_linux_amd64.tar.gz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish

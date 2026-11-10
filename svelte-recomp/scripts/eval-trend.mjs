@@ -58,8 +58,17 @@ async function gemini(body) {
   throw new Error('gemini kept failing');
 }
 async function mcp(method, params) {
+  for (let attempt = 0; attempt < 5; attempt++) {
+    const r = await mcpOnce(method, params);
+    if (r !== 429) return r;
+    await new Promise((s) => setTimeout(s, 15000)); // the public endpoint allows 60 calls a minute
+  }
+  throw new Error('mcp kept refusing (429)');
+}
+async function mcpOnce(method, params) {
   const r = await fetch(MCP, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-11-25' },
     body: JSON.stringify({ jsonrpc: '2.0', id: 1, method, params }) });
+  if (r.status === 429) return 429;
   return (await r.json()).result;
 }
 const parse = (text) => { const m = text?.match(/\{[^{}]*"chance_in_10"[^{}]*\}/); try { return m ? JSON.parse(m[0]) : null; } catch { return null; } };
@@ -99,8 +108,9 @@ const { tools } = await mcp('tools/list', {});
 const decls = tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.inputSchema }));
 const people = Array.from({ length: N }, (_, i) => person(i));
 const rows = [];
-for (let i = 0; i < people.length; i += 4) {
-  const batch = await Promise.all(people.slice(i, i + 4).map(async (p) => {
+const PAR = Number(process.env.EVAL_PAR ?? 4);
+for (let i = 0; i < people.length; i += PAR) {
+  const batch = await Promise.all(people.slice(i, i + PAR).map(async (p) => {
     const own = slimChance({ weigh_ins: p.weigh_ins }).structuredContent;
     const [a, t] = await Promise.all([alone(p).catch(() => null), withTool(p, decls).catch((e) => ({ error: String(e) }))]);
     return { id: p.id, rate: p.rate, sigma: p.sigma, n: p.weigh_ins.length, losing: p.losing, alone: a, withTool: t,
