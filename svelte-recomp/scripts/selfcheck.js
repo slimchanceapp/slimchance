@@ -1198,10 +1198,15 @@ check('nobody can raise their own AI allowance, so no one account can switch AI 
   const dir = '../supabase/migrations';
   const last = readdirSync(dir).filter((f) => readFileSync(`${dir}/${f}`, 'utf8').includes('function public.ai_take')).sort().at(-1);
   const sql = readFileSync(`${dir}/${last}`, 'utf8');
-  assert.match(sql, /cap\s+integer := case p_bucket when 'ai' then 60 when 'search' then 400 else 60 end;/, 'the allowance is the server\'s');
+  // 2026-11-10, frugal: the prepaid balance is the app's only AI money. The
+  // allowances fit real use (30 days: 195 calls, busiest day 84, busiest
+  // account-day 16) and every Gemini answer has a length ceiling.
+  assert.match(sql, /cap\s+integer := case p_bucket when 'ai' then 25 when 'search' then 400 else 25 end;/, 'the allowance is the server\'s');
   assert.match(sql, /lim\s+integer := least\(greatest\(coalesce\(p_limit, 0\), 0\), cap\);/, 'p_limit can only lower it');
-  assert.match(sql, /if trial then\s+lim := least\(lim, 15\);/, 'trials stay at 15');
-  assert.match(readFileSync('../supabase/functions/_shared/auth.ts', 'utf8'), /DAILY = \{ ai: 60, search: 400 \}/, 'the functions ask for no more than the cap');
+  assert.match(sql, /if trial then\s+lim := least\(lim, 10\);/, 'trials stay at 10');
+  assert.match(sql, /ceiling integer := case p_bucket when 'ai' then 150 /, 'everyone together: 150 a day');
+  assert.match(readFileSync('../supabase/functions/_shared/auth.ts', 'utf8'), /DAILY = \{ ai: 25, search: 400 \}/, 'the functions ask for no more than the cap');
+  assert.match(readFileSync('../supabase/functions/_shared/llm.ts', 'utf8'), /maxOutputTokens: a\.maxTokens \?\? 4096,/, 'every answer has a ceiling');
 });
 
 check('an upstream error never carries a Gemini key back to the app, old format or new', async () => {

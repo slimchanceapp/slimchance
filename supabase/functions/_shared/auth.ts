@@ -11,7 +11,7 @@ const ANON = Deno.env.get('SUPABASE_ANON_KEY') ?? '';
 
 /** Calls per user per day (UTC). Far above a person's use: the busiest real
  *  day so far had four AI estimates. */
-export const DAILY = { ai: 60, search: 400 } as const;
+export const DAILY = { ai: 25, search: 400 } as const;
 
 /** null when the call may go ahead, else the response to send instead. Fails
  *  closed: with the database down, the app is down anyway. */

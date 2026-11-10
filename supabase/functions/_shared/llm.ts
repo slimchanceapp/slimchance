@@ -105,6 +105,9 @@ export type Ask = {
   temperature?: number;
   /** Per-attempt timeout; defaults 12 s text / 20 s image (Gemini) and +8 s elsewhere. */
   timeoutMs?: number;
+  /** The longest answer Gemini may write (default 4,096 tokens): every answer has
+   *  a known ceiling on what it can cost (2026-11-10). */
+  maxTokens?: number;
 };
 export type Options = { only?: unknown[] | null; staggerMs?: number; deadlineMs?: number };
 type Provider = { name: string; vision: boolean; run: <T>(a: Ask, parse: (t: string) => T, s: AbortSignal) => Promise<{ value: T; provider: string }> };
@@ -131,6 +134,7 @@ function geminiCall(model: string, a: Ask, thinking: 'minimal' | 'low', signal: 
         responseMimeType: 'application/json',
         ...(a.schema ? { responseSchema: a.schema } : {}),
         temperature: a.temperature ?? 0.2,
+        maxOutputTokens: a.maxTokens ?? 4096,
         thinkingConfig: { thinkingLevel: thinking },
       },
     }),
