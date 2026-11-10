@@ -1,5 +1,5 @@
 // Slim Chance as a tool any AI assistant can call (MCP, the Model Context
-// Protocol). 2026-11-10: people already ask ChatGPT and Claude "is my diet
+// Protocol). 2026-11-10: people already ask general AI assistants "is my diet
 // working?", and a language model is bad at exactly the sum this app does
 // well: a trend through noisy mornings with an honest error bar. So the
 // maths is offered as a tool: send dated morning weights, get the trend and
