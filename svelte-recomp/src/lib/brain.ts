@@ -12,6 +12,8 @@
 //   - it may choose silence: a day that needs nothing gets nothing.
 // I/O lives in stores/brain.ts, the prompt in supabase/functions/coach.
 
+import { holdAfter } from './hold.ts';
+
 export interface DayRow {
   date: string; dow: string;
   /** That morning's weigh-in in the person's unit, or null. */
@@ -191,11 +193,47 @@ export function checkReply(raw: unknown, facts: BrainFacts): Checked {
     return { ok: false, why: 'a session that isn\'t there' };
   }
 
+  // The evening note shows from holdAfter() on, so a clock time before that,
+  // or a session "ahead" that starts before it, has passed when it's read
+  // (2026-11-10: "a notification that I have a workout at 5.30pm, at 7.30pm").
+  if (reply.send_evening) {
+    const opens = holdAfter(new Date(`${facts.now.date}T12:00:00`).getDay());
+    const evening = `${reply.evening_title}\n${reply.evening_body}`;
+    const past = clockTimes(evening).find((t) => t.minutes < opens && !t.tomorrow);
+    if (past) return { ok: false, why: `${past.text} will have passed by the evening` };
+    const at = clockTimes(facts.today.session ?? '')[0];
+    if (at && at.minutes < opens && namedAhead(facts.today.session!).test(evening)) return { ok: false, why: 'a session that will be over by the evening' };
+  }
+
   const said = reply.evening_body.toLowerCase();
   if (reply.send_evening && facts.recentEvenings.some((e) => e.toLowerCase().includes(said) || said.includes(e.toLowerCase()))) {
     return { ok: false, why: 'a repeat of a recent evening' };
   }
   return { ok: true, reply };
+}
+
+/** Clock times in a text ("17:30", "5.30pm", "6pm"), in minutes from
+ *  midnight, and whether "tomorrow" comes just before. */
+export function clockTimes(text: string): Array<{ text: string; minutes: number; tomorrow: boolean }> {
+  const out: Array<{ text: string; minutes: number; tomorrow: boolean }> = [];
+  for (const m of text.matchAll(/\b(\d{1,2})(?:[:.](\d{2}))?\s*(am|pm)\b|\b(\d{1,2})[:.](\d{2})\b/gi)) {
+    let h = +(m[1] ?? m[4]);
+    const min = +(m[2] ?? m[5] ?? 0);
+    const ap = m[3]?.toLowerCase();
+    if (ap === 'pm' && h < 12) h += 12;
+    if (ap === 'am' && h === 12) h = 0;
+    if (h > 23 || min > 59) continue;
+    out.push({ text: m[0], minutes: h * 60 + min, tomorrow: /tomorrow/i.test(text.slice(Math.max(0, (m.index ?? 0) - 30), m.index)) });
+  }
+  return out;
+}
+
+/** The day's own session ("Gym 17:30" by its label, or as a session, workout
+ *  or gym) spoken of as still to come; "rest counts as training tonight" isn't. */
+function namedAhead(session: string): RegExp {
+  const label = session.replace(/\s*\d{1,2}[:.]\d{2}.*$/, '').trim().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const named = String.raw`(?:${label ? `${label}|` : ''}session|workout|gym)`;
+  return new RegExp(String.raw`\b${named}\b[^.\n]{0,40}\b${AHEAD}|\b${AHEAD}\b[^.\n]{0,25}\b${named}\b`, 'i');
 }
 
 const SESSION = String.raw`(?:session|workout|training|gym|badminton|game|match|lift(?:ing)?)`;
@@ -238,5 +276,7 @@ export function eveningFrom<T extends { date: string; title: string; body: strin
 /** What would make the morning's reply stale: training done since, or a
  *  meal's worth of food logged. A new digest is a reason to ask again. */
 export function factsDigest(f: BrainFacts): string {
-  return `${f.today.trained ? 1 : 0}:${Math.round(f.today.kcal / 300)}`;
+  // Protein too: a shake changes the evening's message without moving the
+  // calories much (2026-11-10: a protein note after the target was hit).
+  return `${f.today.trained ? 1 : 0}:${Math.round(f.today.kcal / 300)}:${Math.round(f.today.protein / 20)}`;
 }

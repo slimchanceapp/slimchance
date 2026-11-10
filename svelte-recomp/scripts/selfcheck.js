@@ -1074,7 +1074,9 @@ check('the coach brain sees only the app\'s own numbers, and nothing it writes g
   assert.equal(facts.trend.now, 112.4);
   assert.deepEqual(numbersIn('2,269 kcal, 0.3 kg, after 21:00'), [2269, 0.3, 21, 0]);
 
-  const ok = { send_evening: true, evening_title: 'Badminton at 18:15', evening_body: 'Protein is 84 g short; your usual whey later closes most of it.', noticed_title: '', noticed_body: '', notes: 'Trains in the afternoon on gym days.' };
+  // Not 'Badminton at 18:15': an evening note shows after 19:30 on a weekday,
+  // so that line would arrive after the game started (fixed 2026-11-10).
+  const ok = { send_evening: true, evening_title: 'Protein before bed', evening_body: 'Protein is 84 g short; your usual whey later closes most of it.', noticed_title: '', noticed_body: '', notes: 'Trains in the afternoon on gym days.' };
   assert.equal(checkReply(ok, facts).ok, true);
   assert.equal(checkReply({ ...ok, evening_body: 'You ate 3,400 kcal yesterday.' }, facts).ok, false, 'a number the app never gave it');
   assert.equal(checkReply({ ...ok, evening_body: '3 of the last 14 days had no food logged.' }, facts).ok, true, 'a count it can work out');
@@ -1087,7 +1089,7 @@ check('the coach brain sees only the app\'s own numbers, and nothing it writes g
   const hold = { date: '2026-10-28', title: 'Evening. Hold it.', body: 'quote' };
   assert.equal(eveningFrom(hold, null), hold, 'no reply: the app\'s own message stands');
   assert.equal(eveningFrom(hold, { ...ok, send_evening: false }), null, 'it may choose silence');
-  assert.equal(eveningFrom(hold, ok).title, 'Badminton at 18:15');
+  assert.equal(eveningFrom(hold, ok).title, 'Protein before bed');
   assert.notEqual(factsDigest(facts), factsDigest({ ...facts, today: { ...facts.today, trained: true } }), 'training since is a reason to ask again');
 });
 
@@ -1137,12 +1139,15 @@ check('the coach brain is safe: nothing harmful gets through, whatever the AI wa
   const remind = { send_evening: true, evening_title: 'Training session ahead', evening_body: 'You have a session remaining for today.', noticed_title: '', noticed_body: '', notes: '' };
   assert.equal(checkReply(remind, rest).ok, false, 'no session today: no session reminder');
   assert.equal(checkReply(remind, done).ok, false, 'trained already: no session reminder');
-  assert.equal(checkReply(remind, facts).ok, true, 'a real session still ahead may be mentioned');
+  // A session still ahead when the note shows (after 19:30 on this Wednesday)
+  // may be mentioned; the fixture's 18:15 game will be over by then (2026-11-10).
+  assert.equal(checkReply(remind, { ...facts, today: { ...facts.today, session: 'Badminton 20:15' } }).ok, true, 'a real session still ahead may be mentioned');
+  assert.equal(checkReply(remind, facts).ok, false, 'a session over before the evening note shows is not "ahead"');
   assert.equal(checkReply({ ...remind, evening_title: 'Protein after training', evening_body: 'Whey after your workout closes most of the 84 g.' }, done).ok, true, 'talking about the session done is fine');
   assert.equal(say('Fine.', { noticed_title: 'Pattern', noticed_body: 'Skip a meal on Mondays.' }).ok, false, 'and the noticed line');
   // Ordinary coaching still gets through: the filter isn't a wall.
   for (const fine of [
-    'Badminton at 18:15. A light meal before helps.',
+    'Badminton at 20:15. A light meal before helps.', // 18:15 is over by a Wednesday's 19:30 note
     'Fat loss is on pace: 0.3 kg a week.',
     'Your usual whey later closes most of the 84 g.',
     'Weekends are where the trend drifts. Your plan says tvaroh and whey.',
@@ -5310,6 +5315,31 @@ check('the chance is honest: simulated people with a known truth get odds within
     const said = (b.p / b.n) * 10, truth = (b.hit / b.n) * 10;
     assert.ok(Math.abs(said - truth) <= 1.5, `said ${said.toFixed(1)} in 10, truth ${truth.toFixed(1)} (band ${i})`);
   }
+});
+
+check('the coach’s evening note never names a time or a session that will have passed when it shows', async () => {
+  // The owner, 2026-11-10: "a notification that I have a workout at 5.30pm,
+  // at 7.30pm", and protein "well after I had already hit the mark". The
+  // coach writes its evening text in the afternoon; the note shows after
+  // 19:30 on a weekday (17:00 Friday to Sunday).
+  const { buildFacts, checkReply, factsDigest } = await import('../src/lib/brain.ts');
+  const make = (now, session, protein = 96) => buildFacts({
+    now, units: 'kg', toUnit: (kg) => kg,
+    trend: { kg: 112, lossPerWeekKg: 0.3, pace: 'on-pace', goalKg: 100 },
+    intake: new Map([[now.toISOString().slice(0, 10), { kcal: 1480, protein, items: 3 }]]),
+    weights: [], trained: new Set(), watchMinutes: new Map(), budget: 2250, proteinTarget: 180,
+    session, plans: {}, why: null, usualFoods: [], recentEvenings: [], notes: null,
+  });
+  const tue = make(new Date('2026-11-10T15:40:00'), 'Gym 17:30');
+  const reply = (title, body) => ({ send_evening: true, evening_title: title, evening_body: body, noticed_title: '', noticed_body: '', notes: '' });
+  assert.equal(checkReply(reply('Gym at 17:30', 'Eat light before it.'), tue).ok, false, 'a time that will have passed');
+  assert.equal(checkReply(reply('Lift day', 'Your workout is still ahead tonight.'), tue).ok, false, 'a session that will be over by then');
+  assert.equal(checkReply(reply('Protein before bed', 'Tomorrow at 7:00, weigh in before breakfast.'), tue).ok, true, 'tomorrow is fine');
+  const sat = make(new Date('2026-11-14T13:00:00'), 'Badminton 18:15');
+  assert.equal(checkReply(reply('Badminton at 18:15', 'Eat light before.'), sat).ok, true, 'on a weekend the note shows from 17:00');
+  assert.notEqual(factsDigest(make(new Date('2026-11-10T15:40:00'), null, 96)), factsDigest(make(new Date('2026-11-10T15:40:00'), null, 150)), 'a shake changes the day: the coach is asked again');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/lib/stores/brain.ts', 'utf8'), /if \(s0!\.reply\) keep\(\{ \.\.\.s0!, reply: null \}\);/, 'out of date and not askable yet: the app’s own words stand in');
 });
 
 // Nothing may be reported until the async checks have actually settled.

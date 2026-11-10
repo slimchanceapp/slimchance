@@ -76,7 +76,14 @@ export async function runBrainIfDue(now = new Date()): Promise<void> {
   });
   const digest = factsDigest(facts);
   const same = s0?.date === facts.now.date;
-  if (same && (s0!.digest === digest || s0!.tries >= MAX_TRIES || Date.now() - s0!.at < GAP_MS)) return;
+  if (same && s0!.digest !== digest && (s0!.tries >= MAX_TRIES || Date.now() - s0!.at < GAP_MS)) {
+    // The day has moved on (food, protein, training) and the coach can't be
+    // asked again yet: its text is out of date, so the app's own words stand
+    // in until it can (2026-11-10).
+    if (s0!.reply) keep({ ...s0!, reply: null });
+    return;
+  }
+  if (same && s0!.digest === digest) return;
 
   running = true;
   try {

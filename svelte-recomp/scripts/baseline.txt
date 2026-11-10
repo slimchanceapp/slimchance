@@ -318,6 +318,7 @@ the coach brain sees only the app's own numbers, and nothing it writes goes out 
 the coach never assumes the user is cutting
 the coach never judges protein by the clock: the log can’t say when food was eaten
 the coach plans the next days inside the floor, and the app does every sum
+the coach’s evening note never names a time or a session that will have passed when it shows
 the coach’s plan is kept, and its meals are ticked as they are logged
 the confirmation names real numbers, not "done"
 the declared brand wins over the heuristic
