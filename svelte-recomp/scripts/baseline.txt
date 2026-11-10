@@ -92,6 +92,7 @@ a table pull pages past the server’s 1000-row cap
 a thin week omits sections instead of padding them with blanks
 a training day you have not trained on gets one reminder, before the evening goes
 a trial gets a smaller AI allowance, keeps no photos, and is deleted after 30 idle days
+a trial that leaves setup is deleted, so test runs never count as people
 a watch always beats the phone
 a watch beside the scale: each signal its own honest trend, the scale explained by steps, and no health score
 a watch session that duplicates hand-logged sets is dropped

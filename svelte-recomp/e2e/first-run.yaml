@@ -27,3 +27,11 @@ appId: com.toxicminds.recompos
     text: "kg"
     optional: true
 - takeScreenshot: proof/flow-3-setup
+# Leave the way a person can: the trial is deleted, so no test account stays
+# behind to be counted as a person, and deletion is proven on both phones.
+- tapOn: "Leave setup"
+- tapOn: "Leave and delete"
+- extendedWaitUntil:
+    visible: "The odds, every morning."
+    timeout: 60000
+- takeScreenshot: proof/flow-4-left

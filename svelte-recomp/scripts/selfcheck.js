@@ -5128,6 +5128,20 @@ check('account deletion has its own address, for Google Play', async () => {
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /<span>Delete my account<\/span>/, 'named as the menu names it');
 });
 
+check('a trial that leaves setup is deleted, so test runs never count as people', async () => {
+  // 2026-11-10: each nightly phone proof left two trials behind (48 "sign-ups"
+  // in 14 days, not one a person), because setup offered only Sign out and a
+  // trial has no email to come back with: leaving orphaned it on the server for
+  // 30 days. Leaving setup now deletes a trial, and the phone flow ends that way.
+  const { readFileSync } = await import('node:fs');
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  const setup = layout.slice(layout.indexOf('{:else if needsOnboarding}'), layout.indexOf('<Onboarding '));
+  assert.match(setup, /\{#if \$isTrial\}[\s\S]*aria-label="Leave setup"[\s\S]*\{:else\}[\s\S]*onclick=\{signOut\}/, 'a trial leaves; an account signs out');
+  const leave = layout.match(/<Modal open=\{leaveOpen\}[\s\S]*?<\/Modal>/)?.[0] ?? '';
+  assert.match(leave, /onclick=\{confirmDelete\}[\s\S]*Leave and delete/, 'leaving deletes the trial');
+  assert.match(readFileSync('e2e/first-run.yaml', 'utf8'), /- tapOn: "Leave setup"\s*\n- tapOn: "Leave and delete"/, 'the phone flow cleans up after itself');
+});
+
 check('Progress answers "am I getting there?" first, then fitter, this week, details, goals', async () => {
   // The design review, 2026-10-31: 2.7 screens a stranger had to scroll
   // through on faith. One question per screen, each number once, the rest one

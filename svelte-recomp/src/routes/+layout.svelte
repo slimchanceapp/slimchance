@@ -52,6 +52,7 @@
   let crashMsg = $state<string | null>(null);
   let menuOpen = $state(false);
   let deleteOpen = $state(false);
+  let leaveOpen = $state(false);
   let deleteText = $state('');
   let deleteErr = $state('');
   let deleteBusy = $state(false);
@@ -537,7 +538,13 @@
       <div id="topbar-title" class="wordmark"><b>Slim</b> Chance</div>
       <div class="flex ac gap2">
         <Diagnostics />
-        <button class="icn-btn" onclick={signOut} title="Sign out">⎋</button>
+        {#if $isTrial}
+          <!-- A trial has no email to come back with, so leaving deletes it
+               rather than leaving it orphaned on the server. -->
+          <button class="icn-btn" onclick={() => { deleteErr = ''; leaveOpen = true; }} title="Leave setup" aria-label="Leave setup">⎋</button>
+        {:else}
+          <button class="icn-btn" onclick={signOut} title="Sign out">⎋</button>
+        {/if}
       </div>
     </div>
     <main id="pages">
@@ -552,6 +559,14 @@
       {/if}
       <Onboarding onDone={() => (onboardingDone = true)} />
     </main>
+    <Modal open={leaveOpen} onclose={() => { if (!deleteBusy) leaveOpen = false; }}>
+      <div class="cw-h">Leave setup?</div>
+      <p class="cw-p">This trial is deleted, with anything in it. It has no email to come back
+        with, so it couldn't be opened again anyway.</p>
+      {#if deleteErr}<div class="menu-note">{deleteErr}</div>{/if}
+      <button class="btn bfl del-btn" onclick={confirmDelete} disabled={deleteBusy}>{deleteBusy ? 'Deleting…' : 'Leave and delete'}</button>
+      <button class="btn bg_ bfl cw-no" onclick={() => (leaveOpen = false)} disabled={deleteBusy}>Stay</button>
+    </Modal>
   {:else}
   <div id="topbar">
     <div class="flex ac gap2">
