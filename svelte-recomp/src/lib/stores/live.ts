@@ -5,7 +5,7 @@ import { userId } from './user';
 import { nowTick } from './refresh';
 import { overlaySessions } from '$lib/program';
 import { todayYmd } from '$lib/date';
-import { setUnits } from '$lib/units';
+import { useUnits } from './units';
 
 let currentUid = '';
 
@@ -59,7 +59,7 @@ userId.subscribe((uid) => {
     next: (data) => {
       // Before anything reads the profile, so every number it drives is
       // already in the person's unit.
-      if (data) setUnits(data.units);
+      if (data) useUnits(data.units);
       goalResult.set(data?.goal_kg ?? null);
       goalReasonResult.set(data?.goal_reason ?? null);
       profileResult.set(data ?? null);

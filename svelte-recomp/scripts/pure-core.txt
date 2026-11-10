@@ -1,0 +1,58 @@
+# The pure core: modules in src/lib that take data in and give data out, and
+# reach nothing outside (no storage, network, browser, database or stores),
+# directly or through what they import. selfcheck fails if one stops being
+# pure. Add a module when it joins the core; removing one needs a reason in
+# the commit, as with baseline.txt (2026-11-10, book chapter 5).
+adaptiveTdee.ts
+brain.ts
+briefing.ts
+cheer.ts
+coach.ts
+config.ts
+cycle.ts
+date.ts
+dayOne.ts
+exportData.ts
+fit.ts
+fitness.ts
+food.ts
+foodCoach.ts
+freshness.ts
+hold.ts
+importWeights.ts
+index.ts
+insights.ts
+kind.ts
+lessons.ts
+liftStalls.ts
+line.ts
+mcp.ts
+mealPlan.ts
+meds.ts
+milestone.ts
+muscleVolume.ts
+nextWeight.ts
+nutritionPatterns.ts
+paging.ts
+plans.ts
+plates.ts
+profile.ts
+program.ts
+pulse.ts
+quickAdd.ts
+readiness.ts
+recomp.ts
+scale.ts
+scaleUp.ts
+signals.ts
+situational.ts
+sleepPerformance.ts
+slimTrack.ts
+strength.ts
+tdee.ts
+trainingHeatmap.ts
+units.ts
+week.ts
+weekCheckIn.ts
+weeklyReview.ts
+weeklyShare.ts

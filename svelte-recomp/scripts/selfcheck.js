@@ -5465,6 +5465,46 @@ check('MCP calls are counted by day and tool, never what anyone sent, and counti
   assert.doesNotMatch(readFileSync('src/lib/mcp.ts', 'utf8'), /Nothing is stored\./, 'the tools say what is true: calls are counted');
 });
 
+check('the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import', async () => {
+  // 2026-11-10 (book chapter 5): units.ts read browser storage when imported,
+  // so 15 pure modules secretly depended on it, the MCP server (which runs
+  // where there is no browser) among them. The memory moved to the shell
+  // (stores/units.ts) and the core is listed in scripts/pure-core.txt.
+  const { readFileSync, readdirSync, statSync, existsSync } = await import('node:fs');
+  const { join, dirname, resolve } = await import('node:path');
+  const root = resolve('src/lib');
+  const IMPURE = /^(svelte|svelte\/|\$env|\$app|@supabase|dexie|@capacitor|\$lib\/(stores|db|components|health)\b)/;
+  const GLOBALS = /\b(fetch|window|navigator|document|localStorage|sessionStorage|indexedDB|Capacitor|matchMedia|setTimeout|setInterval|Notification)\b/;
+  const memo = new Map();
+  const why = (f, seen = new Set()) => {
+    if (memo.has(f)) return memo.get(f);
+    if (seen.has(f)) return null;
+    seen.add(f);
+    if (/\/(stores|db|components|health)\//.test(f) || f.endsWith('.svelte')) return `${f} is a shell module`;
+    const src = readFileSync(f, 'utf8');
+    const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '""');
+    let reason = code.match(GLOBALS) ? `${f} uses ${code.match(GLOBALS)[1]}` : null;
+    for (const m of src.matchAll(/^\s*import\s+(?!type\b)(?:[^'";]*?from\s+)?['"]([^'"]+)['"]/gm)) {
+      if (reason) break;
+      const spec = m[1];
+      if (IMPURE.test(spec)) { reason = `${f} imports ${spec}`; break; }
+      const base = spec.startsWith('.') ? resolve(dirname(f), spec) : spec.startsWith('$lib/') ? resolve(root, spec.slice(5)) : null;
+      const target = base && [base, `${base}.ts`, `${base}/index.ts`].find((c) => existsSync(c) && statSync(c).isFile());
+      if (target) reason = why(target, seen);
+    }
+    memo.set(f, reason);
+    return reason;
+  };
+  const listed = readFileSync('scripts/pure-core.txt', 'utf8').split('\n').map((l) => l.trim()).filter((l) => l && !l.startsWith('#'));
+  assert.ok(listed.length >= 53, `the core only grows (${listed.length})`);
+  for (const name of listed) {
+    const f = join(root, name);
+    assert.ok(existsSync(f), `${name} is listed but gone: take it off with a reason`);
+    const r = why(f);
+    assert.equal(r, null, `${name} left the pure core: ${r?.replace(root + '/', '')}`);
+  }
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

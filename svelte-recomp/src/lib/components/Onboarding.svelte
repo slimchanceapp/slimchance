@@ -29,7 +29,8 @@
   import { CALENDAR_KEY, canPush, localTz } from '$lib/reminder';
   import { noteEvent } from '$lib/events';
   import WeightInput from './WeightInput.svelte';
-  import { dwt, roundIn, setUnits, type Units, wtShortU } from '$lib/units';
+  import { dwt, roundIn, type Units, wtShortU } from '$lib/units';
+  import { useUnits } from '$lib/stores/units';
 
   let { onDone }: { onDone: () => void } = $props();
 
@@ -61,8 +62,8 @@
   let units = $state<Units>(firstUnits);
   // The weight boxes read the unit when they appear: it's set before they're
   // re-drawn (the {#key} below), never after.
-  function pickUnits(u: Units) { setUnits(u); units = u; }
-  setUnits(firstUnits);
+  function pickUnits(u: Units) { useUnits(u); units = u; }
+  useUnits(firstUnits);
 
   // — Screen 1: where you are, where you're going —
   let weightKg = $state<number | null>(null);

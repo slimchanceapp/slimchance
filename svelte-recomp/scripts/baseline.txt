@@ -354,6 +354,7 @@ the odds coins flip in and land as they light, and the themes are Deep and Dayli
 the offline estimate understands a Slovak breakfast
 the old heavy session is not shown in the days before the start
 the privacy page names every outside service the code talks to
+the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import
 the same match written twice collapses to one
 the same watch workouts are not rewritten, whatever the timestamp spelling
 the score is gone from the app, and the glow reads the hero’s tone

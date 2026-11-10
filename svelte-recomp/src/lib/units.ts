@@ -3,14 +3,17 @@
 // Every weight is STORED in kilograms (see profile.ts: mixing storage units is
 // how weight histories get corrupted). This is the one place that turns a kg
 // value into what the person reads, and what they type back into kg. The unit
-// is set once from the profile (stores/live.ts) and remembered on the device,
-// so the first frame after a reload is already in the right unit.
+// is set from the profile (stores/live.ts); remembering it on the device, so
+// the first frame after a reload is already in the right unit, is the shell's
+// job (stores/units.ts, restored in routes/+layout.ts). Since 2026-11-10 this
+// module touches no storage: 15 pure modules used to depend on it, the MCP
+// server among them, which runs where there is no browser.
 //
 // Stone users read their weight as "13 st 1.9 lb" and every change in pounds
 // ("down 1.3 lb a week"), as UK scales and slimming clubs do.
 //
 // Lifting loads on the Train tab stay in kg for now: plates are a separate
-// question from body weight. Pure apart from the remembered unit; see
+// question from body weight. Pure apart from the current unit; see
 // selfcheck.js.
 
 export type Units = 'metric' | 'imperial' | 'stone';
@@ -18,19 +21,22 @@ export type WeightUnit = 'kg' | 'lb' | 'st';
 
 export const KG_PER_LB = 0.45359237;
 const LB_PER_ST = 14;
-const KEY = 'recompos.units';
+/** Where the shell remembers the unit on the device (stores/units.ts). */
+export const UNIT_MEMORY_KEY = 'recompos.units';
 
 export const weightUnitOf = (units: string | null | undefined): WeightUnit =>
   units === 'imperial' ? 'lb' : units === 'stone' ? 'st' : 'kg';
 
-let current: WeightUnit = (() => {
-  try { const v = localStorage.getItem(KEY); return v === 'lb' || v === 'st' ? v : 'kg'; } catch { return 'kg'; }
-})();
+let current: WeightUnit = 'kg';
 
 /** Called with the profile's `units` whenever the profile loads or changes. */
 export function setUnits(units: string | null | undefined): void {
   current = weightUnitOf(units);
-  try { localStorage.setItem(KEY, current); } catch { /* storage disabled */ }
+}
+
+/** The unit the device remembered ('kg', 'lb' or 'st'), before the profile loads. */
+export function restoreUnit(remembered: string | null | undefined): void {
+  current = remembered === 'lb' || remembered === 'st' ? remembered : 'kg';
 }
 
 export const weightUnit = (): WeightUnit => current;
