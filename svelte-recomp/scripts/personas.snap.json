@@ -112,10 +112,10 @@
   },
   "a newcomer on their seventh morning": {
     "trend": {
-      "state": "answerable",
+      "state": "too-noisy",
       "trendKg": 87.1
     },
-    "meaning": "Almost certainly coming off.",
+    "meaning": "8 in 10 it’s coming off.",
     "mornings": {
       "weighed": 3,
       "days": 3

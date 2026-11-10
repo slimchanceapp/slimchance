@@ -63,6 +63,17 @@ export const WINDOW_DAYS = 35;
 const RATE_FLOOR_KG_WK = 0.15;
 /** Never promise an answer further out than this — past it, "log more" is the honest advice. */
 const MAX_FORECAST_DAYS = 60;
+/** How much one morning's water carries into the next, before a series can
+ *  show its own. A week or two of slow water swings looks exactly like a trend,
+ *  so a short series can't measure this; it starts high (the careful end of
+ *  what scales do) and the person's own mornings take over as they add up.
+ *  Chosen 2026-11-10 by calibration across nine kinds of scale (selfcheck). */
+const CARRY_PRIOR = 0.7;
+const CARRY_PRIOR_WEIGHT = 10;
+/** Before the line says much, a true rate is assumed to lie near the line the
+ *  chance is about, within about 0.4 kg a week: so no information is a coin
+ *  toss, and a week of noise can't produce a verdict (2026-11-10). */
+const RATE_PRIOR_SD = 0.4;
 
 export type TrendState = 'not-enough' | 'too-noisy' | 'answerable';
 
@@ -146,12 +157,26 @@ export function fitWeightLine(points: WeighIn[], asOfMs: number, windowDays = WI
   const scatter = df > 0 ? Math.sqrt(sse / df) : 0;
   // A heavy morning tends to follow a heavy morning (water and gut content
   // carry over), so daily readings are not independent and the textbook error
-  // bar is too narrow. Widen it by the residuals' own lag-1 autocorrelation:
-  // with ρ = 0.4 the honest interval is 1.5× the naive one.
+  // bar is too narrow. The noise is modelled as carrying over from day to day
+  // (AR(1) in days, gaps included): the carry-over starts at CARRY_PRIOR and
+  // moves toward the residuals' own lag-1 correlation as mornings add up; the
+  // noise level is the residuals' sum of squares over what that model expects
+  // it to be (tr(MR)), and the slope's spread is then exact for that model.
+  // Until 2026-11-10 the residuals alone set both, which made the first two
+  // weeks' coins up to 3 coins too sure: a short series hides its own swings.
   let lag = 0;
   for (let i = 0; i < n - 1; i++) lag += resid[i] * resid[i + 1];
-  const rho = sse > 0 ? Math.min(0.9, Math.max(0, lag / sse)) : 0;
-  const seSlope = df > 0 ? (scatter / Math.sqrt(sxx)) * Math.sqrt((1 + rho) / (1 - rho)) : 0;
+  const rhoHat = sse > 0 ? Math.max(0, lag / sse) : 0;
+  const rho = Math.min(0.9, (Math.max(df, 0) * rhoHat + CARRY_PRIOR_WEIGHT * CARRY_PRIOR) / (Math.max(df, 0) + CARRY_PRIOR_WEIGHT));
+  const pow: number[] = [1];
+  let sumR = 0, cRc = 0;
+  for (let i = 0; i < n; i++) for (let j = 0; j < n; j++) {
+    const g = Math.round(Math.abs(x[i] - x[j]));
+    while (pow.length <= g) pow.push(pow[pow.length - 1] * rho);
+    sumR += pow[g]; cRc += (x[i] - xbar) * (x[j] - xbar) * pow[g];
+  }
+  const expected = n - (sumR / n + cRc / sxx);
+  const seSlope = df > 0 ? Math.sqrt((sse / Math.max(expected, 0.5)) * cRc) / sxx : 0;
   return {
     n, slopePerDay: slope, halfWidthPerDay: tCritical(df) * seSlope, scatterKg: scatter,
     endKg: intercept + slope * x[n - 1], spanDays: Math.round(x[n - 1]),
@@ -228,12 +253,21 @@ export function weightVerdict(points: WeighIn[], asOfMs?: number): WeightVerdict
  */
 // ponytail: a normal curve at the interval's own scale stands in for Student's
 // t; from the first verdict (seven weigh-ins) they agree to within one coin in ten.
+// The line's rate is combined with RATE_PRIOR_SD around the chance's own line,
+// so with little information the chance stays near a coin toss; with a month
+// of mornings the line outweighs it.
 export function chanceOf(v: WeightVerdict | null, way: 'lose' | 'gain' | 'hold'): number | null {
   if (!v || v.state === 'not-enough') return null;
-  const above = (x: number) => v.halfWidthKgPerWeek > 0
-    ? normalCdf((1.96 * (v.rateKgPerWeek - x)) / v.halfWidthKgPerWeek)
-    : v.rateKgPerWeek > x ? 1 : v.rateKgPerWeek < x ? 0 : 0.5;
-  return way === 'lose' ? above(RATE_FLOOR_KG_WK) : way === 'gain' ? 1 - above(-RATE_FLOOR_KG_WK) : above(-RATE_FLOOR_KG_WK);
+  const line = way === 'lose' ? RATE_FLOOR_KG_WK : -RATE_FLOOR_KG_WK;
+  const se = v.halfWidthKgPerWeek / 1.96;
+  let rate = v.rateKgPerWeek, spread = 0;
+  if (se > 0) {
+    const wLine = 1 / (se * se), wPrior = 1 / (RATE_PRIOR_SD * RATE_PRIOR_SD);
+    rate = (v.rateKgPerWeek * wLine + line * wPrior) / (wLine + wPrior);
+    spread = Math.sqrt(1 / (wLine + wPrior));
+  }
+  const above = spread > 0 ? normalCdf((rate - line) / spread) : rate > line ? 1 : rate < line ? 0 : 0.5;
+  return way === 'gain' ? 1 - above : above;
 }
 
 /** Φ(z), Abramowitz & Stegun 7.1.26 (error under 1e-7). */

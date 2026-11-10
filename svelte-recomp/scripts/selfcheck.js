@@ -573,7 +573,7 @@ check('the hero reads the trend, the distance to the next stop, and a pace that 
   assert.deepEqual(early.odds, { lit: 4, text: '4 in 10 it’s coming off: too close to call.' }, 'a first week can’t know yet, and says so');
   assert.deepEqual(gentle.odds, { lit: 3, text: '3 in 10 it’s coming off right now.' }, 'a flat month: honest odds, no joke');
   assert.equal(pulse({ weight: { ...wv(90, 0.3, 0.4), state: 'too-noisy' }, pace: 'too-early', firstKg: 92, goalKg: 76, next: null }).odds.text,
-    '8 in 10 it’s coming off.');
+    '7 in 10 it’s coming off.'); // 8 until 2026-11-10: an unsure line now leans toward a coin toss
   // A slow drift the interval is sure of (0.08 kg a week) is not "coming off":
   // it's the flat the stall check names, and the odds must not cheer it.
   const drift = pulse({ weight: wv(93.1, 0.08, 0.05), pace: 'stalled', firstKg: 113.5, goalKg: 76, next });
@@ -588,10 +588,15 @@ check('the hero reads the trend, the distance to the next stop, and a pace that 
 check('the odds are the verdict’s own interval, read against a loss that counts', async () => {
   const { chanceOf } = await import('../src/lib/insights.ts');
   const near = (a, b) => Math.abs(a - b) < 1e-4;
-  assert.ok(near(chanceOf({ ...wv(90, 0.45, 0.3), state: 'too-noisy' }, 'lose'), 0.975), 'the interval just clears 0.15 kg a week');
+  // Since 2026-11-10 the interval is weighed with a plausible rate centred on
+  // the line itself (insights RATE_PRIOR_SD), so an interval that only just
+  // clears 0.15 kg a week reads as strong, not certain (it was exactly 0.975).
+  const clears = chanceOf({ ...wv(90, 0.45, 0.3), state: 'too-noisy' }, 'lose');
+  assert.ok(clears > 0.95 && clears < 0.975, `the interval just clears 0.15 kg a week: strong, not certain (${clears.toFixed(3)})`);
   assert.ok(near(chanceOf(wv(90, 0.15, 0.3), 'lose'), 0.5), 'right on the line: a coin toss');
   assert.ok(near(chanceOf(wv(90, -0.15, 0.3), 'hold'), 0.5), 'holding is not climbing past the same line');
-  assert.ok(near(chanceOf(wv(90, -0.45, 0.3), 'gain'), 0.975));
+  assert.ok(near(chanceOf(wv(90, -0.45, 0.3), 'gain'), clears), 'gaining mirrors losing');
+  assert.ok(chanceOf(wv(90, 0.6, 0.05), 'lose') > 0.99, 'a month of clear loss still reads as almost certain');
   assert.equal(chanceOf(null, 'lose'), null);
   assert.equal(chanceOf({ ...wv(90, 0.5), state: 'not-enough' }, 'lose'), null);
 });
@@ -5423,6 +5428,52 @@ check('the chance is honest: simulated people with a known truth get odds within
     const said = (b.p / b.n) * 10, truth = (b.hit / b.n) * 10;
     assert.ok(Math.abs(said - truth) <= 1.5, `said ${said.toFixed(1)} in 10, truth ${truth.toFixed(1)} (band ${i})`);
   }
+});
+
+check('the chance is honest in the first two weeks too, on quiet and noisy scales alike', async () => {
+  // 2026-11-10: an eval found the first coins overconfident. With 7 to 10
+  // mornings, 0 to 2 coins went to people who were truly losing about 4 times
+  // in 10, because a week of slow water swings looks just like a trend. The
+  // check above only simulated 35 to 65 days. Here: 9 kinds of scale (day-to-day
+  // noise 0.4, 0.7 or 1.0 kg; carry-over 0.2, 0.45 or 0.7) with the 0.35%
+  // weekend swing seen in 1,421 smart-scale users (PLOS ONE 2020,
+  // doi:10.1371/journal.pone.0232152), 7 to 20 days each. Confident coins (0-2
+  // or 8-10) must be no more than 2 coins too sure on any scale, and the
+  // average error (Brier score) must stay under 0.2.
+  const { weightVerdict, chanceOf } = await import('../src/lib/insights.ts');
+  const DAY = 864e5; let worst = 0, brier = 0, count = 0, at = '';
+  for (const sd of [0.4, 0.7, 1.0]) for (const r of [0.2, 0.45, 0.7]) {
+    let seed = 11;
+    const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
+    const lo = { p: 0, hit: 0, n: 0 }, hi = { p: 0, hit: 0, n: 0 };
+    for (let person = 0; person < 500; person++) {
+      const rate = -0.4 + rnd() * 1.4, days = 7 + Math.floor(rnd() * 14), kg0 = 80 + rnd() * 50, start = Date.UTC(2026, 0, 1 + Math.floor(rnd() * 7), 12);
+      const pts = []; let e = sd * gauss();
+      for (let d = 0; d < days; d++) {
+        e = r * e + Math.sqrt(1 - r * r) * sd * gauss();
+        const dow = new Date(start + d * DAY).getUTCDay(), weekend = kg0 * 0.0035 * (dow === 0 || dow === 1 ? 0.5 : dow === 4 || dow === 5 ? -0.5 : 0);
+        if (rnd() < 0.85 || d === days - 1) pts.push({ date: new Date(start + d * DAY).toISOString().slice(0, 10), weight: +(kg0 - (rate / 7) * d + e + weekend).toFixed(1) });
+      }
+      const p = chanceOf(weightVerdict(pts, start + (days - 1) * DAY), 'lose');
+      if (p == null) continue;
+      const y = rate > 0.15 ? 1 : 0;
+      brier += (p - y) ** 2; count++;
+      if (p <= 0.2) { lo.p += p; lo.hit += y; lo.n++; }
+      if (p >= 0.8) { hi.p += p; hi.hit += y; hi.n++; }
+    }
+    for (const [b, sign] of [[lo, 1], [hi, -1]]) {
+      if (b.n < 30) continue;
+      const over = (sign * (b.hit - b.p) / b.n) * 10;
+      if (over > worst) { worst = over; at = `noise ${sd} kg, carry-over ${r}, ${sign > 0 ? 'low' : 'high'} coins`; }
+    }
+  }
+  assert.ok(worst <= 2, `confident coins were ${worst.toFixed(1)} coins too sure (${at})`);
+  assert.ok(brier / count < 0.2, `Brier ${(brier / count).toFixed(3)}`);
+  // No real information is a coin toss, not a verdict.
+  const flat = [92.4, 93.6, 92.1, 93.3, 92.2, 93.5, 92.0].map((weight, k) => ({ date: `2026-11-0${k + 1}`, weight }));
+  const p = chanceOf(weightVerdict(flat, Date.UTC(2026, 10, 7, 12)), 'lose');
+  assert.ok(p > 0.3 && p < 0.7, `a noisy flat week is too close to call (${p.toFixed(2)})`);
 });
 
 check('the coach’s evening note never names a time or a session that will have passed when it shows', async () => {

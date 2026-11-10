@@ -1,9 +1,10 @@
 // Slim Chance as a tool any AI assistant can call (MCP, the Model Context
 // Protocol). 2026-11-10: people already ask general AI assistants "is my diet
-// working?", and a language model is bad at exactly the sum this app does
-// well: a trend through noisy mornings with an honest error bar. So the
-// maths is offered as a tool: send dated morning weights, get the trend and
-// the chance back, in the same words the app uses.
+// working?", and the sum behind the answer (a trend through noisy mornings
+// with an honest error bar) is this app's own. So the maths is offered as a
+// tool: send dated morning weights, get the trend and the chance back, in the
+// same words the app uses. Whether it makes an assistant's answer better is
+// measured, not assumed: scripts/eval-trend.mjs.
 //
 // Stateless and anonymous by design: nothing is stored, no account, no AI on
 // our side (the caller's assistant does the talking), so there is no personal
