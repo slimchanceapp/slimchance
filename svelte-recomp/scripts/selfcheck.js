@@ -5439,6 +5439,32 @@ check('a stall with falling steps names moving less, from the same steps trend a
   assert.match(readFileSync('src/lib/signals.ts', 'utf8'), /fitWeightLine\(pts, asOfMs, undefined, CAREFUL_CARRY\)/);
 });
 
+check('the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8', async () => {
+  // Decision 0003 (2026-11-05) named the measure; until 2026-11-10 nothing
+  // counted it. Totals only, owners left out, each among those who had time.
+  const { readFileSync } = await import('node:fs');
+  const sql = readFileSync('../supabase/migrations/20261110120000_outcomes.sql', 'utf8');
+  assert.match(sql, /'week4_weighing', count\(\*\) filter \(where first_weigh <= \(now\(\) at time zone 'utc'\)::date - 35 and week4_weighs >= 2\)/);
+  assert.match(sql, /abs\(week8_kg - start_kg\) >= 0\.5/, 'half a kilo, beyond a week of noise');
+  assert.match(sql, /u\.id not in \(select user_id from public\.app_owners\)/, 'owners left out');
+  const page = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
+  assert.ok(page.indexOf('Is it helping?') > 0 && page.indexOf('Is it helping?') < page.indexOf('From sign-up to staying'), 'first on the page');
+});
+
+check('MCP calls are counted by day and tool, never what anyone sent, and counting can never fail an answer', async () => {
+  // 2026-11-10: is the public listing doing anything? A count per day and tool.
+  const { readFileSync } = await import('node:fs');
+  const route = readFileSync('src/routes/mcp/+server.ts', 'utf8');
+  assert.match(route, /body: JSON\.stringify\(\{ p_tool: tool \}\)/, 'only the tool name leaves');
+  assert.match(route, /signal: AbortSignal\.timeout\(800\)/);
+  assert.match(route, /catch \{ \/\* counting is never worth a failed answer \*\/ \}/);
+  const sql = readFileSync('../supabase/migrations/20261110130000_mcp_calls.sql', 'utf8');
+  assert.match(sql, /alter table public\.mcp_calls enable row level security;/);
+  assert.doesNotMatch(sql, /create policy/i, 'nobody reads or writes the table directly');
+  assert.match(sql, /if p_tool not in \('initialize', 'tools\/list', 'slim_chance', 'body_signals'\) then/);
+  assert.doesNotMatch(readFileSync('src/lib/mcp.ts', 'utf8'), /Nothing is stored\./, 'the tools say what is true: calls are counted');
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

@@ -21,6 +21,10 @@
     by_from?: Array<{ from: string; joined: number; setup: number; weighed: number; three_of_seven: number; week: number; month: number }>;
     /** People per answer to "Is Slim Chance for you?" (migration 20261031130000_fit_ask). */
     fit?: Record<string, number>;
+    /** Decision 0003's measure of helping (migration 20261110120000_outcomes). */
+    outcomes?: { week4_eligible: number; week4_weighing: number; week8_eligible: number; week8_measured: number; week8_toward_goal: number };
+    /** Calls to the public MCP server per tool, last 30 days (migration 20261110130000_mcp_calls). */
+    mcp?: Record<string, number>;
   }
 
   const SPANS = [30, 90, 365] as const;
@@ -61,6 +65,29 @@
 {:else if !m}
   <div class="card nb-note">{loading ? 'Counting…' : ''}</div>
 {:else}
+  <!-- Decision 0003: the measure is people still weighing in at week 4 and
+       moving toward their goal by week 8, not sign-ups or opens. First. -->
+  <section class="card" aria-label="Is it helping?">
+    <div class="card-lbl">Is it helping? · decision 0003</div>
+    {#if m.outcomes}
+      <div class="nb-pair"><span>Still weighing in at week 4</span><b>{m.outcomes.week4_weighing} of {m.outcomes.week4_eligible}</b></div>
+      <div class="nb-pair"><span>Nearer their goal by week 8</span><b>{m.outcomes.week8_toward_goal} of {m.outcomes.week8_measured}</b></div>
+      <p class="nb-foot">
+        Week 4: two or more weigh-ins in days 22 to 35 after the first, among the {m.outcomes.week4_eligible} who started long enough ago.
+        Week 8: week 8's average at least half a kilo nearer the goal than week 1's, among those still weighing then
+        ({m.outcomes.week8_eligible} started long enough ago). Small numbers say little: read them as counts, not rates.
+      </p>
+    {/if}
+  </section>
+
+  <section class="card" aria-label="Assistants using Slim Chance">
+    <div class="card-lbl">Assistants using Slim Chance · MCP, last 30 days</div>
+    <div class="nb-pair"><span>Connected</span><b>{m.mcp?.['initialize'] ?? 0}</b></div>
+    <div class="nb-pair"><span>Asked for the chance</span><b>{m.mcp?.['slim_chance'] ?? 0}</b></div>
+    <div class="nb-pair"><span>Asked about a watch</span><b>{m.mcp?.['body_signals'] ?? 0}</b></div>
+    <p class="nb-foot">Counts of calls to slimchance.app/mcp, by day and tool. Nothing anyone sent is kept, so these are calls, not people.</p>
+  </section>
+
   <section class="card" aria-label="From sign-up to staying">
     <div class="card-lbl">From sign-up to staying · joined in the last {m.days} days</div>
     {#each m.funnel as s, i}

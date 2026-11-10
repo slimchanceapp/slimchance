@@ -33,7 +33,7 @@ const TOOL = {
     'water noise, the rate per week with its 95% range, and the chance in 10 that it is truly moving the ' +
     'way the person wants. It reads the last 5 weeks up to the latest reading; it describes the recent ' +
     'past, it is not a forecast. Needs at least 7 readings in those 5 weeks for a verdict; with fewer it ' +
-    'says how many more mornings it needs. Nothing is stored.',
+    'says how many more mornings it needs. Nothing you send is stored.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -87,7 +87,7 @@ const SIGNALS_TOOL = {
     '(falling usually means fitness improving), daily steps (falling is a common hidden reason weight loss ' +
     'slows), sleep hours and HRV. With morning weights too, it also gives the weight trend and says when the ' +
     'watch explains the scale. Separate signals, not a health score; not medical advice. Needs 7 days of a ' +
-    'signal for its trend. Nothing is stored.',
+    'signal for its trend. Nothing you send is stored.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -232,7 +232,7 @@ export function handleMcp(msg: any, headers: { protocolVersion?: string | null }
         protocolVersion: SUPPORTED.includes(want) ? want : SUPPORTED[0],
         capabilities: { tools: {} },
         serverInfo: { name: 'slim-chance', title: 'Slim Chance', version: '1.0.0', websiteUrl: 'https://slimchance.app' },
-        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Nothing is stored.',
+        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Nothing anyone sends is stored; calls are counted per day.',
       });
     }
     case 'ping': return ok({});
