@@ -59,7 +59,8 @@ Deno.serve(async (req: Request) => {
   if (!image || !gender) return json({ error: 'Missing image or gender' }, 400);
 
   try {
-    const { value, provider } = await ask({ prompt: prompt(gender), image }, parse, { only: body?.only });
+    // Gemini's paid tier only, as the privacy page promises: never Cloudflare, never a gateway.
+    const { value, provider } = await ask({ prompt: prompt(gender), image }, parse, { only: ['gemini'] });
     return json({ ...value, provider });
   } catch (e) {
     console.error('estimate-bf failed', JSON.stringify((e as any)?.errors ?? String(e)));

@@ -1167,7 +1167,7 @@ check('the coach brain has no reach: no tools, no one else\'s data, off until co
   const fn = readFileSync('../supabase/functions/coach/index.ts', 'utf8');
   assert.match(fn, /const refused = await gate\(req, 'ai'\);/, 'a signed-in person within the daily AI allowance');
   assert.match(fn, /if \(!GEMINI_PAID && !OWNERS\.includes\(subOf\(req\) \?\? ''\)\)/, 'strangers wait for the paid tier the EU terms need');
-  assert.match(fn, /\{ only: \['gemini'\], deadlineMs: 40_000 \}/, 'Gemini only, never a free gateway');
+  assert.match(fn, /\{ only: \['gemini', 'cloudflare'\], deadlineMs: 40_000 \}/, 'Gemini or Cloudflare (keeps nothing, trains on nothing), never a free gateway');
   assert.match(fn, /JSON\.stringify\(facts\)\.length > 20_000/, 'a bounded summary');
   assert.doesNotMatch(fn, /fetch\(|createClient|\.from\(|Deno\.env\.get\('SUPABASE/, 'it reads nothing: no database, no other person, no web');
   assert.match(readFileSync('../supabase/config.toml', 'utf8'), /\[functions\.coach\]\nenabled = true\nverify_jwt = true/);
@@ -1439,6 +1439,7 @@ check('the privacy page names every outside service the code talks to', async ()
   const NAMES = {
     'generativelanguage.googleapis.com': 'Gemini', 'api.kilo.ai': 'Kilo', 'text.pollinations.ai': 'Pollinations',
     'search.openfoodfacts.org': 'Open Food Facts', 'world.openfoodfacts.org': 'Open Food Facts', 'api.nal.usda.gov': 'USDA FoodData Central',
+    'api.cloudflare.com': 'Cloudflare Workers AI',
     'api.open-meteo.com': 'Open-Meteo', 'www.youtube-nocookie.com': 'YouTube', 'www.youtube.com': 'YouTube', 'github.com': 'GitHub',
     // Not outside: the app's own address, written into the calendar reminder.
     'slimchance.app': 'Slim Chance',
@@ -1472,13 +1473,15 @@ check('consent is asked at sign-up and records the privacy page it was given to'
   assert.match(gate, /onclick=\{start\} disabled=\{busy \|\| !consent\}/);
 });
 
-check('photos go to Gemini alone, and body photos only once Gemini is on its paid tier', async () => {
+check('photos never go through a free gateway, and body photos only to Gemini on its paid tier', async () => {
   const { readFileSync } = await import('node:fs');
   const llm = readFileSync('../supabase/functions/_shared/llm.ts', 'utf8');
   assert.match(llm, /name: 'gemini', vision: true/);
   assert.match(llm, /openAiCompatible\('kilo', KILO_URL, false,/, 'no photo through a free gateway');
   assert.match(llm, /openAiCompatible\('pollinations', POLLINATIONS_URL, false,/);
-  assert.match(llm, /const chain = a\.image \? geminiModels\.map\(geminiModel\) : PROVIDERS;\n  const providers = chain\.filter\(\(p\) => \(!a\.image \|\| p\.vision\)/, 'a photo races Gemini models only');
+  // Since 2026-11-10 a food photo may also go to Cloudflare Workers AI (keeps
+  // nothing, trains on nothing), never to Kilo or Pollinations.
+  assert.match(llm, /const chain = a\.image \? \[\.\.\.geminiModels\.map\(geminiModel\), \.\.\.\(cloudflare \? \[cloudflare\] : \[\]\)\] : PROVIDERS;\n  const providers = chain\.filter\(\(p\) => \(!a\.image \|\| p\.vision\)/, 'a photo races Gemini, then Cloudflare, never a free gateway');
   const bf = readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8');
   assert.ok(bf.indexOf('if (!GEMINI_PAID)') > 0 && bf.indexOf('if (!GEMINI_PAID)') < bf.indexOf('await ask('), 'refused before any provider sees it');
   // Paid since 2026-10-28; the page says so, and where a body photo goes.
@@ -5553,6 +5556,21 @@ check('when the AI’s prepaid credit runs out, photos say paused (no retry), th
     assert.doesNotMatch(src, /const KEY = process\.env\.GEMINI_API_KEY/, `${f}: never the app's`);
     assert.match(src, /spend\(\);/, `${f}: a cap on calls`);
   }
+});
+
+check('a free reader stands behind Gemini: Cloudflare for food photos and the coach, last for typed food, never for body photos', async () => {
+  // 2026-11-10: Gemini's prepaid credit ran out (my eval runs spent it) and
+  // photos and the coach stopped. Cloudflare Workers AI's free allowance can't
+  // bill on the Free plan, keeps nothing and trains on nothing.
+  const { readFileSync } = await import('node:fs');
+  const llm = readFileSync('../supabase/functions/_shared/llm.ts', 'utf8');
+  assert.match(llm, /const cloudflare: Provider \| null = CF_TOKEN && CF_ACCOUNT/, 'off until both secrets exist');
+  assert.match(llm, /const chain = a\.image \? \[\.\.\.geminiModels\.map\(geminiModel\), \.\.\.\(cloudflare \? \[cloudflare\] : \[\]\)\] : PROVIDERS;/, 'photos: Gemini first, then Cloudflare');
+  assert.match(llm, /openAiCompatible\('pollinations'[^\n]*\n  \.\.\.\(cloudflare \? \[cloudflare\] : \[\]\),\n\];/, 'typed food: Cloudflare last, its allowance kept for photos');
+  assert.match(llm, /mistral-small-3\.1/, 'a vision model licensed for the EU');
+  assert.match(readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8'), /\{ only: \['gemini'\] \}\);/, 'body photos: Gemini paid only, as promised');
+  const policy = readFileSync('static/privacy.html', 'utf8');
+  assert.match(policy, /Photos go to Gemini or, when Gemini is unavailable, to Cloudflare Workers AI, which keeps\nnothing once it has answered and never trains on what it is sent\./);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {

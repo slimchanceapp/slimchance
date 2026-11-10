@@ -46,6 +46,7 @@ a deload snaps to a real, rackable weight (rounds, not up)
 a fixed dumbbell jumps 17.5 -> 20, never 18.x
 a flat, noisy month rules out the plan: stalled, not “too noisy to say”
 a food eaten twice yesterday and once today still has one serving left
+a free reader stands behind Gemini: Cloudflare for food photos and the coach, last for typed food, never for body photos
 a goal ABOVE current weight is a gain plan, not a no-op
 a goal ABOVE current weight prescribes a surplus, never a deficit
 a gym week recorded only on the watch counts as training in the weekly review
@@ -256,7 +257,7 @@ percentile handles empty and single-value input
 period-aware weight learns the person’s own swing, and says only that it’s learning before three cycles
 personas read the same as last time, or the change was meant
 phone-only users get no false watch
-photos go to Gemini alone, and body photos only once Gemini is on its paid tier
+photos never go through a free gateway, and body photos only to Gemini on its paid tier
 picks ONE source per day instead of summing (the double-count bug)
 poor protein adherence becomes a named lever
 preferred source wins even on a low-wear day

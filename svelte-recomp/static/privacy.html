@@ -80,16 +80,19 @@ the app works offline. The app itself is served by Vercel.</p>
 <li><strong>An AI estimate</strong> (food from a photo or a description, a recipe idea):
 sent to Google's Gemini API on its paid tier: Google does not use what is sent to improve its
 products, and keeps it only for a limited time, to detect misuse.
-Photos go only to Gemini. A text request (a description, a recipe) may go to Kilo's AI
-gateway or Pollinations when Gemini is busy. Slim Chance does not keep a photo sent only for an
+Photos go to Gemini or, when Gemini is unavailable, to Cloudflare Workers AI, which keeps
+nothing once it has answered and never trains on what it is sent. A text request (a
+description, a recipe) may go to Kilo's AI gateway, Pollinations or Cloudflare Workers AI
+when Gemini is busy. Slim Chance does not keep a photo sent only for an
 estimate.</li>
 <li><strong>The AI coach</strong>, only if you turn it on in Settings (it is off until you do):
-once each afternoon, a summary of your last two weeks goes to Google's Gemini so it can write
+once each afternoon, a summary of your last two weeks goes to Google's Gemini (or, when
+Gemini is unavailable, to Cloudflare Workers AI, which keeps nothing and never trains on it) so it can write
 that evening's message, or choose to send none, and notice one pattern. The summary holds your
 weight trend and morning weights, calories and protein per day, which days you trained and for
 how long, today's session, your written plans and reason, the names of foods you log most, and
-the notes the coach keeps about you. No photos and no name. It goes to Gemini only, never to
-the free gateways. The app checks every reply before showing it and drops any that invents a
+the notes the coach keeps about you. No photos and no name. It goes to Gemini or Cloudflare
+Workers AI only, never to the free gateways. The app checks every reply before showing it and drops any that invents a
 number or says something it never would. When you ask it to plan your next days, it gets that
 week's calorie numbers, your protein target, the coach's notes and a table of foods with their
 calories: the app's own staples and the foods you log most. The app works out every number in

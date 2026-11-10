@@ -191,7 +191,7 @@ const gemini: Provider = { name: 'gemini', vision: true, run: (a, parse, signal)
 // demand", the next two waiting out 20 s timeouts one model after another.)
 const geminiModel = (model: string): Provider => ({ name: 'gemini', vision: true, run: (a, parse, signal) => geminiRun([model], a, parse, signal) });
 
-function openAiCompatible(name: string, url: string, vision: boolean, models: (a: Ask) => string[], extra: Record<string, unknown> = {}): Provider {
+function openAiCompatible(name: string, url: string, vision: boolean, models: (a: Ask) => string[], extra: Record<string, unknown> = {}, headers: Record<string, string> = {}): Provider {
   return {
     name, vision,
     async run(a, parse, signal) {
@@ -203,7 +203,7 @@ function openAiCompatible(name: string, url: string, vision: boolean, models: (a
             : a.prompt;
           const res = await fetch(url, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json', ...headers },
             body: JSON.stringify({ model, messages: [{ role: 'user', content }], temperature: a.temperature ?? 0.2, ...extra }),
             signal: withTimeout(signal, (a.timeoutMs ?? (a.image ? 20_000 : 12_000)) + 8_000),
           });
@@ -224,6 +224,24 @@ function openAiCompatible(name: string, url: string, vision: boolean, models: (a
   };
 }
 
+// Cloudflare Workers AI (2026-11-10, after Gemini's prepaid credit ran out):
+// the free daily allowance of the Workers Free plan, where going over fails
+// instead of billing, so it can never cost money. Cloudflare keeps nothing once
+// it has answered and never trains on what it is sent (its data-usage page).
+// Mistral Small 3.1 reads photos and is Apache-licensed (Meta's vision models
+// exclude the EU). Behind Gemini for photos and the coach, last for typed text,
+// so its allowance is kept for what only it and Gemini can do. Off until both
+// secrets exist; never for body photos (estimate-bf).
+const CF_TOKEN: string = (globalThis as any).Deno?.env.get('CLOUDFLARE_AI_TOKEN') ?? '';
+const CF_ACCOUNT: string = (globalThis as any).Deno?.env.get('CLOUDFLARE_ACCOUNT_ID') ?? '';
+const CF_MODEL = '@cf/mistralai/mistral-small-3.1-24b-instruct';
+const cloudflare: Provider | null = CF_TOKEN && CF_ACCOUNT
+  ? openAiCompatible('cloudflare', `https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/v1/chat/completions`, true,
+    () => [CF_MODEL], { max_tokens: 1500 }, { Authorization: `Bearer ${CF_TOKEN}` })
+  : null;
+/** Which free reader stands behind Gemini for photos, for the health digest. */
+export const PHOTO_FALLBACK: string = cloudflare ? 'cloudflare' : 'none';
+
 const PROVIDERS: Provider[] = [
   gemini,
   openAiCompatible('kilo', KILO_URL, false, () => KILO_TEXT),
@@ -231,6 +249,7 @@ const PROVIDERS: Provider[] = [
   // long answer (a recipe) came back empty with finish_reason "length" until
   // reasoning was turned down. (max_tokens is a paid feature: HTTP 402.)
   openAiCompatible('pollinations', POLLINATIONS_URL, false, () => ['openai'], { reasoning_effort: 'low' }),
+  ...(cloudflare ? [cloudflare] : []),
 ];
 
 /**
@@ -245,7 +264,7 @@ const PROVIDERS: Provider[] = [
 export const GEMINI_PAID: boolean = (globalThis as any).Deno?.env.get('GEMINI_TIER') === 'paid';
 
 export function ask<T>(a: Ask, parse: (text: string) => T, opts: Options = {}): Promise<{ value: T; provider: string }> {
-  const chain = a.image ? geminiModels.map(geminiModel) : PROVIDERS;
+  const chain = a.image ? [...geminiModels.map(geminiModel), ...(cloudflare ? [cloudflare] : [])] : PROVIDERS;
   const providers = chain.filter((p) => (!a.image || p.vision) && (!opts.only || opts.only.includes(p.name)));
   const stagger = opts.staggerMs ?? (a.image ? 9_000 : 6_000);
   const ctrl = new AbortController();
