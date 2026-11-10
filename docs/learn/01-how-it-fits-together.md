@@ -11,8 +11,9 @@ into the page.
 1. [How it fits together](#chapter-1-how-it-fits-together): the layers, one weigh-in end to end, the practices, and the first bug lesson.
 2. [Design: a system, not a mood](#chapter-2-design-a-system-not-a-mood): tokens, two themes, the coin rule, and how we choose.
 3. [MCP: Slim Chance inside any assistant](#chapter-3-mcp-slim-chance-inside-any-assistant): the protocol, one conversation end to end, and the server we built.
-4. Domain-driven design: cutting the app into areas that can't break each other (coming).
-5. AI you can trust: retrieval, checks, evaluations, and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
+4. [Evals: how we found out our chance was overconfident](#chapter-4-evals-how-we-found-out-our-chance-was-overconfident): measuring an AI and our own maths against a known truth.
+5. Domain-driven design: cutting the app into areas that can't break each other (coming).
+6. AI you can trust: retrieval and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -273,7 +274,7 @@ transport "Streamable HTTP").
   tool can't disagree. `src/lib/mcp.ts` is pure (a message in, a reply out)
   and `src/routes/mcp/+server.ts` only moves bytes. This shape has a name,
   *ports and adapters*: the core knows nothing about who is calling.
-  Chapter 4 builds on it.
+  Chapter 5 builds on it.
 - **Two kinds of error.** A broken message is a protocol error. A wrong
   date is a *tool* error (`isError: true`) with a sentence the model can read
   and fix, then retry, without a person seeing a failure.
@@ -326,6 +327,113 @@ curl -s -X POST https://slimchance.app/mcp -H 'Content-Type: application/json' \
 
 ---
 
+## Chapter 4. Evals: how we found out our chance was overconfident
+
+### What an eval is
+
+An eval is a test for answers that aren't simply right or wrong: a fixed set
+of cases, a known truth for each, and a score computed the same way every
+time. It is how you compare two models, two prompts, or a model with and
+without a tool, by evidence instead of impression.
+
+The hard part is the known truth. For "is this person really losing
+weight?" there is a clean way to get it: **make the people up.** Give each
+one a true weekly rate, then add what a real scale adds: daily water that
+carries over from one morning to the next, and missed mornings. The
+question has a correct answer for every made-up person, so every answer can
+be scored.
+
+### The setup
+
+`svelte-recomp/scripts/eval-trend.mjs` asks the same question three ways:
+
+| Way | What answers |
+|---|---|
+| Alone | A general model (Gemini) reads the numbers and judges |
+| With the tool | The same model, offered our live MCP tools; nothing tells it to use them |
+| Tool only | Our own function, no model |
+
+Each answer is a chance in 10. Two scores:
+- **Brier score:** the average squared gap between the chance and what was
+  true (1 if truly losing, 0 if not). 0 is perfect; always saying "5 in 10"
+  scores 0.25, a coin toss.
+- **Confident mistakes:** 8 or more in 10 when not truly losing, or 2 or
+  less when truly losing.
+
+### What it found
+
+60 made-up people, 10 to 32 days each:
+
+| | Brier | Confident mistakes |
+|---|---|---|
+| Model alone | **0.154** | 6 |
+| Model with our tool | 0.184 | 7 |
+| Our tool alone | 0.183 | 7 |
+
+Two findings, one good and one uncomfortable:
+1. **The model chose our tool for all 60 people**, from its description
+   alone. The MCP side works.
+2. **The model alone was better than our maths.** Split by how many mornings
+   each person had, the gap is all in the short ones: with 10 mornings or
+   fewer our tool scored 0.258, worse than a coin toss, while the model
+   hedged with "too early to tell" and scored 0.204. From three weeks on,
+   both were good.
+
+### Finding the cause: three wrong guesses first
+
+This is the systematic-debugging habit from chapter 1: state one guess, test
+it, keep what the evidence says.
+
+1. **"The chance is just off for short series."** Tested on 20,000 made-up
+   people with our function alone, no model, at no cost. Confirmed: with
+   7 to 10 mornings, when the app showed 0 to 2 coins, those people were
+   truly losing almost 4 times in 10. From about 15 mornings on it was
+   honest. Our existing honesty check only simulated people with 35 to 65
+   days of data, so it never looked at the first two weeks, which is exactly
+   when a new person sees their first coins.
+2. **"The carry-over estimate is biased with few mornings."** True in theory,
+   and correcting it barely helped.
+3. **"It should lean on what's typical for people."** On its own this barely
+   helped either, because the margin of error was still too narrow to let
+   it act.
+
+What the evidence finally showed: **over a week or two, slow water swings
+look exactly like a trend**, so a series can't measure its own noise. The
+fix needs two things together: start the margin of error from how noisy
+real scales are, and let a plausible human rate count until the person's own
+mornings outweigh it. Together they cut the overconfident answers sharply,
+though not fully yet. A real series of morning weights also turned out
+noisier than the simulator assumed, so with real people the problem is
+probably bigger, not smaller.
+
+### What we do with it
+
+- **The fix is the next piece of work,** chosen by calibration on both noise
+  levels, and it lands with a new honesty check for the first weeks that
+  fails today. Every bug becomes a check first.
+- **The MCP server stays unlisted until the eval says the tool makes a model
+  better, not worse.** An eval used this way is a *gate*: a release waits on
+  a number, not on a feeling.
+- **The app's coins in the first two weeks get the same fix,** since the tool
+  and the app share one function. That is the upside of one source of truth:
+  one fix, everywhere.
+
+### What is weak, honestly
+
+- The made-up people are only as realistic as their noise. One real series
+  can't stand for everyone.
+- 60 people is small for comparing a model with our maths; the 20,000-person
+  runs are what the conclusions rest on.
+- The model's answers vary from run to run, and an eval needs re-running when
+  the model changes.
+
+**Try it.** `node scripts/eval-trend.mjs 10` in `svelte-recomp` (it needs a
+Gemini key in the environment) prints the three scores for ten people. Then
+change `pick([10, 16, 24, 32])` to only `[32]` and watch the gap close: with
+a month of mornings our maths and the model agree.
+
+---
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -359,3 +467,9 @@ curl -s -X POST https://slimchance.app/mcp -H 'Content-Type: application/json' \
   code runs.
 - **Ports and adapters:** a core that knows nothing about the outside, with
   thin adapters (a screen, an HTTP route, an MCP server) plugged into it.
+- **Brier score:** the average squared gap between a predicted chance and
+  what happened; 0 is perfect, 0.25 is a coin toss.
+- **Gate:** a release step that waits on a measured result.
+- **Prior:** what is plausible before looking at this person's data (how
+  noisy scales are, how fast people really lose), which their own data
+  outweighs as it accumulates.
