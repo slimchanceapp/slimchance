@@ -1,6 +1,7 @@
 # 0004: AI runs on the phone first, and never does the maths
 
-**Date:** 2026-11-10.
+**Date:** 2026-11-10. **Amended by** [0007](0007-ai-engines-gemini-then-gemma.md): in the cloud,
+Google's open Gemma now stands behind Gemini. The phone-first part below stands, still unbuilt.
 
 ## Decision
 - **The phone's own model comes first.** Where the phone ships one (Gemini

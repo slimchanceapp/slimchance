@@ -13,7 +13,7 @@ into the page.
 3. [MCP: Slim Chance inside any assistant](#chapter-3-mcp-slim-chance-inside-any-assistant): the protocol, one conversation end to end, and the server we built.
 4. [Evals: how we found out our chance was overconfident](#chapter-4-evals-how-we-found-out-our-chance-was-overconfident): measuring an AI and our own maths against a known truth.
 5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, and the pure core a check now guards.
-6. AI you can trust: retrieval and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
+6. [The AI layer: engines, evidence, and an expensive lesson](#chapter-6-the-ai-layer-engines-evidence-and-an-expensive-lesson): the barcode chain, the day the AI went dark, and the two engines that replaced one.
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -593,6 +593,117 @@ read which check fails and why. Then take the line out.
 
 ---
 
+## Chapter 6. The AI layer: engines, evidence, and an expensive lesson
+
+### The barcode chain
+
+A scanned barcode is looked up in order, cheapest and most trusted first:
+
+1. **Your own history.** A product you logged before is known even when no
+   database is.
+2. **Open Food Facts**, the open database, by its product address, then by its
+   search index. US barcodes are 12 digits and Open Food Facts files them as 13
+   with a leading zero, so both forms are tried.
+3. **USDA FoodData Central**, the US government's database of branded foods,
+   when Open Food Facts has nothing. Only the number is sent.
+4. **A photo of the label**, read by the AI, saved with the barcode so your
+   next scan finds it instantly.
+
+Step 3 was decided by measurement, not by guess. Of 250 random US packaged
+foods drawn from USDA's database, Open Food Facts knew 184 with calories (74%),
+7 without, and 59 not at all. So about one US scan in four (95% range 21% to
+32%) used to end in "not found" and now doesn't. The sample came from the part
+of USDA's list its API lets you page through (about the first 50,000 of
+450,000 products, sorted by name); a product's name shouldn't decide whether
+Open Food Facts knows it, but it is a limit worth saying.
+
+### The day the AI went dark
+
+On 10 November photo reading, label reading and the coach stopped working for
+everyone. The cause was mine. The evals in chapter 4 ran about 1,000 requests
+through the app's own Gemini key in one afternoon; the whole app makes about
+200 a month. Gemini runs on a prepaid balance, and it hit zero.
+
+Three engineering lessons, each now a rule with a check:
+
+- **A shared resource is shared state.** A prepaid balance behaves like a
+  database every feature writes to. Anything that can drain it (a test, a
+  script, a stranger) needs its own limit. Evals now refuse the app's key and
+  stop after a set number of calls; the daily allowances fit real use (25 a
+  person, 150 a day in all).
+- **An error message must be true.** The app said "try again in a minute"
+  when nothing would change in a minute. Errors now say what is really
+  happening ("paused") and offer what still works.
+- **Find out before the users do.** The owner found the outage; nothing
+  alarmed. The daily health check now asks the AI for one token and emails
+  the owner when nothing can read a photo.
+
+### Two engines and one rule
+
+Gemini's free tier wasn't a way out: Google's terms let an app serve users in
+the EU, the UK and Switzerland from the paid tier only, so the free tier could
+have served the owner and no one else. That would have made the app worse,
+which was rejected.
+
+The answer was a second engine. **Gemma 4** is Google's open model, built from
+Gemini 3 research, under a licence that lets it serve anyone. Cloudflare runs
+it: always warm, so there are no cold starts, on a free daily allowance that
+fails instead of billing, and it keeps nothing once it has answered and never
+trains on what it is sent.
+
+A detour worth recording: the first plan was to run Gemma ourselves on Modal's
+free monthly credits. Modal refuses every GPU without a card on file, which
+the reviews I had read did not say. Keeping a GPU warm all day would have cost
+hundreds a month. The lesson: check billing facts at the source, never in a
+summary.
+
+One rule now decides which engine may answer each request
+(`providersFor`, `supabase/functions/_shared/auth.ts`):
+
+| Request | May go to |
+|---|---|
+| A photo, a label, a body-fat photo, the coach | Gemini (where Google allows), then Gemma. Never a free gateway |
+| Typed food, a recipe | Gemini, Gemma, then the free text gateways (Kilo, Pollinations) |
+
+When Gemini answers "balance empty", the app remembers that for ten minutes,
+so Gemma answers without first waiting for a refusal. This is the
+*anti-corruption layer* of chapter 5 at work: the rest of the app never knows
+which engine answered.
+
+### Measuring before switching on
+
+Gemma served nobody until two tests passed:
+
+- **Labels:** 60 real nutrition-label photos from Open Food Facts, 12 each from
+  Slovakia, Czechia, Germany, the UK and the US. Energy came back within 10% on
+  53 and within 5% on 49; protein within 1 g on 52; about 2 seconds each.
+- **Typed food:** 150 USDA foods with a portion. Typical error 10%, with no
+  lean high or low; 11 off by more than half.
+
+Then I looked at two of the misses by eye. On a pasta label printed in about
+twenty languages Gemma read 539 kcal where it says 359: a real miss. On a
+Slovak product, Gemma read 648 kcal and the label says 648, but the database
+said 847. **The test data was wrong, not the model.** An eval is only as good
+as its truth, so read the failures before believing the score.
+
+### What is weak, honestly
+
+- **Gemini wasn't measured on the same tests.** Its balance was empty, so
+  "as good as before" is a claim about Gemma against the truth, not against
+  Gemini.
+- **The free allowance has a ceiling:** about 1,300 label reads a day. A busier
+  day pauses photos until midnight UTC.
+- **The food test uses USDA's wording** ("Chicken, broilers or fryers,
+  breast…"), not the way people type.
+- **USDA's barcode lookups use a shared demo key**, which other users of the
+  same key can rate-limit.
+
+**Try it.** With the Cloudflare key loaded, `node scripts/eval-label.mjs 10`
+in `svelte-recomp` reads ten labels and prints the scores. Add `EVAL_ROWS=1`
+to see each label's truth beside Gemma's answer.
+
+---
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -642,3 +753,11 @@ read which check fails and why. Then take the line out.
 - **Modular monolith:** one app and one deploy, with areas kept apart inside.
 - **Strangler pattern:** replacing a structure piece by piece while it keeps
   running.
+- **Prepaid credit:** money loaded in advance and spent per request; when it
+  reaches zero, every request stops.
+- **Open-weights model:** a model whose weights are published, so anyone may
+  run it (Gemma); the opposite of one only its maker serves (Gemini).
+- **Fallback chain:** engines tried in order, each when the one before it
+  fails.
+- **Serverless:** someone else keeps the machines running and you pay (or
+  not) per request, so nothing of yours has to stay warm.
