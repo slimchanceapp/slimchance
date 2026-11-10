@@ -73,8 +73,13 @@ expect(ics.status === 200 && ics.type.startsWith('text/calendar') && ics.body.st
 const coach = await get(`${fn}/coach`, { method: 'POST', body: '{}', headers: { 'content-type': 'application/json' } });
 expect(coach.status === 401, `coach without a login: ${coach.status}, not 401`);
 
+// The MCP endpoint answers an assistant the way the spec says (src/lib/mcp.ts).
+const mcp = await get(`${HOSTS[1]}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-11-25' },
+  body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
+expect(mcp.status === 200 && mcp.body.includes('"slim_chance"'), `mcp tools/list: ${mcp.status}`);
+
 if (fails.length) {
   console.error(`smoke: ${fails.length} failed\n  ${fails.join('\n  ')}`);
   process.exit(1);
 }
-console.log(`smoke: ${HOSTS.length} addresses on ${sha ?? seen[0]}; pages load, the first screen runs, functions answer.`);
+console.log(`smoke: ${HOSTS.length} addresses on ${sha ?? seen[0]}; pages load, the first screen runs, functions and MCP answer.`);

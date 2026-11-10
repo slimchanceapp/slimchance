@@ -5307,6 +5307,55 @@ check('Train turns orange only after a planned day passes without training, neve
   assert.match(readFileSync('src/routes/workouts/+page.svelte', 'utf8'), /return trainingTone\(gymSessions7, weeklyTarget,/);
 });
 
+check('any AI assistant can ask Slim Chance for the trend and the chance over MCP, and nothing is stored', async () => {
+  // 2026-11-10: the maths offered as an MCP tool (src/lib/mcp.ts), so people
+  // can ask the assistant they already use. Same functions as the app.
+  const { handleMcp, slimChance, SUPPORTED } = await import('../src/lib/mcp.ts');
+  const init = handleMcp({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 't', version: '1' } } });
+  assert.equal(init.status, 200);
+  assert.equal(init.body.result.protocolVersion, '2025-06-18', 'a supported version is echoed');
+  assert.deepEqual(init.body.result.capabilities, { tools: {} });
+  assert.equal(handleMcp({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2024-11-05' } }).body.result.protocolVersion, SUPPORTED[0], 'an old one gets our latest');
+  assert.deepEqual(handleMcp({ jsonrpc: '2.0', method: 'notifications/initialized' }), { status: 202, body: null });
+  const newer = handleMcp({ jsonrpc: '2.0', id: 2, method: 'tools/list' }, { protocolVersion: '2026-07-28' });
+  assert.equal(newer.status, 400);
+  assert.equal(newer.body.error.code, -32022, 'a newer client is told which versions to fall back to');
+  assert.deepEqual(newer.body.error.data.supported, SUPPORTED);
+  const list = handleMcp({ jsonrpc: '2.0', id: 3, method: 'tools/list' }, { protocolVersion: '2025-11-25' });
+  assert.deepEqual(list.body.result.tools.map((t) => t.name), ['slim_chance']);
+  assert.equal(list.body.result.tools[0].annotations.readOnlyHint, true);
+  assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).status, 404);
+  assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).body.error.code, -32601);
+  // Three weeks losing half a kilo a week, with a scale's daily noise.
+  const noise = [0.3, -0.2, 0.4, -0.4, 0.1, 0.2, -0.3, 0, 0.35, -0.15, 0.25, -0.35, 0.05, 0.3, -0.25, 0.1, -0.1, 0.2, -0.3, 0.15, 0];
+  const day = (k) => new Date(Date.UTC(2026, 9, 20 + k)).toISOString().slice(0, 10);
+  const weigh_ins = noise.map((e, k) => ({ date: day(k), weight: +(95 - (0.5 / 7) * k + e).toFixed(1) }));
+  const call = handleMcp({ jsonrpc: '2.0', id: 5, method: 'tools/call', params: { name: 'slim_chance', arguments: { weigh_ins, goal_weight: 85 } } });
+  const r = call.body.result.structuredContent;
+  assert.equal(r.state, 'answerable');
+  assert.ok(r.chance_in_10 >= 8, `losing half a kilo a week is a strong chance (${r.chance_in_10})`);
+  assert.ok(Math.abs(r.trend - (95 - (0.5 / 7) * 20)) < 0.5, `the trend sits under the noise (${r.trend})`);
+  assert.ok(r.rate_range[0] < 0.5 && r.rate_range[1] > 0.5, 'the true rate is inside the range');
+  assert.equal(r.as_of, day(20), 'judged as of the latest reading, so old exports still work');
+  assert.ok(r.weeks_to_goal > 10 && r.weeks_to_goal < 30, `at this pace (${r.weeks_to_goal} weeks)`);
+  assert.match(call.body.result.content[0].text, /describes those readings, not a promise/, 'about the recent past, said so');
+  // The same in pounds comes back in pounds, with the same chance.
+  const lb = slimChance({ weigh_ins: weigh_ins.map((w) => ({ ...w, weight: +(w.weight * 2.20462).toFixed(1) })), unit: 'lb' }).structuredContent;
+  assert.equal(lb.chance_in_10, r.chance_in_10);
+  assert.ok(Math.abs(lb.trend - r.trend * 2.20462) < 0.3);
+  const few = slimChance({ weigh_ins: weigh_ins.slice(0, 3) }).structuredContent;
+  assert.equal(few.state, 'not-enough');
+  assert.equal(few.more_mornings_needed, 4);
+  assert.equal(few.chance_in_10, null, 'no coins before there is a line');
+  assert.equal(slimChance({ weigh_ins: [{ date: 'yesterday', weight: 90 }] }).isError, true, 'bad input is a tool error the assistant can fix');
+  assert.equal(slimChance({ weigh_ins: [{ date: '2026-11-01', weight: 9000 }] }).isError, true);
+  // Nothing stored, no account, no AI on our side: the module reaches no store or network.
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('src/lib/mcp.ts', 'utf8');
+  assert.doesNotMatch(src, /from '\$lib\/stores|supabase|dexie|fetch\(/i);
+  assert.match(readFileSync('src/routes/mcp/+server.ts', 'utf8'), /export const prerender = false;/);
+});
+
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');

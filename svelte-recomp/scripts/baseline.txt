@@ -114,6 +114,7 @@ an unknown template id falls back rather than producing a broken week
 an unlogged workout still counts, and sport always counts
 an unmapped coach id is still shown, never silently dropped
 an upstream error never carries a Gemini key back to the app, old format or new
+any AI assistant can ask Slim Chance for the trend and the chance over MCP, and nothing is stored
 badminton loads the muscles it actually works
 being short on protein at midday earns a nudge with the real number in it
 bestE1RM ignores incomplete sets

@@ -72,7 +72,7 @@ export interface Odds {
  *  call", not a verdict: a first week can't know yet, and says so. No joke on
  *  the name: "Not so slim" beside a chance of slimming read backwards
  *  (2026-11-10). */
-function oddsOf(p: number | null, what: string): Odds | null {
+export function oddsOf(p: number | null, what: string): Odds | null {
   if (p == null) return null;
   const lit = p >= 0.95 ? 10 : p < 0.05 ? 0 : Math.min(9, Math.max(1, Math.round(p * 10)));
   const text = (lit === 10 ? `Almost certainly ${what}.`
