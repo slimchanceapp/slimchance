@@ -14,11 +14,9 @@
 //     plan of foods and grams for the next days (src/lib/mealPlan.ts checks it
 //     and works out every number itself).
 
-import { ask, corsHeaders, extractJson, GEMINI_PAID, json } from '../_shared/llm.ts';
-import { gate } from '../_shared/auth.ts';
+import { ask, corsHeaders, extractJson, json } from '../_shared/llm.ts';
+import { gate, geminiFor } from '../_shared/auth.ts';
 
-// Comma-separated, so a throwaway test account can be let in for a live check.
-const OWNERS = (Deno.env.get('OWNER_USER_ID') ?? '').split(',').map((s) => s.trim()).filter(Boolean);
 
 const SCHEMA = {
   type: 'OBJECT',
@@ -107,16 +105,6 @@ function parsePlan(text: string) {
   return o;
 }
 
-/** The user behind the token. The gateway has already verified it (verify_jwt). */
-function subOf(req: Request): string | null {
-  try {
-    const part = (req.headers.get('Authorization') ?? '').replace(/^Bearer\s+/i, '').split('.')[1];
-    return JSON.parse(atob(part.replace(/-/g, '+').replace(/_/g, '/'))).sub ?? null;
-  } catch {
-    return null;
-  }
-}
-
 function parse(text: string) {
   const o = extractJson(text);
   if (!o || typeof o.send_evening !== 'boolean') throw new Error('no reply in the answer');
@@ -128,7 +116,7 @@ Deno.serve(async (req: Request) => {
   if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: corsHeaders });
   const refused = await gate(req, 'ai');
   if (refused) return refused;
-  if (!GEMINI_PAID && !OWNERS.includes(subOf(req) ?? '')) {
+  if (!geminiFor(req)) {
     return json({ error: "The AI coach starts once Slim Chance's AI runs on its paid tier." }, 503);
   }
 

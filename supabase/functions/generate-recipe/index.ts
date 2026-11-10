@@ -12,7 +12,7 @@
 // Providers come from ../_shared/llm.ts: it called gemini-flash-latest alone,
 // with no timeout, and that model was taking 25 s+ to say "ok" (2026-10-16).
 import { ask, corsHeaders, extractJson, json } from '../_shared/llm.ts';
-import { gate } from '../_shared/auth.ts';
+import { gate, geminiFor } from '../_shared/auth.ts';
 
 // Asking for structured output natively is far more reliable than begging for
 // JSON in the prompt and then stripping code fences off the answer.
@@ -132,7 +132,7 @@ ${avoid.length ? `- They have recently eaten these, so make it clearly different
           if (!o || !o.name || !Array.isArray(o.ing) || !Array.isArray(o.steps) || !o.steps.length) throw new Error('incomplete recipe');
           return o;
         },
-        { only: body?.only, staggerMs: 15_000, deadlineMs: 100_000 },
+        { only: geminiFor(req) ? body?.only : ['kilo', 'pollinations'], staggerMs: 15_000, deadlineMs: 100_000 },
       ));
     } catch (e) {
       console.error('generate-recipe failed', JSON.stringify((e as any)?.errors ?? String(e)));

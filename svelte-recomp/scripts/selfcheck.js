@@ -1166,7 +1166,7 @@ check('the coach brain has no reach: no tools, no one else\'s data, off until co
   const { readFileSync } = await import('node:fs');
   const fn = readFileSync('../supabase/functions/coach/index.ts', 'utf8');
   assert.match(fn, /const refused = await gate\(req, 'ai'\);/, 'a signed-in person within the daily AI allowance');
-  assert.match(fn, /if \(!GEMINI_PAID && !OWNERS\.includes\(subOf\(req\) \?\? ''\)\)/, 'strangers wait for the paid tier the EU terms need');
+  assert.match(fn, /if \(!geminiFor\(req\)\) \{/, 'strangers wait for the paid tier the EU terms need (one gate: _shared/auth.ts geminiFor)');
   assert.match(fn, /\{ only: \['gemini'\], deadlineMs: 40_000 \}/, 'Gemini only, never a free gateway');
   assert.match(fn, /JSON\.stringify\(facts\)\.length > 20_000/, 'a bounded summary');
   assert.doesNotMatch(fn, /fetch\(|createClient|\.from\(|Deno\.env\.get\('SUPABASE/, 'it reads nothing: no database, no other person, no web');
@@ -5558,6 +5558,22 @@ check('when the AI’s prepaid credit runs out, photos say paused (no retry), th
     assert.doesNotMatch(src, /const KEY = process\.env\.GEMINI_API_KEY/, `${f}: never the app's`);
     assert.match(src, /spend\(\);/, `${f}: a cap on calls`);
   }
+});
+
+check('on Gemini’s free tier only the owner uses Gemini; others’ typed food uses the free text services and their photos wait', async () => {
+  // 2026-11-10: the prepaid balance ran out and the owner won't pay. Google's
+  // terms (effective 2026-03-23) let an app serve EU users from the paid tier
+  // only, and give EU users' free-tier data the paid terms (not used to improve
+  // its products). So the free tier serves the developer, nobody else.
+  const { readFileSync } = await import('node:fs');
+  const auth = readFileSync('../supabase/functions/_shared/auth.ts', 'utf8');
+  assert.match(auth, /export const geminiFor = \(req: Request\): boolean => GEMINI_PAID \|\| OWNERS\.includes\(subOf\(req\) \?\? ''\);/);
+  const food = readFileSync('../supabase/functions/estimate-food/index.ts', 'utf8');
+  assert.match(food, /if \(image && !gemini\) \{\s*return json\(\{ error: 'Reading photos is paused for now\./, 'a stranger\u2019s photo waits');
+  assert.match(food, /const only = gemini \? body\?\.only : \['kilo', 'pollinations'\];/, 'their words go to the free text services');
+  assert.match(readFileSync('../supabase/functions/generate-recipe/index.ts', 'utf8'), /only: geminiFor\(req\) \? body\?\.only : \['kilo', 'pollinations'\]/);
+  assert.match(readFileSync('../supabase/functions/estimate-bf/index.ts', 'utf8'), /if \(!GEMINI_PAID\) return json/, 'body photos: paid tier only, as promised');
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /Under Google's terms for the EU, the UK and Switzerland, Google does\nnot use what is sent to improve its products/);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {

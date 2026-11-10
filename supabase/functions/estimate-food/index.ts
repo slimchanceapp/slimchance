@@ -9,7 +9,7 @@
 //   add "only": ["pollinations"] to exercise one fallback on its own.
 
 import { ask, corsHeaders, extractJson, imageFrom, json, outOfCredit, Refusal } from '../_shared/llm.ts';
-import { gate } from '../_shared/auth.ts';
+import { gate, geminiFor } from '../_shared/auth.ts';
 
 type Macros = { kcal: number; protein_g: number; carbs_g: number; fat_g: number };
 type Item = Macros & { name: string; grams: number | null };
@@ -108,11 +108,18 @@ Deno.serve(async (req: Request) => {
   if (!image && !desc) return json({ error: 'Describe the food, add a photo, or both.' }, 400);
   if (label && !image) return json({ error: 'Reading a label needs a photo of it.' }, 400);
 
+  // On Gemini's free tier only the owner may use it (src: _shared/auth.ts
+  // geminiFor); anyone else's photo waits, their words go to the free text services.
+  const gemini = geminiFor(req);
+  if (image && !gemini) {
+    return json({ error: 'Reading photos is paused for now. Type what you ate, or the numbers from the label, and it logs the same way.', paused: true });
+  }
+  const only = gemini ? body?.only : ['kilo', 'pollinations'];
   const started = Date.now();
   try {
     const { value, provider } = label
-      ? await ask({ prompt: LABEL_PROMPT, image }, parseLabel, { only: body?.only })
-      : await ask({ prompt: mealPrompt(desc, !!image), image }, parseMeal, { only: body?.only });
+      ? await ask({ prompt: LABEL_PROMPT, image }, parseLabel, { only })
+      : await ask({ prompt: mealPrompt(desc, !!image), image }, parseMeal, { only });
     return json({ ...value, provider, ms: Date.now() - started });
   } catch (e) {
     if (e instanceof Refusal) return json({ error: e.message });
