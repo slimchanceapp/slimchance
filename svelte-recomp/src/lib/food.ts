@@ -13,7 +13,7 @@ export type Serving = { label: string; g: number };
 /** One row the logger can offer. */
 export interface Candidate {
   key: string;
-  source: 'history' | 'builtin' | 'off';
+  source: 'history' | 'builtin' | 'off' | 'usda';
   name: string;
   brand?: string;
   /** Per 100 g (100 ml for drinks) when known. */
@@ -211,6 +211,29 @@ export function offCandidate(p: Record<string, any>): Candidate | null {
     per100: kcal != null && kcal <= 950 ? { kcal: Math.round(kcal), protein_g: r1(p100), carbs_g: r1(c100), fat_g: r1(f100) } : null,
     servings,
     local: /en:(slovakia|czech-republic)/.test(JSON.stringify(p.countries_tags ?? '')),
+  };
+}
+
+/** A USDA FoodData Central branded food: food-search's answer when Open Food
+ *  Facts doesn't know a barcode (2026-11-10; most packaged foods sold in the
+ *  US). Branded values are per 100 g, or 100 ml for drinks. */
+export function usdaCandidate(f: Record<string, any>): Candidate | null {
+  const code = String(f.gtinUpc ?? '').trim(), desc = String(f.description ?? '').trim();
+  if (!code || !desc) return null;
+  const n = new Map<string, number>((f.foodNutrients ?? []).map((x: any) => [String(x.nutrientNumber), num(x.value)]));
+  const kcal = n.has('208') ? n.get('208')! : null;
+  const unit = String(f.servingSizeUnit ?? '').toLowerCase();
+  const ml = /^(ml|mlt)$/.test(unit);
+  const servings: Serving[] = [];
+  const serving = ml || /^(g|grm)$/.test(unit) ? num(f.servingSize) : 0;
+  if (serving > 0) servings.push({ label: 'serving', g: Math.round(serving) });
+  const pack = num(String(f.packageWeight ?? '').match(/(\d+(?:\.\d+)?)\s*(?:g|ml)\b/i)?.[1]);
+  if (pack > 0 && Math.round(pack) !== Math.round(serving) && pack <= 3000) servings.push({ label: 'whole pack', g: Math.round(pack) });
+  return {
+    key: `u:${code}`, source: 'usda', name: desc.charAt(0) + desc.slice(1).toLowerCase(),
+    brand: String(f.brandName || f.brandOwner || '').trim(), barcode: code,
+    per100: kcal != null && kcal <= 950 ? { kcal: Math.round(kcal), protein_g: r1(n.get('203') ?? 0), carbs_g: r1(n.get('205') ?? 0), fat_g: r1(n.get('204') ?? 0) } : null,
+    servings, ml, local: false,
   };
 }
 

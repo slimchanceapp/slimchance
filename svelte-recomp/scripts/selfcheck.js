@@ -1438,7 +1438,7 @@ check('the privacy page names every outside service the code talks to', async ()
   const policy = readFileSync('static/privacy.html', 'utf8');
   const NAMES = {
     'generativelanguage.googleapis.com': 'Gemini', 'api.kilo.ai': 'Kilo', 'text.pollinations.ai': 'Pollinations',
-    'search.openfoodfacts.org': 'Open Food Facts', 'world.openfoodfacts.org': 'Open Food Facts',
+    'search.openfoodfacts.org': 'Open Food Facts', 'world.openfoodfacts.org': 'Open Food Facts', 'api.nal.usda.gov': 'USDA FoodData Central',
     'api.open-meteo.com': 'Open-Meteo', 'www.youtube-nocookie.com': 'YouTube', 'www.youtube.com': 'YouTube', 'github.com': 'GitHub',
     // Not outside: the app's own address, written into the calendar reminder.
     'slimchance.app': 'Slim Chance',
@@ -5503,6 +5503,30 @@ check('the pure core stays pure: no listed module reaches storage, network, brow
     const r = why(f);
     assert.equal(r, null, `${name} left the pure core: ${r?.replace(root + '/', '')}`);
   }
+});
+
+check('a barcode Open Food Facts doesn’t know is asked of USDA’s branded foods, and shown as theirs', async () => {
+  // 2026-11-10: the stranger test is mostly people in the US, whose packaged
+  // food USDA FoodData Central covers. A real answer from it, as food-search
+  // passes it through (values per 100 g).
+  const { usdaCandidate } = await import('../src/lib/food.ts');
+  const c = usdaCandidate({ gtinUpc: '022000050311', description: '5 FLAVORS BIG RING GUMMIES CANDY, CHERRY', brandName: 'LIFE SAVERS', brandOwner: 'Mars, Inc.',
+    servingSize: 37.0, servingSizeUnit: 'GRM', packageWeight: '8.6 oz/243 g',
+    foodNutrients: [{ nutrientNumber: '208', value: 351 }, { nutrientNumber: '203', value: 2.7 }, { nutrientNumber: '205', value: 83.8 }, { nutrientNumber: '204', value: 0 }] });
+  assert.equal(c.source, 'usda');
+  assert.equal(c.name, '5 flavors big ring gummies candy, cherry', 'no shouting');
+  assert.equal(c.brand, 'LIFE SAVERS');
+  assert.deepEqual(c.per100, { kcal: 351, protein_g: 2.7, carbs_g: 83.8, fat_g: 0 });
+  assert.deepEqual(c.servings, [{ label: 'serving', g: 37 }, { label: 'whole pack', g: 243 }]);
+  assert.equal(usdaCandidate({ gtinUpc: '1', description: '' }), null);
+  assert.equal(usdaCandidate({ gtinUpc: '1', description: 'X', foodNutrients: [{ nutrientNumber: '208', value: 2000 }] }).per100, null, 'an impossible energy is no data');
+  const { readFileSync } = await import('node:fs');
+  const fn = readFileSync('../supabase/functions/food-search/index.ts', 'utf8');
+  assert.match(fn, /if \(code && !hits\.length\) \{\s*const food = await usda\(code\)/, 'USDA only when Open Food Facts has nothing');
+  assert.match(fn, /headers: \{ 'X-Api-Key': FDC_KEY \}/, 'the key in a header, never in a URL');
+  assert.match(fn, /code\.length === 12 \? `code:\(\$\{code\} OR 0\$\{code\}\)`/, 'a 12-digit US code is also tried as Open Food Facts files it');
+  assert.match(readFileSync('src/lib/foodSources.ts', 'utf8'), /data\?\.usda \? usdaCandidate\(data\.usda\)/);
+  assert.match(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /source === 'usda'\}USDA FoodData Central/);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {

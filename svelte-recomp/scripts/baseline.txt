@@ -28,6 +28,7 @@ a Capacitor plugin proxy is never returned from an async function
 a Capacitor weekday is one ahead of a JS getDay()
 a bad weight is dropped, not published
 a barbell only lands on the 2.5kg plate-pair grid
+a barcode Open Food Facts doesn’t know is asked of USDA’s branded foods, and shown as theirs
 a bundle counts what it contains and never drops an empty table
 a camera misread fails the GS1 check digit
 a ceiling set below the trend is caught as a target, not shown as 8 kg over

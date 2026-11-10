@@ -3,12 +3,13 @@
 //
 //   search    your foods + built-in basics (instant, offline) -> Open Food Facts
 //             via the food-search edge function
-//   barcode   your own history -> OFF product API -> OFF search by code
+//   barcode   your own history -> OFF product API -> OFF search by code ->
+//             USDA FoodData Central (branded, mostly US), via food-search
 //   describe  estimate-food (Gemini -> Kilo -> Pollinations, server side) ->
 //             the offline estimator in $lib/food
 
 import { supabase } from '$lib/db/client';
-import { rankProducts, offCandidate, type Candidate, type Macros } from '$lib/food';
+import { rankProducts, offCandidate, usdaCandidate, type Candidate, type Macros } from '$lib/food';
 
 export type AiItem = Macros & { name: string; grams: number | null };
 export type AiMeal = Macros & { mode: 'meal'; name: string; items: AiItem[]; confidence: 'low' | 'medium' | 'high'; provider: string };
@@ -40,7 +41,7 @@ export async function lookupBarcode(code: string, history: Candidate[]): Promise
   try {
     const { data } = await supabase.functions.invoke('food-search', { body: { code }, timeout: 8000 });
     const hit = data?.hits?.[0];
-    return hit ? offCandidate(hit) : null;
+    return hit ? offCandidate(hit) : data?.usda ? usdaCandidate(data.usda) : null;
   } catch {
     return null;
   }

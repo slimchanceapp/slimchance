@@ -206,7 +206,7 @@
       const c = await lookupBarcode(code, history);
       if (c) { pick({ ...c, barcode: code }); return; }
       missBarcode = code;
-      notice = `${code} isn't in Open Food Facts or your history.`;
+      notice = `${code} isn't in Open Food Facts, USDA's database or your history.`;
     } finally {
       working = '';
     }
@@ -312,6 +312,7 @@
             {#if pending.c.key.startsWith('l:')}From the label
             {:else if pending.c.source === 'history'}Yours · logged {pending.c.count}×
             {:else if pending.c.source === 'builtin'}Basic food · per 100 {unit(pending.c)}: {macroLine(pending.c.per100!)}
+            {:else if pending.c.source === 'usda'}USDA FoodData Central{#if pending.c.per100}{' · '}per 100 {unit(pending.c)}: {macroLine(pending.c.per100)}{/if}
             {:else}Open Food Facts{pending.c.local ? ' · sold in SK/CZ' : ''}{#if pending.c.per100}{' · '}per 100 {unit(pending.c)}: {macroLine(pending.c.per100)}{/if}{/if}
           </div>
           {#if pending.c.per100 && pending.grams != null}
