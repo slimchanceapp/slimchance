@@ -12,7 +12,7 @@ into the page.
 2. [Design: a system, not a mood](#chapter-2-design-a-system-not-a-mood): tokens, two themes, the coin rule, and how we choose.
 3. [MCP: Slim Chance inside any assistant](#chapter-3-mcp-slim-chance-inside-any-assistant): the protocol, one conversation end to end, and the server we built.
 4. [Evals: how we found out our chance was overconfident](#chapter-4-evals-how-we-found-out-our-chance-was-overconfident): measuring an AI and our own maths against a known truth.
-5. Domain-driven design: cutting the app into areas that can't break each other (coming).
+5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, and the pure core a check now guards.
 6. AI you can trust: retrieval and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
@@ -275,7 +275,7 @@ transport "Streamable HTTP").
   tool can't disagree. `src/lib/mcp.ts` is pure (a message in, a reply out)
   and `src/routes/mcp/+server.ts` only moves bytes. This shape has a name,
   *ports and adapters*: the core knows nothing about who is calling.
-  Chapter 5 builds on it.
+  Chapter 5 measures it.
 - **Two kinds of error.** A broken message is a protocol error. A wrong
   date is a *tool* error (`isError: true`) with a sentence the model can read
   and fix, then retry, without a person seeing a failure.
@@ -466,6 +466,133 @@ a month of mornings our maths and the model agree.
 
 ---
 
+## Chapter 5. Domain-driven design: areas that can't break each other
+
+### The idea
+
+Domain-driven design (DDD) says: build the software out of the words and the
+boundaries of the problem it serves, not out of technical layers alone. Four
+ideas carry most of it:
+
+- **Ubiquitous language:** one word for one thing, used the same way in
+  conversation, on screen and in the code.
+- **Bounded contexts:** areas with their own model and their own rules, which
+  talk to each other through narrow doors.
+- **Aggregates:** things that must change together or not at all.
+- **Anti-corruption layers:** translators at the border, so an outside system's
+  quirks don't leak into your model.
+
+The worry it answers is the one raised on 5 November: blast radius. A change
+in one place shouldn't break another.
+
+### Our language, and where each word lives
+
+The app already has a language, and each word has exactly one home in the
+code. Chapter 1's "one source of truth" rule is this idea under another name.
+
+| Word | Means | Its one home |
+|---|---|---|
+| Weigh-in | One morning's reading, saved with a typo guard | `saveWeighIn`, `weighIn.ts` |
+| Trend | Where the weight really is under the daily water noise | `weightVerdict`, `insights.ts` |
+| The chance (coins) | How likely the trend is really going the goal's way | `chanceOf`, `insights.ts`; words in `pulse.ts` |
+| The path | How far from the start to the goal | `slimTrack.ts` |
+| The budget | The week's calories, not the day's | `weekBudget`, `week.ts` |
+| Learned burn | What this body burns, learned from the log and the scale | `weeklyMaintenance`, `adaptiveTdee.ts` |
+| The floor | The least anyone is ever planned to eat | `CUT_FLOOR`, `tdee.ts` |
+| A trained day | Lifting logged, or 30+ minutes of watch-recorded sport | `trainedDates`, `health/exercise.ts` |
+| A stall | The trend has ruled out the plan's pace | `diagnoseStall`, `insights.ts` |
+| Moments | The morning briefing and the evening hold | `stores/moments.ts` |
+
+### The map
+
+| Area | What it knows | Core (pure) | Shell (talks to the world) |
+|---|---|---|---|
+| Body | Weigh-ins, trend, chance, path | `insights` `pulse` `line` `slimTrack` `milestone` `units` | `weighIn`, `stores/body` |
+| Nutrition | Food, the week's budget, the learned burn | `food` `week` `adaptiveTdee` `tdee` `mealPlan` | `foodLog`, `foodSources`, the food edge functions |
+| Training | Sessions, programs, lifts | `program` `strength` `liftStalls` `plates` | the Train screen, `health/logActivity` |
+| Health signals | Sleep, resting heart rate, HRV, steps | `signals` `readiness` `fitness` | `health/*` (Health Connect), Apple Health |
+| Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
+| Moments | Briefing, evening hold, kind words | `briefing` `hold` `cheer` `kind` `lessons` | `stores/moments`, the Android receiver |
+| Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
+| Identity and data | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live` |
+| Metrics | Are we helping? | `fit` | `events`, the Numbers page, `owner_metrics` |
+| The outside world | Other people's AI assistants | `mcp` | `routes/mcp/+server.ts` |
+
+Two DDD ideas are already here under other names:
+- **Aggregates.** Rows that belong together (a meal, a seeded plan) go
+  through `upsertRecords`: one request, all or nothing. A half-saved meal is
+  exactly what an aggregate exists to prevent.
+- **An anti-corruption layer.** `supabase/functions/_shared/llm.ts` puts three
+  AI providers behind one door, and `checkReply` refuses model text that
+  breaks the app's rules. Gemini's quirks stop at that border.
+
+### Measuring the core
+
+The rule from chapter 1 is "logic is pure": data in, data out. A small
+analysis checked every module in `src/lib`, following each import, and
+counted the ones that reach nothing outside: no storage, network, browser,
+database or stores.
+
+The first count was 38 of 71. The surprise was why: `units.ts`, which turns
+kilograms into pounds or stone, read the person's unit from browser storage
+the moment it was imported. So 15 otherwise pure modules secretly depended
+on a browser, including the MCP server, which runs on a server with no
+browser at all. It worked only because the read was wrapped in a `try`.
+
+This is a *hidden dependency*, the kind DDD's boundaries exist to expose. The
+fix kept the behaviour (a pounds user never sees kilograms flash on a
+reload) but moved the memory out of the core: `units.ts` now only holds the
+current unit, `stores/units.ts` remembers it on the device, and the root
+loader restores it before the first frame. A throwaway account on the live
+site confirmed pounds on the very first frame after a reload.
+
+The count is now **53 of 71**. The other 18 are adapters (haptics,
+notifications, the database, sharing, the weather cache), which is where
+side effects belong.
+
+### The boundary, enforced
+
+The 53 are listed in `svelte-recomp/scripts/pure-core.txt`, and a check fails
+when any of them stops being pure, naming the import that did it. Put the old
+`units.ts` back and it fails at once: "coach.ts left the pure core: units.ts
+uses localStorage". Like the regression baseline, the list may grow, and
+taking a module off needs a reason in the commit.
+
+### Why not split it into services
+
+Microservices draw the boundaries with a network: each area becomes its own
+program with its own deploy. That buys independence for large teams and costs
+everything else: latency, failures between services, versioning, a pipeline
+per service. One person working with an AI gains none of it. The blast radius
+here comes from logic leaking across layers, and a check stops that for free.
+
+So the decision ([0006](../decisions/0006-modular-monolith-with-a-guarded-core.md))
+is a *modular monolith*: one app, one deploy, areas named, the core guarded.
+Files move into an area's own folder only once a check shows that area's
+boundary holds, one area at a time. That incremental move has a name, the
+*strangler* pattern, after a vine that slowly replaces the tree it grows on.
+
+### What is weak, honestly
+
+- **The map is a table, not folders.** Everything still sits flat in
+  `src/lib`, so nothing stops Body from importing Training directly.
+  The next check should cover imports between areas, not only purity.
+- **`stores/body.ts` is a hub.** It joins Body, Nutrition and Training into
+  the numbers every screen shares. Useful, and also the place where a change
+  ripples furthest.
+- **A concept in the wrong place.** `trainedDates`, the one definition of a
+  trained day, is pure logic living among the Health Connect adapters in
+  `health/exercise.ts`. It's the natural first move.
+- **Purity is measured by what a file says, not what it does.** A module
+  could still reach the outside through a function passed in. The check
+  catches the common leaks, not every possible one.
+
+**Try it.** Add `localStorage.getItem('x');` inside any function in
+`src/lib/pulse.ts`, run `node scripts/selfcheck.js` in `svelte-recomp`, and
+read which check fails and why. Then take the line out.
+
+---
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -505,3 +632,13 @@ a month of mornings our maths and the model agree.
 - **Prior:** what is plausible before looking at this person's data (how
   noisy scales are, how fast people really lose), which their own data
   outweighs as it accumulates.
+- **Bounded context:** an area of the app with its own model and rules,
+  talking to other areas through narrow doors.
+- **Ubiquitous language:** one word for one thing, everywhere: in talk, on
+  screen and in the code.
+- **Aggregate:** things that must change together or not at all, saved as one.
+- **Anti-corruption layer:** a translator at the border with an outside
+  system, so its quirks don't leak in.
+- **Modular monolith:** one app and one deploy, with areas kept apart inside.
+- **Strangler pattern:** replacing a structure piece by piece while it keeps
+  running.

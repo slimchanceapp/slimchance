@@ -1,0 +1,33 @@
+# 0006: One app with a guarded pure core; boundaries before folders
+
+**Date:** 2026-11-10.
+
+## Decision
+- **One app, not services.** Slim Chance stays a single codebase and a single
+  deploy (a *modular monolith*).
+- **A pure core, guarded.** The modules that hold the domain's logic take data
+  in and give data out, and reach nothing outside: no storage, network,
+  browser, database or stores, directly or through an import. They are listed
+  in `svelte-recomp/scripts/pure-core.txt` (53 of 71 today), and a check fails
+  when one stops being pure. Side effects live in adapters: screens, stores,
+  sync, the MCP route, the phone shells, the AI provider chain.
+- **The areas are named before they get folders.** The context map in the
+  book (chapter 5) names each area and its modules. Files move into an area's
+  own folder only once a check shows that area's boundary holds, one area at a
+  time (the *strangler* way), starting with Body.
+
+## Why
+- The worry raised on 2026-11-05 was blast radius: a change in one place
+  breaking another. Here that happens through logic leaking into the wrong
+  layer, not through deployment, so the boundary that matters is in the code.
+- The pure core is why the MCP server took a day: the maths could be called
+  from a server without knowing about screens or storage.
+- A check costs minutes; moving a hundred files costs days and breaks every
+  open line of thought. Checks first, folders when they're earned.
+- The first measurement found a real leak: `units.ts` read browser storage
+  when imported, so 15 core modules (the MCP server among them) depended on
+  it. Fixed the same day, and the check now fails if it comes back.
+
+## What would change it
+A second developer working in parallel, or one area needing its own deploy or
+its own limits (for example the MCP server under heavy outside traffic).
