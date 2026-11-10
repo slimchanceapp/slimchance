@@ -625,7 +625,7 @@
         {#if $brainNote}<br>{$brainNote}{/if}
         {#if $coachNotes}<br><br><b>What it has learned:</b> {$coachNotes} <button class="menu-size" onclick={forgetCoachNotes}>Forget</button>{/if}
       {:else}
-        Lets an AI write tonight's message, or stay quiet, and notice one pattern a day. Once a day it sends Google's Gemini (or, when Gemini is unavailable, Cloudflare Workers AI, which keeps nothing) a two-week summary: weights, calories and protein per day, training, your plans and usual foods. No photos and no name. Off unless you turn it on.
+        Lets an AI write tonight's message, or stay quiet, and notice one pattern a day. Once a day it sends Google's Gemini a two-week summary: weights, calories and protein per day, training, your plans and usual foods. No photos and no name. Off unless you turn it on.
       {/if}
     </div>
     <a class="menu-item" href="{base}/meds" onclick={() => (menuOpen = false)}>

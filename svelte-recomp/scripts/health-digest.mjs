@@ -16,7 +16,7 @@ export function digest(h) {
     `- Opened the app: ${e.open ?? 0} people; started setup: ${e.setup_1 ?? 0}; finished: ${e.setup_done ?? 0}`,
     `- Reminders: ${e.reminder_push ?? 0} by push, ${e.reminder_calendar ?? 0} by calendar, ${e.reminder_failed ?? 0} couldn't be set`,
     `- AI calls: ${Object.entries(h.ai ?? {}).map(([k, v]) => `${k} ${v}`).join(', ') || 'none'}`,
-    `- Gemini credit: ${h.ai_credit ?? 'not checked'}; free photo reader behind it: ${h.photo_fallback ?? 'none'}`,
+    `- Gemini credit: ${h.ai_credit ?? 'not checked'}`,
     ...(broke ? ['  - USED UP: photos, label reading and the coach are down until it is topped up in AI Studio.'] : []),
     `- Errors: ${(h.errors ?? []).length} kinds seen, ${fresh.length} new`,
     ...fresh.map((x) => `  - NEW (${x.people} ${x.people === 1 ? 'person' : 'people'}, ${x.route || 'no route'}): ${x.message}`),

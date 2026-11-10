@@ -4,10 +4,8 @@
 // the reply, and the app checks every reply before a word of it is shown
 // (checkReply there). Nothing here computes a number about the person.
 //
-// Gemini, or Cloudflare Workers AI when Gemini is unavailable (it keeps nothing
-// and never trains on what it is sent): two weeks of someone's weight, food
-// and plans are too personal for a free gateway whose data handling we can't
-// check. Until Gemini runs on
+// Gemini only: two weeks of someone's weight, food and plans are too personal
+// for a free gateway whose data handling we can't check. Until Gemini runs on
 // its paid tier (GEMINI_TIER=paid; Google's terms require it for apps used in
 // the EU) only the owner's account (OWNER_USER_ID) may use it.
 //
@@ -147,7 +145,7 @@ Deno.serve(async (req: Request) => {
         ? { prompt: planPrompt(facts), schema: PLAN_SCHEMA, temperature: 0.4, timeoutMs: 30_000 }
         : { prompt: prompt(facts), schema: SCHEMA, temperature: 0.6, timeoutMs: 25_000 },
       planning ? parsePlan : parse,
-      { only: ['gemini', 'cloudflare'], deadlineMs: 40_000 },
+      { only: ['gemini'], deadlineMs: 40_000 },
     );
     return json({ reply: value, provider, ms: Date.now() - started });
   } catch (e) {

@@ -4,7 +4,7 @@
 // .github/workflows/health-digest.yml, which emails the owner when something
 // new needs a look. SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected by
 // the platform; HEALTH_TOKEN is a project secret. A wrong token sees nothing.
-import { geminiCredit, PHOTO_FALLBACK } from '../_shared/llm.ts';
+import { geminiCredit } from '../_shared/llm.ts';
 
 const BASE = Deno.env.get('SUPABASE_URL')!;
 const KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -50,7 +50,6 @@ Deno.serve(async (req) => {
       // Gemini's prepaid balance, checked with one token: photos, labels and
       // the coach stop when it runs out (2026-11-10).
       ai_credit: credit,
-      photo_fallback: PHOTO_FALLBACK,
     });
   } catch (e) {
     return Response.json({ since, failed: String((e as Error)?.message ?? e) }, { status: 500 });
