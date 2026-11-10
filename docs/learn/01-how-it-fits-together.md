@@ -10,9 +10,9 @@ into the page.
 
 1. [How it fits together](#chapter-1-how-it-fits-together): the layers, one weigh-in end to end, the practices, and the first bug lesson.
 2. [Design: a system, not a mood](#chapter-2-design-a-system-not-a-mood): tokens, two themes, the coin rule, and how we choose.
-3. Domain-driven design: cutting the app into areas that can't break each other (coming).
-4. AI you can trust: retrieval, checks, evaluations, and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
-5. MCP: letting any AI assistant use the app (coming).
+3. [MCP: Slim Chance inside any assistant](#chapter-3-mcp-slim-chance-inside-any-assistant): the protocol, one conversation end to end, and the server we built.
+4. Domain-driven design: cutting the app into areas that can't break each other (coming).
+5. AI you can trust: retrieval, checks, evaluations, and AI on the phone (coming; the decision so far is [0004](../decisions/0004-ai-on-the-phone-first.md)).
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -204,6 +204,128 @@ active tab follow. Then put it back.
 
 ---
 
+## Chapter 3. MCP: Slim Chance inside any assistant
+
+### The idea
+
+Until now Slim Chance only worked if a stranger installed it, signed up and
+weighed in for a week, and of 59 who signed up none got that far in three
+days. Meanwhile millions of people already ask a general AI assistant "is my
+diet working?", and a language model is bad at exactly the sum this app does
+well: a trend through noisy mornings with an honest error bar.
+
+So the maths is now offered as a tool that any assistant can call, with no
+app, no account and nothing stored. The app becomes an engine, and the
+screens are only one way in. It is also the cheapest test we have of the
+question in [0003](../decisions/0003-mission-and-who-first.md): does anyone
+want the chance, once the sign-up wall is gone?
+
+### What MCP is
+
+The Model Context Protocol is an open standard for letting AI applications
+use outside tools and data. The assistant is the *client*; we are a
+*server*. A server can offer three kinds of thing:
+
+| Primitive | What it is | Ours |
+|---|---|---|
+| Tools | Actions the model can decide to call | `slim_chance` |
+| Resources | Documents the app can read into the conversation | none yet |
+| Prompts | Ready-made conversation starters the person picks | none yet |
+
+The messages are JSON-RPC 2.0: small JSON objects with a `method`, `params`
+and an `id`, answered with a `result` or an `error`. Each one travels as an
+HTTP POST to one address, `https://slimchance.app/mcp` (the spec calls this
+transport "Streamable HTTP").
+
+### One conversation, end to end
+
+1. **initialize.** The client says which protocol version it speaks. We
+   answer with the version we'll use, what we offer (`tools`), and a line of
+   instructions for the model.
+2. **notifications/initialized.** "Ready." A notification has no `id`, so
+   no answer is due: we return HTTP 202 and nothing else.
+3. **tools/list.** We describe `slim_chance`: a title, a description, and a
+   JSON Schema for its input (dated weights, kg or lb, which way the person
+   wants to go) and its output.
+4. **The model decides.** Nobody presses a button. The model reads the
+   description and decides whether this tool answers the person's question,
+   so **the description is the interface**. Ours says what the tool needs
+   (7 readings in 5 weeks), what it does, and what it is not (a forecast).
+5. **tools/call.** The model sends the weights; we answer with a sentence for
+   the model to relay, plus the same facts as structured data:
+
+```json
+{ "state": "answerable", "chance_in_10": 10, "chance": "Almost certainly coming off.",
+  "trend": 92.1, "rate_per_week": 0.46, "rate_range": [0.2, 0.73],
+  "scale_noise": 0.2, "readings_used": 8, "unit": "kg", "as_of": "2026-11-10" }
+```
+
+### The choices, and why
+
+- **Stateless and anonymous.** Weights arrive, maths runs, the answer leaves,
+  and nothing is kept. Health data is the most protected kind under European
+  law; not holding it at all is the strongest protection there is.
+- **No AI on our side.** The caller's assistant does the talking, so a call
+  costs us a few milliseconds of arithmetic and no AI bill, and there is no
+  sign-up to guard.
+- **The same maths as the app.** The tool calls `weightVerdict`, `chanceOf`
+  and `oddsOf`, the functions behind the coins on Today, so the app and the
+  tool can't disagree. `src/lib/mcp.ts` is pure (a message in, a reply out)
+  and `src/routes/mcp/+server.ts` only moves bytes. This shape has a name,
+  *ports and adapters*: the core knows nothing about who is calling.
+  Chapter 4 builds on it.
+- **Two kinds of error.** A broken message is a protocol error. A wrong
+  date is a *tool* error (`isError: true`) with a sentence the model can read
+  and fix, then retry, without a person seeing a failure.
+- **Version negotiation.** The protocol moved on in July 2026 to a newer,
+  fully stateless version. We speak the two 2025 versions most assistants
+  use. A newer client gets the spec's own answer, "unsupported version, here
+  is what I speak", and falls back to one we both know.
+- **A rate limit at the edge.** Vercel's firewall lets one address make 60
+  calls a minute; the 61st gets HTTP 429 ("too many requests") before our
+  code runs. Tested: 70 quick calls, 60 answered, 10 refused.
+
+### How it was tested
+
+- **In the suite.** Because the handler is pure, the check plays a whole
+  conversation without a network: the handshake, the list, a call with three
+  weeks of noisy mornings (the true rate must land inside the range), the
+  same in pounds, too few readings, bad input, a newer client.
+- **With real clients.** The official MCP Inspector, versions 1 and 2,
+  connected, listed the tool and called it.
+- **After every deploy.** The ship script's live check asks the live server
+  for its tool list; if that fails, the deploy rolls back by itself.
+- **The safety net caught us.** The first commit had a product name in a
+  code comment. The check that keeps assistant names out of published files
+  only reads committed files, so it passed on the laptop and stopped the
+  deploy. That commit is in the public history, fixed by the next one.
+
+### What is weak, honestly
+
+- **Nobody knows it exists.** It is not listed in the public MCP registry
+  yet; listing it is an outward step for the owner to approve.
+- **It remembers nothing.** Each call sends the whole history again. A
+  version connected to a Slim Chance account would need sign-in (OAuth 2.1)
+  and a much bigger privacy decision.
+- **One tool.** The weekly budget and the learned burn are not offered yet.
+- **The `Origin` header is not checked.** The spec asks servers to check it
+  so websites can't reach servers running on someone's own computer. This
+  one is public and keeps nothing, so a website calling it gains nothing it
+  couldn't get directly. The reason is written next to the code.
+
+**Try it.** In your AI assistant's settings, add a custom connector (some
+call it an integration or an MCP server) with the address
+`https://slimchance.app/mcp`. Then paste a week or two of morning weights
+with their dates and ask whether your weight is really moving. Or, from a
+terminal:
+
+```sh
+curl -s -X POST https://slimchance.app/mcp -H 'Content-Type: application/json' \
+  -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}'
+```
+
+---
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -228,3 +350,12 @@ active tab follow. Then put it back.
   assistant use an app's functions as tools.
 - **ADR (architecture decision record):** one short file per decision: what,
   why, and what would change it. Ours are in `docs/decisions/`.
+- **JSON-RPC:** a tiny convention for calling functions with JSON messages:
+  a method name and parameters in, a result or an error out.
+- **JSON Schema:** a description of what a piece of JSON must look like,
+  which machines (and models) can read.
+- **Stateless:** keeps nothing between calls; every call carries all it needs.
+- **Rate limit:** a cap on how often one caller may call, enforced before the
+  code runs.
+- **Ports and adapters:** a core that knows nothing about the outside, with
+  thin adapters (a screen, an HTTP route, an MCP server) plugged into it.
