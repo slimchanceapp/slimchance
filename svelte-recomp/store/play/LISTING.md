@@ -139,12 +139,13 @@ Background reading: **No**. Each permission and what it is for:
 ## 4. Closed test (Test and release → Testing → Closed testing)
 
 1. Create the track (or use "Alpha"). **Countries:** all available.
-2. **Testers:** an email list for now (your own addresses); add the public Google Group
-   when it exists. **Feedback:** `hello@slimchance.app`.
+2. **Testers:** Google Groups, `slimchance-testers@googlegroups.com` (anyone joins at
+   groups.google.com/g/slimchance-testers). **Feedback:** `hello@slimchance.app`.
 3. **Create release:** when asked about app signing, choose **Use a Google-generated key**
    (Play App Signing). The bundle is signed with our upload key, which stays on the laptop
    and in GitHub's secrets.
-4. Upload `slimchance-play.aab` (build 18, version 2.5). Release name: `18 (2.5)`.
+4. Upload `slimchance-play.aab` (build 20, version 2.5; CI artifact `slimchance-play-aab`, a copy
+   at `~/Downloads/slimchance-play/slimchance-play-build20.aab`). Release name: `20 (2.5)`.
    Release notes:
    ```
    The first test build. Thank you for trying it: hello@slimchance.app reaches the person who builds it.
