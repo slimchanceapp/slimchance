@@ -15,6 +15,7 @@ into the page.
 5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, and the pure core a check now guards.
 6. [The AI layer: engines, evidence, and an expensive lesson](#chapter-6-the-ai-layer-engines-evidence-and-an-expensive-lesson): the barcode chain, the day the AI went dark, and the two engines that replaced one.
 7. [Learning from the best: MacroFactor, Oura, Duolingo](#chapter-7-learning-from-the-best-macrofactor-oura-duolingo): reading the leaders' own methods, two faults they showed us, and the tests that proved the fixes.
+8. [Ask about your numbers: retrieval, a tool and a small agent](#chapter-8-ask-about-your-numbers-retrieval-a-tool-and-a-small-agent): finding the right paragraph by meaning, letting a model call our code, and the check that decides what you see.
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -827,6 +828,133 @@ Oura on [the readiness score](https://support.ouraring.com/hc/en-us/articles/360
 Duolingo retention write-ups ([Lazyweb](https://lazyweb.com/research/duolingo-retention-experiments),
 second-hand, so treated as hints rather than facts).
 
+## Chapter 8. Ask about your numbers: retrieval, a tool and a small agent
+
+Progress has a box (when the AI coach is on): ask anything about your weight,
+food or training. "Am I actually losing weight?" "Was I faster in my first
+month?" "Do I need to log the oil?" Three techniques answer it, and a fourth
+decides whether you see the answer at all.
+
+### Retrieval: the right paragraph, found by meaning
+
+Our guides and FAQ are cut into 23 passages. Each one is turned into an
+**embedding**: a list of 384 numbers that places its meaning in space, made by
+a small open model (`bge-small-en-v1.5` on Cloudflare). Passages about the
+same thing land near each other. `scripts/build-knowledge.mjs` does this once
+and saves `supabase/functions/_shared/knowledge.json`.
+
+When you ask, your question is embedded the same way, and
+`_shared/knowledge.ts` measures how close it sits to every passage (the
+**cosine** of the angle between the two lists). The three closest, if they're
+close enough (0.5), go to the model with your question. That is **RAG**: the
+model writes from our text, handed to it now, not from what it remembers.
+
+**How we know it finds the right one.** `scripts/eval-retrieval.mjs` asks 15
+questions the way people ask them, each with the passage that answers it:
+14 of 15 had it in the top three (**recall@3**), and its average rank was
+close to first (**mean reciprocal rank** 0.93). The miss teaches the most:
+"What does the app do when my weight jumps?" found "My weight jumps before my
+period" first. The words matched; the meaning didn't. Small embedding models
+lean on shared words. We left it: one miss in 15, and the fix (a bigger model,
+or mixing word search with meaning search) costs more than it buys today.
+
+### A tool: the model asks, our code answers
+
+Some questions need a calculation: is the trend really going down, and how
+fast? A model shouldn't do that sum, and here it isn't allowed to. It gets
+one **tool**, `slim_chance`, and it may only say which dates to look at. The
+function then fetches your real weigh-ins for those dates and calls our own
+MCP server (chapter 3), the same door any assistant uses. The answer (the
+chance in 10, the pace, the scale's noise) goes back to the model.
+
+Why dates only: a tool that took weights as input would let the model make
+some up. With dates, the worst it can do is pick the wrong dates, and then it
+gets a true answer about those dates.
+
+### The agent: a loop, not a single call
+
+An **agent** is a model in a loop that can act. Ours is about 40 lines
+(`supabase/functions/ask/agent.ts`):
+
+```
+question + your 14-day facts + 3 passages
+   -> model: "call slim_chance from 2026-09-11 to 2026-10-11"
+   -> our code runs it, hands back the result
+   -> model: (maybe another call)  ...  -> {"answer": "...", "sources": [...]}
+```
+
+At most three turns, and the last one has no tools, so it must answer with
+what it has. The eval and the live function run this same loop: the model
+and the tool are passed in, so the test can't drift from the real thing.
+
+### The check: the AI proposes, the app decides
+
+Nothing reaches you until `src/lib/ask.ts` has read it:
+
+- **Every measurement is grounded:** each number must be in your facts or a
+  tool result (within 1%). Small whole counts (days, mornings) are free; a
+  small decimal like "down 2.7 kg" is a measurement and must be found.
+- **The never-say list** from the coach: no guilt, no starving, no asking you
+  to log more.
+- **Medicine goes to your doctor:** mentioning it is allowed only as a
+  referral, and never with a go-ahead to stop or change anything.
+- **Sources are real:** a guide is cited only if it was retrieved for this
+  question.
+
+A refused answer is asked for once more, with the reason attached ("refused
+because: ..."). A second refusal shows nothing.
+
+### What the eval found
+
+`scripts/eval-ask.mjs` asks eight questions of a simulated person, each with
+what a good answer needs (the tool, a particular guide, or neither). The first
+run passed 6 of 8, and both failures were **our check being wrong**, not the
+model:
+
+1. "Please consult your doctor regarding any changes to your medication" was
+   refused by a flat rule against the word "medication". The right answer was
+   being blocked. Now medicine is allowed when it sends you to a doctor.
+2. "If you start logging it, your numbers will adjust" was refused as a
+   nudge to log more. But that sentence is **our own guide**, nearly word for
+   word. A clause that opens with "if you" is now left out of that rule;
+   "try logging the oil" is still refused.
+
+Then two real misses:
+
+3. "Was I losing faster in my first month?" got "I don't have your data from
+   your first month." True: the model saw only 14 days and didn't know when
+   your weigh-ins began, so it couldn't pick dates. Now it's told the range.
+4. The test itself was wrong. The simulated weigh-ins had a 2 kg jump three
+   weeks ago (a formula slip), while the hand-written facts said "losing 0.3
+   kg a week", so the tool and the facts disagreed. Fixed to one smooth line.
+
+Writing the check's own test turned up one more: "down 2.7 kg since
+August", a number found nowhere, passed, because every number under 14 was
+free. That's how only whole counts came to be free.
+
+Final: **8 of 8**, one of them after the retry, in 21 model calls on
+Cloudflare's free allowance. Live, from a throwaway trial account (deleted
+afterwards): 3 to 6 seconds per answer.
+
+### What is weak, honestly
+
+- **Eight questions is a small eval.** It shows the parts work together, not
+  how often answers are good across many people and many questions. It grows
+  with each question people really ask, graded the same way.
+- **The check grounds numbers, not claims.** A sentence can quote a true
+  number and still misread it. The next step is a second model as a judge, or
+  pulling out each claim and checking it.
+- **One more thing to fail:** the tool call crosses the internet to our own
+  server, and every asker shares that server's per-address limit, because all
+  the calls leave from Supabase's few addresses.
+- **Nothing is kept,** so we can't learn from real answers. That is on
+  purpose (privacy), and it means the eval's questions are written by hand.
+
+**Try it.** `node scripts/eval-retrieval.mjs` and read the scores beside each
+passage. Then in `src/lib/ask.ts`, delete the `if you` line and run
+`node scripts/eval-ask.mjs`: watch the oil question get refused for quoting
+our own guide.
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -893,3 +1021,18 @@ second-hand, so treated as hints rather than facts).
 - **False alarm and catch rate:** how often a warning fires when nothing is
   wrong, and how often it fires when something is. A useful warning has few of
   the first and many of the second.
+- **Embedding:** a list of numbers that stands for a text's meaning, so texts
+  that mean similar things get similar lists.
+- **Cosine similarity:** how closely two embeddings point the same way, from
+  -1 to 1; the measure used to find the nearest passages.
+- **Recall@k:** how often the right answer is among the top k results.
+- **Mean reciprocal rank (MRR):** the average of 1 divided by the right
+  answer's position (first = 1, second = 0.5); 1 is perfect.
+- **Tool (function) calling:** a model answering "run this function with these
+  arguments" instead of text; our code runs it and hands back the result.
+- **Agent:** a model in a loop that can act through tools, deciding each step
+  from what the last one returned.
+- **Grounding:** tying every claim in an answer to a source it was given;
+  here, every number to the facts or a tool result.
+- **Guardrail:** a check outside the model that decides whether its output is
+  used.
