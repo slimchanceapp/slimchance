@@ -24,7 +24,7 @@
 // phase is two weeks: `w1` is the prescription for its first week, `w2` for
 // its second. Every video id is checked by `npm run check:videos`.
 
-import type { PlanExercise, PlanSession } from './workoutPlanDefaults.ts';
+import type { PlanExercise, PlanSession } from '../training/index.ts';
 
 export interface ProgramPhase {
   /** Program weeks this phase covers, e.g. [1, 2]. */

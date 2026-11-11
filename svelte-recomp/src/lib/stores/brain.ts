@@ -14,7 +14,7 @@ import { upsertRecord } from './sync';
 import { PRIVACY_VERSION, userId } from './user';
 import { buildFacts, checkReply, factsDigest, type BrainReply } from '$lib/brain';
 import { checkAnswer, type AskChecked } from '$lib/ask';
-import { trainedDates } from '$lib/health/exercise';
+import { trainedDates } from '$lib/training';
 import { cleanPlans } from '$lib/plans';
 import { frequentFoods } from '$lib/nutrition';
 import { toUnit, weightUnit } from '$lib/units';

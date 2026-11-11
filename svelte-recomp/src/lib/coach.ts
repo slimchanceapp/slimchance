@@ -78,7 +78,7 @@ export interface CoachInput {
 
   /** Muscle-retention read from the lift log: is strength holding while the
    *  fat comes off? Paired with weight loss below to tell the real story. */
-  strengthTrend?: import('./strength').StrengthTrend | null;
+  strengthTrend?: import('./training/index').StrengthTrend | null;
   /** A rehab program (Back Rebuild) sets the loads: no strength verdicts. */
   inProgram?: boolean;
 

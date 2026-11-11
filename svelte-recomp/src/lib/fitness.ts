@@ -4,7 +4,7 @@
 // carry it, and the answer rests on the heart and the lifts. Pure; see
 // selfcheck.js.
 import { fitWeightLine, CAREFUL_CARRY } from './body/index.ts';
-import type { StrengthTrend } from './strength.ts';
+import type { StrengthTrend } from './training/index.ts';
 import { shiftYmd } from './date.ts';
 
 export interface FitnessSign {

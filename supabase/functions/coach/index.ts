@@ -100,7 +100,7 @@ Reply with JSON only: {"days":[{"date":"YYYY-MM-DD","meals":[{"time":"HH:MM","it
 }
 
 // The training week (pact m14, 2026-11-10): the person's own sessions, walks
-// and rest, arranged over the days left; src/lib/trainPlan.ts checks it.
+// and rest, arranged over the days left; src/lib/training/trainPlan.ts checks it.
 const TRAIN_SCHEMA = {
   type: 'OBJECT',
   properties: {

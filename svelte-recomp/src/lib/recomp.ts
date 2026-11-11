@@ -21,7 +21,7 @@
 //
 // Pure — no Svelte, Dexie or Capacitor — so it is unit-tested in selfcheck.js.
 
-import type { StrengthTrend } from './strength';
+import type { StrengthTrend } from './training/index';
 
 export type RecompDirection =
   | 'recomp'        // fat down AND muscle up/held — the outcome we want

@@ -4,7 +4,7 @@
 // LEARNED maintenance, protein, training tonnage, steps and sleep — then turning
 // the gaps into concrete, prioritised adjustments. Pure + unit-tested.
 
-import type { StrengthLog, StrengthSet } from './strength';
+import type { StrengthLog, StrengthSet } from './training/index';
 import { weightVerdict } from './body/index.ts';
 import { dwt } from './units.ts';
 

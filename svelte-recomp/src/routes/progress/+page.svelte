@@ -12,7 +12,7 @@
   import { userId } from '$lib/stores/user';
   import Commitments from '$lib/components/Commitments.svelte';
   import WeightInput from '$lib/components/WeightInput.svelte';
-  import { strengthTrend } from '$lib/strength';
+  import { strengthTrend } from '$lib/training';
   import { recompVerdict, verdictTone, leanMass, fatMass, type BodyFatPoint } from '$lib/recomp';
   import { liveProfile } from '$lib/stores/live';
   import { nowTick } from '$lib/stores/refresh';

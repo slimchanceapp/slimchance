@@ -11,7 +11,7 @@
 // own sessions come back untouched the day it ends. Their weekday schedule —
 // which days are gym, which are badminton — is respected as is.
 
-import type { PlanDay, PlanSession } from './data/workoutPlanDefaults.ts';
+import type { PlanDay, PlanSession } from './training/index.ts';
 import { PHASES, WEEKS, type ProgramPhase } from './data/backRebuild.ts';
 
 export type ProgramState = { id: 'back-rebuild'; start: string } | null | undefined;

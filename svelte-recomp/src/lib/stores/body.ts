@@ -11,7 +11,7 @@
 //
 // The calorie target is the WEEK's: set from data up to last Sunday, so it holds
 // still for seven days and the week's budget is a number you can plan against.
-import { trainedDates } from '$lib/health/exercise';
+import { trainedDates } from '$lib/training';
 import { derived, type Readable } from 'svelte/store';
 import { liveWeights, liveGoal, liveFoodLogs, liveDailyLogs, liveProfile, liveTracks, liveGoalReason, liveWorkoutLogs, liveActivitySessions, liveSessionCompletions, liveBiometrics, liveDailySteps } from './live';
 import { todayDate } from './refresh';
@@ -31,7 +31,7 @@ import { explainUp, type UpExplained } from '$lib/body';
 import { sinceStart, type SinceStart } from '$lib/sinceStart';
 import { cycleInfo, cycleNote } from '$lib/cycle';
 import { fitness as fitnessOf, type Fitness } from '$lib/fitness';
-import { strengthTrend } from '$lib/strength';
+import { strengthTrend } from '$lib/training';
 
 export interface DayIntake { kcal: number; protein: number; carbs: number; fat: number; items: number }
 

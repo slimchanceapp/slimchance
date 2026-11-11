@@ -501,7 +501,7 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | The budget | The week's calories, not the day's | `weekBudget`, `nutrition/week.ts` |
 | Learned burn | What this body burns, learned from the log and the scale | `weeklyMaintenance`, `nutrition/adaptiveTdee.ts` |
 | The floor | The least anyone is ever planned to eat | `CUT_FLOOR`, `nutrition/tdee.ts` |
-| A trained day | Lifting logged, or 30+ minutes of watch-recorded sport | `trainedDates`, `health/exercise.ts` |
+| A trained day | Lifting logged, or 30+ minutes of watch-recorded sport | `trainedDates`, `training/exercise.ts` |
 | A stall | The trend has ruled out the plan's pace | `diagnoseStall`, `body/insights.ts` |
 | Moments | The morning briefing and the evening hold | `stores/moments.ts` |
 
@@ -511,7 +511,7 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 |---|---|---|---|
 | Body (`src/lib/body`) | Weigh-ins, trend, chance, path, ceiling, stops | `insights` `pulse` `line` `slimTrack` `milestone` `scale` `scaleUp` `importWeights`, read through `index.ts` | `weighIn`, `stores/body` |
 | Nutrition (`src/lib/nutrition`) | Food, the week's budget, the learned burn, meal plans | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` `foodCoach` `quickAdd`, read through `index.ts` | `foodLog`, `foodSources`, the food edge functions |
-| Training | Sessions, programs, lifts | `program` `strength` `liftStalls` `plates` `trainPlan` | the Train screen, `health/logActivity` |
+| Training (`src/lib/training`) | Sessions, lifts, plates, the exercise library, watch workouts, the trained day | `strength` `liftStalls` `plates` `trainPlan` `nextWeight` `muscleVolume` `trainingHeatmap` `exercise`, read through `index.ts` | the Train screen, `logActivity` |
 | Health signals | Sleep, resting heart rate, HRV, steps | `signals` `readiness` `fitness` | `health/*` (Health Connect), Apple Health |
 | Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
 | Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
@@ -640,6 +640,24 @@ which let the slip pass; it is 0.2% now.
 **Try it.** Add `import { weightVerdict } from './body/insights.ts';` to the
 top of `src/lib/week.ts` and run `node scripts/selfcheck.js`: "week.ts
 reaches past Body's door". Then take it out.
+
+### The third area: Training
+
+Training followed the same afternoon: lifts and their progress, plates, the
+exercise library and plan defaults, watch workouts and the one definition of
+a trained day, behind `src/lib/training/index.ts`, with `logActivity.ts` as
+the one way to log an activity. Training builds on no other area at all; a
+probe that had it read Nutrition's door failed, as it should.
+
+The move found two things. The watch-workout maths (`exercise.ts`) is pure
+logic, but it lived in `health/`, the folder for adapters, so the purity
+check had never been allowed to look at it; in Training it joined the pure
+core and passed. And `data/checklist.ts`, an old evening checklist, had no
+importer anywhere: dead code, deleted.
+
+Same behaviour (every check, snapshot unchanged), same speed (building a
+year of watch workouts: about 4.2 s per 200 runs before and after), and the
+size moved by 39 bytes in all, 15 on the first screen: module names.
 
 ### Can the repo rebuild its own database?
 

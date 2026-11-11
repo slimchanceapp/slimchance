@@ -28,7 +28,7 @@
   import { noteEvent, noteOrigin } from '$lib/events';
   import Onboarding from '$lib/components/Onboarding.svelte';
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
-  import { trainedDates } from '$lib/health/exercise';
+  import { trainedDates } from '$lib/training';
   import { shiftYmd } from '$lib/date';
   import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, type AlarmRow } from '$lib/nativeAlarms';
   import { moments, momentSetting, refreshForecast } from '$lib/stores/moments';

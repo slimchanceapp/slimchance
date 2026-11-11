@@ -4,8 +4,8 @@
   // Train tab quietly saved a three-day gym week for everyone, so people who
   // don't lift were handed one. Nothing is saved until they choose.
   import { upsertRecords } from '$lib/stores/sync';
-  import { PLAN_TEMPLATES, buildSchedule, describeSchedule } from '$lib/data/planTemplates';
-  import { DEFAULT_SESSIONS } from '$lib/data/workoutPlanDefaults';
+  import { PLAN_TEMPLATES, buildSchedule, describeSchedule } from '$lib/training';
+  import { DEFAULT_SESSIONS } from '$lib/training';
   import db from '$lib/db/dexie';
 
   let { uid }: { uid: string } = $props();

@@ -44,3 +44,7 @@ its own limits (for example the MCP server under heavy outside traffic).
   doors; it builds only on Body's door. The border check became one rule for
   every area. Same behaviour, same speed; the first screen ended 160 bytes
   lighter after the size check caught a 3.6 KB slip on the way.
+- **2026-11-11: Training moved** into `svelte-recomp/src/lib/training`
+  behind `index.ts`, with `logActivity.ts` as its shell door; it builds on no
+  other area. The watch-workout maths left `health/` and joined the pure
+  core; a dead checklist file was deleted. Same behaviour, speed and size.

@@ -5,12 +5,12 @@
   // whether sleep is moving your gym output. All pure functions (unit-tested);
   // each card hides itself until there's enough data to say something honest.
   import { liveWorkoutLogs, liveWorkoutSessions, liveActivitySessions, liveBiometrics } from '$lib/stores/live';
-  import { DEFAULT_SESSIONS } from '$lib/data/workoutPlanDefaults';
-  import { muscleVolume } from '$lib/muscleVolume';
-  import { liftStalls } from '$lib/liftStalls';
+  import { DEFAULT_SESSIONS } from '$lib/training';
+  import { muscleVolume } from '$lib/training';
+  import { liftStalls } from '$lib/training';
   import { sleepPerformance } from '$lib/sleepPerformance';
-  import { trainingHeatmap } from '$lib/trainingHeatmap';
-  import { sessionMuscleLoad } from '$lib/health/exercise';
+  import { trainingHeatmap } from '$lib/training';
+  import { sessionMuscleLoad } from '$lib/training';
 
   const _logs = liveWorkoutLogs();
   const _sessions = liveWorkoutSessions();

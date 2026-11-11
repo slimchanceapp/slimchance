@@ -1,7 +1,7 @@
 <script lang="ts">
-  import { buildGroups } from '$lib/data/workouts';
-  import { DEFAULT_SESSIONS, type PlanDay, type PlanSession, type PlanExercise } from '$lib/data/workoutPlanDefaults';
-  import { buildSchedule } from '$lib/data/planTemplates';
+  import { buildGroups } from '$lib/training';
+  import { DEFAULT_SESSIONS, type PlanDay, type PlanSession, type PlanExercise } from '$lib/training';
+  import { buildSchedule } from '$lib/training';
   import VideoEmbed from '$lib/components/VideoEmbed.svelte';
   import Modal from '$lib/components/Modal.svelte';
   import ExerciseMedia from '$lib/components/ExerciseMedia.svelte';
@@ -14,20 +14,20 @@
   import MiniChart from '$lib/components/MiniChart.svelte';
   import PageHero from '$lib/components/PageHero.svelte';
   import TrainPlan from '$lib/components/TrainPlan.svelte';
-  import { sessionsLeft } from '$lib/trainPlan';
-  import { trainingTone } from '$lib/trainPlan';
+  import { sessionsLeft } from '$lib/training';
+  import { trainingTone } from '$lib/training';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
-  import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/nextWeight';
+  import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/training';
   import { speak } from '$lib/stores/toast';
   import { haptic } from '$lib/haptics';
   import { MUSCLE_RECOVERY_HOURS, recoveryState, exerciseModifier } from '$lib/readiness';
   import type { RecoveryStatus } from '$lib/readiness';
-  import { sessionMuscleLoad, isSameSessionAsLogged, trainedDates as trainedOn } from '$lib/health/exercise';
+  import { sessionMuscleLoad, isSameSessionAsLogged, trainedDates as trainedOn } from '$lib/training';
   import { todayYmd, mondayOf } from '$lib/date';
   import { nowTick, todayDate } from '$lib/stores/refresh';
-  import { logManualActivity, QUICK_ACTIVITIES } from '$lib/health/logActivity';
-  import { EXERCISE_TYPES } from '$lib/health/exercise';
+  import { logManualActivity, QUICK_ACTIVITIES } from '$lib/training/logActivity';
+  import { EXERCISE_TYPES } from '$lib/training';
   import { writeBackToHealth } from '$lib/health/writeBack';
   import WeekChooser from '$lib/components/WeekChooser.svelte';
 

@@ -3,7 +3,7 @@
 // card for Monday..today, the check-in for the week that just ended.
 import { derived } from 'svelte/store';
 import { liveWeights, liveDailySteps, liveBiometrics, liveWorkoutLogs, liveActivitySessions, liveSessionCompletions } from './live';
-import { trainedDates } from '$lib/health/exercise';
+import { trainedDates } from '$lib/training';
 import { body } from './body';
 import type { WeeklyReviewInput } from '$lib/weeklyReview';
 

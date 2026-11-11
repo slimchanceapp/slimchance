@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { calculatePlates, warmupLadder, DEFAULT_BAR_KG, DEFAULT_PLATES_KG } from '$lib/plates';
+  import { calculatePlates, warmupLadder, DEFAULT_BAR_KG, DEFAULT_PLATES_KG } from '$lib/training';
 
   let { targetKg = 60 }: { targetKg?: number } = $props();
 

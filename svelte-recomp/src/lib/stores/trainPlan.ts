@@ -1,7 +1,7 @@
 // The coach's latest training week, kept on this device like the meal plan
 // (stores/coachPlan.ts): a new one replaces it; past days stop showing.
 import { writable } from 'svelte/store';
-import type { CheckedTrainPlan } from '$lib/trainPlan';
+import type { CheckedTrainPlan } from '$lib/training';
 
 const KEY = 'recompos.trainPlan';
 

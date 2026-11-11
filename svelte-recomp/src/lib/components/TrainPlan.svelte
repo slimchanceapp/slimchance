@@ -10,7 +10,7 @@
   import { readyToday } from '$lib/readiness';
   import { shiftYmd, mondayOf } from '$lib/date';
   import { supabase } from '$lib/db/client';
-  import { checkTrainPlan, type CheckedTrainPlan, type TrainDay } from '$lib/trainPlan';
+  import { checkTrainPlan, type CheckedTrainPlan, type TrainDay } from '$lib/training';
   import { trainPlan } from '$lib/stores/trainPlan';
 
   let { sessions, left, doneDates }: { sessions: string[]; left: number; doneDates: string[] } = $props();

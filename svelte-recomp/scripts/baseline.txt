@@ -320,6 +320,7 @@ the Nutrition area keeps its boundary: the app reaches it only through its doors
 the Stoic lines rotate by date, never at random, and each is sourced
 the Sunday check-ins become a journal, newest first, in the user’s words
 the Sunday review asks about the user’s own plan, in their words
+the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area
 the app never says "Badminton 18:15" in a fortnight the plan says no games
 the boot screen and the tab loader spin the same coin, still for anyone who asked for less motion
 the briefing and the hold never wake the phone, and are never alarms

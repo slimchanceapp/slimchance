@@ -9,7 +9,7 @@
 //
 // Pure — no Svelte/Dexie — unit-tested in selfcheck.js.
 
-import type { StrengthLog } from './strength';
+import type { StrengthLog } from './training/index';
 
 export interface SleepNight { date: string; sleep_hours?: number | null }
 

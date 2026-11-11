@@ -19,7 +19,7 @@
 import { readFileSync } from 'node:fs';
 import { buildFacts, checkReply } from '../src/lib/brain.ts';
 import { checkPlan, planFoods } from '../src/lib/nutrition/mealPlan.ts';
-import { checkTrainPlan } from '../src/lib/trainPlan.ts';
+import { checkTrainPlan } from '../src/lib/training/trainPlan.ts';
 
 const KEY = process.env.CLOUDFLARE_AI_TOKEN, ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID;
 if (!KEY || !ACCOUNT) { console.error('CLOUDFLARE_AI_TOKEN and CLOUDFLARE_ACCOUNT_ID missing'); process.exit(1); }

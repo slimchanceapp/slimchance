@@ -14,7 +14,7 @@ import { writable } from 'svelte/store';
 import db from '$lib/db/dexie';
 import { supabase } from '$lib/db/client';
 import { upsertRecords } from '$lib/stores/sync';
-import { buildActivitySessions } from './exercise';
+import { buildActivitySessions } from '../training/index';
 import { sleepNights } from './sleep';
 import { hasPlugin, isAndroidApp, isIOSApp } from '$lib/platform';
 import { type RecordType, READ_TYPES, READ_PERMISSION, WRITE_TYPES, canWrite, readTypesKey } from './permissions';

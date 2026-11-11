@@ -58,17 +58,17 @@ const { foldDailyFocus, todaysFocus } = await import('../src/lib/coach.ts');
 const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
 const { proteinByTrainingDay } = await import('../src/lib/nutrition/nutritionPatterns.ts');
 const { watchAgreement, recoveryCost } = await import('../src/lib/signals.ts');
-const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/health/exercise.ts');
+const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/training/exercise.ts');
 
 const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, isSameSessionAsLogged } =
-  await import('../src/lib/health/exercise.ts');
+  await import('../src/lib/training/exercise.ts');
 const { calcBmr, calcTdee, projectGoalWithTdee, resolveCalorieTarget } = await import('../src/lib/nutrition/tdee.ts');
 const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/lib/nutrition/adaptiveTdee.ts');
 const { computeReadiness, recoveryState, acuteChronicRatio, sessionLoad, exerciseModifier } =
   await import('../src/lib/readiness.ts');
-const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/strength.ts');
+const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/training/strength.ts');
 const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/coach.ts');
-const { inferEquipment, nextGymWeight, roundToGymWeight } = await import('../src/lib/nextWeight.ts');
+const { inferEquipment, nextGymWeight, roundToGymWeight } = await import('../src/lib/training/nextWeight.ts');
 const { evaluateFood } = await import('../src/lib/nutrition/foodCoach.ts');
 const { PATTERNS, toneHaptic } = await import('../src/lib/haptics.ts');
 
@@ -1224,7 +1224,7 @@ check('one definition of "trained today", and the watch counts', async () => {
   // 2026-10-26: a 44-minute gym session on the watch at 14:39, no sets typed
   // in, and at 17:30 the app asked "Training day — still on?". Four screens
   // each had their own idea of a trained day; only one of them read the watch.
-  const { trainedDates, TRAINED_MIN } = await import('../src/lib/health/exercise.ts');
+  const { trainedDates, TRAINED_MIN } = await import('../src/lib/training/exercise.ts');
   const d = trainedDates([], [{ date: '2026-10-26', duration_min: 44 }], []);
   assert.ok(d.has('2026-10-26'), 'a watch workout is training');
   assert.ok(!trainedDates([], [{ date: 'a', duration_min: 22 }, { date: 'b', duration_min: 3 }], []).size, 'a ride to work or a 3-minute blip is not');
@@ -1235,7 +1235,7 @@ check('one definition of "trained today", and the watch counts', async () => {
   assert.ok(!trainedDates([], [], [{ date: 'f', sets: [{ reps: 0 }] }]).size, 'an empty template row does not');
   const { readFileSync } = await import('node:fs');
   for (const f of ['src/routes/+page.svelte', 'src/routes/+layout.svelte', 'src/routes/workouts/+page.svelte', 'src/lib/stores/body.ts', 'src/lib/stores/review.ts']) {
-    assert.match(readFileSync(f, 'utf8'), /import \{[^}]*\btrainedDates\b[^}]*\} from '\$lib\/health\/exercise'/, `${f} asks the one definition`);
+    assert.match(readFileSync(f, 'utf8'), /import \{[^}]*\btrainedDates\b[^}]*\} from '\$lib\/training'/, `${f} asks the one definition`);
   }
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /workoutLoggedToday: trainedDates\(/);
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /watchTrains: \(\(\$_nudgeActivity as any\[\]\) \|\| \[\]\)\.some\(\(a\) => a\.source === 'watch'/);
@@ -1595,7 +1595,7 @@ check('an unlogged workout still counts, and sport always counts', () => {
 check('every video id is a well-formed YouTube id', async () => {
   const { readFileSync } = await import('node:fs');
   const bad = [];
-  for (const f of ['src/lib/data/workouts.ts', 'src/lib/data/workoutPlanDefaults.ts', 'src/lib/coach.ts']) {
+  for (const f of ['src/lib/training/data/workouts.ts', 'src/lib/training/data/workoutPlanDefaults.ts', 'src/lib/coach.ts']) {
     const src = readFileSync(f, 'utf8');
     for (const m of src.matchAll(/["']?\b(?:vid|v)["']?\s*:\s*['"]([^'"]*)['"]/g)) {
       if (!/^[A-Za-z0-9_-]{11}$/.test(m[1])) bad.push(`${f}  "${m[1]}"`);
@@ -1618,7 +1618,7 @@ check('every video id is a well-formed YouTube id', async () => {
 
 check('seeded sessions name no weekday, sport or venue', async () => {
   const { readFileSync } = await import('node:fs');
-  const src = readFileSync('src/lib/data/workoutPlanDefaults.ts', 'utf8');
+  const src = readFileSync('src/lib/training/data/workoutPlanDefaults.ts', 'utf8');
   // Strip comments — the explanation of the old bug quotes the bad strings.
   const code = src.replace(/^\s*\/\/.*$/gm, '');
   const banned = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday',
@@ -2634,7 +2634,7 @@ check('no hardcoded personal constants remain in config', async () => {
 console.log('\nplanTemplates — a week that isn\'t one person\'s week');
 
 const { buildSchedule, describeSchedule, PLAN_TEMPLATES } =
-  await import('../src/lib/data/planTemplates.ts');
+  await import('../src/lib/training/data/planTemplates.ts');
 
 check('every template produces a full, valid week', () => {
   for (const t of PLAN_TEMPLATES) {
@@ -3010,11 +3010,11 @@ check('celebrate is a distinct multi-beat crescendo', () => {
 });
 
 // ── Analysis bundle: muscle volume, lift stalls, sleep↔perf, nutrition, heatmap ──
-const { muscleVolume, SET_FLOOR, SET_CEILING } = await import('../src/lib/muscleVolume.ts');
-const { liftStalls } = await import('../src/lib/liftStalls.ts');
+const { muscleVolume, SET_FLOOR, SET_CEILING } = await import('../src/lib/training/muscleVolume.ts');
+const { liftStalls } = await import('../src/lib/training/liftStalls.ts');
 const { sleepPerformance } = await import('../src/lib/sleepPerformance.ts');
 const { nutritionPatterns } = await import('../src/lib/nutrition/nutritionPatterns.ts');
-const { trainingHeatmap } = await import('../src/lib/trainingHeatmap.ts');
+const { trainingHeatmap } = await import('../src/lib/training/trainingHeatmap.ts');
 
 const GROUPS = ['Chest', 'Back', 'Quads', 'Shoulders'];
 function groupsForTest(name) {
@@ -5406,7 +5406,7 @@ check('the theme switch turns light on at once, not after a restart', async () =
 check('Train turns orange only after a planned day passes without training, never on a Monday morning', async () => {
   // 2026-11-10: "0 of 2 this week" was orange from Monday morning, before any
   // session was due, because the colour only counted sessions done.
-  const { trainingTone } = await import('../src/lib/trainPlan.ts');
+  const { trainingTone } = await import('../src/lib/training/trainPlan.ts');
   const monThu = [1, 4];
   assert.equal(trainingTone(0, 2, monThu, 1), 'ok', 'Monday morning: nothing due yet');
   assert.equal(trainingTone(0, 2, monThu, 2), 'warn', 'Tuesday after a missed Monday: look here');
@@ -5733,6 +5733,14 @@ check('the Body area keeps its boundary: the app reaches it only through its doo
   await areaBorder('body', { doors: ['weighIn'], shell: { 'weighIn.ts': ['src/lib/db/dexie', 'src/lib/stores/sync', 'src/lib/stores/toast', 'src/lib/haptics', 'src/lib/health/writeBack'] } });
 });
 
+check('the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area', async () => {
+  // 2026-11-11, the third slice: lifts, plates, the exercise library, watch
+  // workouts and the one definition of a trained day behind index.ts, logging
+  // an activity through logActivity.ts. The move brought the watch-workout
+  // maths out of health/ (the adapters' folder) and into the pure core.
+  await areaBorder('training', { doors: ['logActivity'], shell: { 'logActivity.ts': ['src/lib/db/client', 'src/lib/db/dexie'] } });
+});
+
 check('the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body', async () => {
   // 2026-11-11, the second slice: food, the week's budget, the learned burn and
   // meal plans behind index.ts, saving food through foodLog.ts and looking it
@@ -5822,7 +5830,7 @@ check('Gemini only where Google allows it, Gemma for everyone, the free text ser
 check('the coach arranges your own sessions over the week: never a new one, never too many, spaced out, easy when your body asks', async () => {
   // Pact m14 (2026-11-10): "which of your own sessions go on which day, walks
   // and rest, from your Train week and the watch. Never new exercises or loads."
-  const { checkTrainPlan, sessionsLeft } = await import('../src/lib/trainPlan.ts');
+  const { checkTrainPlan, sessionsLeft } = await import('../src/lib/training/trainPlan.ts');
   const f = { days: ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'], sessions: ['Lower', 'Badminton'], left: 2, easyToday: false, today: '2026-11-12' };
   const good = { days: [
     { date: '2026-11-12', kind: 'session', session: 'lower', why: 'Fresh legs today' },

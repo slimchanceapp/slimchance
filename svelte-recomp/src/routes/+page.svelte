@@ -12,7 +12,7 @@
   import { CALENDAR_KEY, calendarUrl } from '$lib/reminder';
   import { saveAccountOpen, importOpen } from '$lib/stores/notices';
   import { liveProfile } from '$lib/stores/live';
-  import { DEFAULT_SESSIONS } from '$lib/data/workoutPlanDefaults';
+  import { DEFAULT_SESSIONS } from '$lib/training';
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { cardNav } from '$lib/actions/cardNav';
@@ -38,7 +38,7 @@
   import Commitments from '$lib/components/Commitments.svelte';
   import CoinSpin from '$lib/components/CoinSpin.svelte';
   import FitAsk from '$lib/components/FitAsk.svelte';
-  import { primaryActivity, trainedDates } from '$lib/health/exercise';
+  import { primaryActivity, trainedDates } from '$lib/training';
   import WeekCheckIn from '$lib/components/WeekCheckIn.svelte';
   import { badmintonRule } from '$lib/program';
   import { nowTick, todayDate } from '$lib/stores/refresh';
