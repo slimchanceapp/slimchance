@@ -61,8 +61,8 @@ Slim Chance is a tracker and a guide, not medical advice. If you have a medical 
 **Graphics:** app icon `../play-icon-512.png`; feature graphic
 `feature-graphic.jpg`; phone screenshots, in this order:
 `screenshot-1-today.jpg`, `screenshot-2-scale-up.jpg`,
-`screenshot-3-first-odds.jpg`, `screenshot-4-progress.jpg`,
-`screenshot-5-food.jpg`. No tablet screenshots needed for a phone app.
+`screenshot-3-progress.jpg`, `screenshot-4-food.jpg`,
+`screenshot-5-train.jpg` (Deep theme, remade 2026-11-11 from a throwaway trial). No tablet screenshots needed for a phone app.
 
 ## 2. Store settings
 
