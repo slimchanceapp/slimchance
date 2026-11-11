@@ -6,7 +6,7 @@
   // An Apple Health export can be hundreds of megabytes, so it's read in
   // pieces rather than all at once.
   import Modal from './Modal.svelte';
-  import { appleParsed, appleRecords, guessUnit, parseWeightFile, readingsFrom, type ParsedFile, type RawReading } from '$lib/importWeights';
+  import { appleParsed, appleRecords, guessUnit, parseWeightFile, readingsFrom, type ParsedFile, type RawReading } from '$lib/body';
   import { upsertRecords } from '$lib/stores/sync';
   import { supabase } from '$lib/db/client';
   import db from '$lib/db/dexie';

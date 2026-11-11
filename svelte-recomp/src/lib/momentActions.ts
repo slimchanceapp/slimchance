@@ -4,7 +4,7 @@
 // typo guard, saveFoods, the Back Rebuild rating), and only then lets go of it.
 import { get, writable } from 'svelte/store';
 import { momentsAck, momentsPending, type MomentInput } from '$lib/nativeAlarms';
-import { NeedsConfirm, saveWeighIn } from '$lib/weighIn';
+import { NeedsConfirm, saveWeighIn } from '$lib/body/weighIn';
 import { saveFoods } from '$lib/foodLog';
 import { upsertRecord } from '$lib/stores/sync';
 import { notYetLogged } from '$lib/quickAdd';

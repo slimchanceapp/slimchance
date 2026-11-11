@@ -7,7 +7,7 @@
   import { projectGoal, projectGoalWithTdee, ACTIVITY_LABELS, type ActivityLevel } from '$lib/tdee';
   import { waterTargetLitres } from '$lib/coach';
   import { body } from '$lib/stores/body';
-  import { saveWeighIn, NeedsConfirm } from '$lib/weighIn';
+  import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import MiniChart from '$lib/components/MiniChart.svelte';
   import WeightInput from '$lib/components/WeightInput.svelte';
   import { dwt, unitWord, wt as fmtW, wtShortU } from '$lib/units';

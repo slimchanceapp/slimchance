@@ -3,7 +3,7 @@
   import CoachPlan from '$lib/components/CoachPlan.svelte';
   import { upsertRecord, syncStatus } from '$lib/stores/sync';
   import { liveFoodLogs, liveCustomRecipes } from '$lib/stores/live';
-  import { goalDirection } from '$lib/coach';
+  import { goalDirection } from '$lib/body';
   import { body } from '$lib/stores/body';
   import Modal from '$lib/components/Modal.svelte';
   import MiniChart from '$lib/components/MiniChart.svelte';

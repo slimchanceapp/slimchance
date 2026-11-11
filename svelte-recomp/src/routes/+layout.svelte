@@ -34,7 +34,7 @@
   import { moments, momentSetting, refreshForecast } from '$lib/stores/moments';
   import { saveMomentInputs, confirmWeight, answerWeight, nativeKg, type MomentContext } from '$lib/momentActions';
   import { onMomentsInput } from '$lib/nativeAlarms';
-  import { offTrend } from '$lib/scale';
+  import { offTrend } from '$lib/body';
   import { badmintonRule } from '$lib/program';
   import { sportOf } from '$lib/plans';
   import { coachOn, coachNotes, brainNote, runBrainIfDue, setCoach, forgetCoach } from '$lib/stores/brain';

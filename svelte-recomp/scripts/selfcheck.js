@@ -54,8 +54,10 @@ function check(name, fn) {
 const { pickOriginByDay, percentile } = await import('../src/lib/health/dedupe.ts');
 const { preferredSource: guessWatchOrigin } = await import('../src/lib/health/watches.ts');
 const { ymd, todayYmd, mondayOf, shiftYmd } = await import('../src/lib/date.ts');
-const { foldDailyFocus, todaysFocus, goalDirection } = await import('../src/lib/coach.ts');
-const { weightVerdict, tCritical, proteinByTrainingDay, watchAgreement, recoveryCost, paceVsPlan, fitWeightLine, diagnoseStall } = await import('../src/lib/insights.ts');
+const { foldDailyFocus, todaysFocus } = await import('../src/lib/coach.ts');
+const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
+const { proteinByTrainingDay } = await import('../src/lib/nutritionPatterns.ts');
+const { watchAgreement, recoveryCost } = await import('../src/lib/signals.ts');
 const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/health/exercise.ts');
 
 const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, isSameSessionAsLogged } =
@@ -493,7 +495,7 @@ check('no screen tells a gaining user to cut', () => {
   assert.ok(plan.targetKcal > plan.maintenanceKcal, 'the day-one target must be a surplus too');
 });
 
-const { pulse } = await import('../src/lib/pulse.ts');
+const { pulse } = await import('../src/lib/body/pulse.ts');
 // A trend line the hero can read: answerable, with its 95% interval.
 const wv = (trendKg, rate, half = 0.1) => ({
   state: 'answerable', rateKgPerWeek: rate, halfWidthKgPerWeek: half, loKgPerWeek: rate - half, hiKgPerWeek: rate + half,
@@ -586,7 +588,7 @@ check('the hero reads the trend, the distance to the next stop, and a pace that 
 });
 
 check('the odds are the verdict’s own interval, read against a loss that counts', async () => {
-  const { chanceOf } = await import('../src/lib/insights.ts');
+  const { chanceOf } = await import('../src/lib/body/insights.ts');
   const near = (a, b) => Math.abs(a - b) < 1e-4;
   // Since 2026-11-10 the interval is weighed with a plausible rate centred on
   // the line itself (insights RATE_PRIOR_SD), so an interval that only just
@@ -3541,7 +3543,7 @@ check('weight rate, learned burn and targets are computed in one place', async (
     ...readdirSync('src/routes', { recursive: true }).map((f) => `src/routes/${f}`),
   ].filter((f) => /\.(ts|svelte)$/.test(f));
   const offenders = (re, allowed) => files.filter((f) => !allowed.includes(f) && re.test(readFileSync(f, 'utf8')));
-  assert.deepEqual(offenders(/sxy|\(xs\[i\] - mx\)|weeklyLoss\(/, ['src/lib/insights.ts']), [], 'one least-squares weight slope');
+  assert.deepEqual(offenders(/sxy|\(xs\[i\] - mx\)|weeklyLoss\(/, ['src/lib/body/insights.ts']), [], 'one least-squares weight slope');
   assert.deepEqual(offenders(/adaptiveTdee\(\{/, ['src/lib/adaptiveTdee.ts']), [], 'one learned burn');
   assert.deepEqual(offenders(/weeklyMaintenance\(\{/, ['src/lib/stores/body.ts']), [], 'one week’s maintenance');
   assert.deepEqual(offenders(/diagnoseStall\(\{/, ['src/lib/stores/body.ts']), [], 'one stall diagnosis');
@@ -3554,9 +3556,9 @@ check('weight rate, learned burn and targets are computed in one place', async (
 
 console.log('\nreal life — the line, the plans, the week, coming back');
 
-const { lineState, suggestLine } = await import('../src/lib/line.ts');
+const { lineState, suggestLine } = await import('../src/lib/body/line.ts');
 const { activePlan, cueActive, cleanPlans, CUES } = await import('../src/lib/plans.ts');
-const { morningsThisWeek, weighInMessage } = await import('../src/lib/scale.ts');
+const { morningsThisWeek, weighInMessage } = await import('../src/lib/body/scale.ts');
 const { weekShape } = await import('../src/lib/week.ts');
 
 // Synthetic mornings (the repo is public): a steady loss to a low, then a regain.
@@ -3626,7 +3628,7 @@ check('nothing in the weekly ritual assumes someone to send it to', async () => 
 });
 
 check('a next stop knows what it means at this height', async () => {
-  const { milestoneState, weightUnderBmi, suggestStops } = await import('../src/lib/milestone.ts');
+  const { milestoneState, weightUnderBmi, suggestStops } = await import('../src/lib/body/milestone.ts');
   // A made-up person, 178 cm: BMI 30 ends at 95.0 kg, BMI 25 at 79.2.
   assert.equal(weightUnderBmi(30, 178), 95.0, 'the heaviest weight under BMI 30 at 178 cm');
   const at951 = milestoneState({ kg: 95.1, set: '2026-10-17' }, 103.1, 178);
@@ -3692,12 +3694,12 @@ check('stepping back on the scale after a gap is welcomed, not scored', () => {
 });
 
 check('a reading far off the trend asks once before it bends five weeks of numbers', async () => {
-  const { offTrend } = await import('../src/lib/scale.ts');
+  const { offTrend } = await import('../src/lib/body/scale.ts');
   assert.equal(offTrend(93.5, 103.1), -9.6, 'a dropped digit');
   assert.equal(offTrend(104.6, 103.1), null, 'a heavy Monday is not a typo');
   assert.equal(offTrend(103, null), null, 'no trend yet, nothing to compare');
   const { readFileSync } = await import('node:fs');
-  assert.match(readFileSync('src/lib/weighIn.ts', 'utf8'), /if \(off != null && !ctx\.confirmed\)/);
+  assert.match(readFileSync('src/lib/body/weighIn.ts', 'utf8'), /if \(off != null && !ctx\.confirmed\)/);
 });
 
 check('the week’s shape: weekday medians, the weekend gap, and the scale’s rhythm', () => {
@@ -3724,7 +3726,7 @@ check('one weigh-in path, one place the commitments are saved', async () => {
   // Importing a history writes past days in bulk (no typo prompt, no
   // messages, never over a day already logged); today's reading is saveWeighIn's.
   // A smart scale's readings (Health Connect) fill days with no weigh-in, the same way.
-  assert.deepEqual(weighs.sort(), ['src/lib/components/ImportWeights.svelte', 'src/lib/components/Onboarding.svelte', 'src/lib/health/healthConnect.ts', 'src/lib/weighIn.ts'], 'onboarding seeds the first one; an import or a scale adds days with none; everything else goes through saveWeighIn');
+  assert.deepEqual(weighs.sort(), ['src/lib/body/weighIn.ts', 'src/lib/components/ImportWeights.svelte', 'src/lib/components/Onboarding.svelte', 'src/lib/health/healthConnect.ts'], 'onboarding seeds the first one; an import or a scale adds days with none; everything else goes through saveWeighIn');
   // A write that carries one of them, not a file that merely reads one.
   const commits = files.filter((f) => /upsertRecord\('user_settings',\s*\{[^}]*\b(line|plans|why|milestone):/.test(readFileSync(f, 'utf8')));
   assert.deepEqual(commits, ['src/lib/commitments.ts']);
@@ -4486,7 +4488,7 @@ check('Back Rebuild looks after the neck as well as the lower back', async () =>
 
 // ── The next-stop moment ─────────────────────────────────────────────────────
 check('a next stop is reached when the trend stays there three days, not on one lucky morning', async () => {
-  const { heldUnder, milestoneState } = await import('../src/lib/milestone.ts');
+  const { heldUnder, milestoneState } = await import('../src/lib/body/milestone.ts');
   const series = (vals) => { const m = new Map(vals.map(([d, v]) => [d, v])); return (ymd) => m.get(ymd) ?? null; };
   const t = series([['2026-12-01', 95.4], ['2026-12-02', 95.05], ['2026-12-03', 94.9], ['2026-12-04', 94.8]]);
   assert.equal(heldUnder(95.1, t, '2026-12-04'), true, 'three days at or under');
@@ -4504,12 +4506,12 @@ check('a next stop is reached when the trend stays there three days, not on one 
   assert.equal(milestoneState({ ...set, reached: '2026-12-04' }, 94.9, 178, ctx('2026-12-04', 94.9)).celebrated, true, 'shown once');
   const late = milestoneState({ kg: 95.1, set: '2026-10-01' }, 94.9, 178, { today: '2026-12-04', trendOn: (ymd) => (ymd < '2026-10-04' ? null : ymd === '2026-10-04' ? 103.2 : 94.9) });
   assert.equal(late.fromKg, 103.2, 'no trend on the day it was set: the first day after that has one');
-  const { suggestStops } = await import('../src/lib/milestone.ts');
+  const { suggestStops } = await import('../src/lib/body/milestone.ts');
   assert.deepEqual(suggestStops(110.1, 192, 92), [105, 92], 'the goal, not a BMI line 0.1 kg off it');
 });
 
 check('choosing the next stop keeps the one reached, for the journal', async () => {
-  const { nextMilestone } = await import('../src/lib/milestone.ts');
+  const { nextMilestone } = await import('../src/lib/body/milestone.ts');
   const reached = { kg: 105, set: '2026-10-17', reached: '2026-12-04' };
   assert.deepEqual(nextMilestone(reached, 100, '2026-12-04'),
     { kg: 100, set: '2026-12-04', history: [{ kg: 105, set: '2026-10-17', reached: '2026-12-04' }] });
@@ -4540,7 +4542,7 @@ check('the letter from last month tells the month back, in the user’s words', 
   assert.deepEqual(l.notes.map((n) => n.note), ['Cinema. Didn’t touch the popcorn.'], 'his words only, blank ones dropped, the month’s only');
   assert.deepEqual(l.stops, [{ kg: 105, reached: '2026-10-28' }]);
   assert.ok(l.toKg < l.fromKg && l.deltaKg < 0, 'the trend came down');
-  const { weightVerdict } = await import('../src/lib/insights.ts');
+  const { weightVerdict } = await import('../src/lib/body/insights.ts');
   const at = (ymd) => Math.round(weightVerdict(w, Date.parse(`${ymd}T12:00:00`)).trendKg * 10) / 10;
   assert.equal(l.toKg, at('2026-10-19'), 'read at the last weigh-in (the 19th), not extrapolated to the 31st');
   assert.notEqual(at('2026-10-31'), at('2026-10-19'), '(the two differ, so the line above means something)');
@@ -4604,9 +4606,9 @@ check('a weight reads in the person’s own unit, and what they type comes back 
 
 check('in pounds the hero, the coach and the weigh-in all speak pounds; in kg nothing changed', async () => {
   const u = await import('../src/lib/units.ts');
-  const { pulse } = await import('../src/lib/pulse.ts');
-  const { weighInMessage } = await import('../src/lib/scale.ts');
-  const { suggestStops } = await import('../src/lib/milestone.ts');
+  const { pulse } = await import('../src/lib/body/pulse.ts');
+  const { weighInMessage } = await import('../src/lib/body/scale.ts');
+  const { suggestStops } = await import('../src/lib/body/milestone.ts');
   const w = { trendKg: 100, latestKg: 100.4, state: 'answerable', rateKgPerWeek: 0.5, loKgPerWeek: 0.3, hiKgPerWeek: 0.7, n: 30, weighInsNeeded: null };
   const input = { weight: w, pace: 'on-pace', firstKg: 110, goalKg: 90, next: null };
   try {
@@ -4658,8 +4660,8 @@ check('morning two reads the scale for a stranger, and one morning can\'t move t
   // the goal date a week later, and "Nothing in your log explains it" to
   // someone with no log. Before seven mornings make a trend, the mornings'
   // average is the current weight.
-  const { weightVerdict } = await import('../src/lib/insights.ts');
-  const { explainUp } = await import('../src/lib/scaleUp.ts');
+  const { weightVerdict } = await import('../src/lib/body/insights.ts');
+  const { explainUp } = await import('../src/lib/body/scaleUp.ts');
   const two = weightVerdict([{ date: '2026-10-29', weight: 92.4 }, { date: '2026-10-30', weight: 93.0 }], Date.parse('2026-10-30T12:00:00'));
   assert.equal(two.state, 'not-enough');
   assert.equal(two.trendKg, null);
@@ -4672,7 +4674,7 @@ check('morning two reads the scale for a stranger, and one morning can\'t move t
   // Since 2026-11-03 Today's big number is the pulse's, whose caption says
   // "not a trend yet" until there is one.
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /\$body\.weight\?\.trendKg != null \? 'Trend' : 'Average so far'/, '"trend" only once there is one');
-  assert.match(readFileSync('src/lib/pulse.ts', 'utf8'), /not a trend yet/);
+  assert.match(readFileSync('src/lib/body/pulse.ts', 'utf8'), /not a trend yet/);
   const base = { today: '2026-10-30', kg: 93.0, prev: { date: '2026-10-29', kg: 92.4 }, trendKg: null, trendPrevKg: null,
     scatterKg: 0, intake: new Map(), weekdayOffsets: null, trained: new Set() };
   const x = explainUp(base);
@@ -4685,7 +4687,7 @@ check('morning two reads the scale for a stranger, and one morning can\'t move t
 });
 
 check('a high morning is explained from the person’s own data, and only from it', async () => {
-  const { explainUp } = await import('../src/lib/scaleUp.ts');
+  const { explainUp } = await import('../src/lib/body/scaleUp.ts');
   const intake = new Map();
   for (let d = 1; d <= 27; d++) intake.set(`2026-09-${String(d).padStart(2, '0')}`, { kcal: 2000 + (d % 3) * 50 });
   const base = { today: '2026-10-19', kg: 91.3, prev: { date: '2026-10-18', kg: 90.4 }, trendKg: 90.6, trendPrevKg: 90.6,
@@ -4791,7 +4793,7 @@ check('a normal swing is told with the band it was judged by, measured from the 
   // usual scatter (1.0 kg); the sentence quoted the scatter itself, so the words
   // contradicted the number. A morning still at or below the trend (yesterday
   // was simply low) was called a swing above it.
-  const { explainUp } = await import('../src/lib/scaleUp.ts');
+  const { explainUp } = await import('../src/lib/body/scaleUp.ts');
   const base = { today: '2026-11-11', kg: 94.4, prev: { date: '2026-11-10', kg: 93.5 }, trendKg: 93.5, trendPrevKg: 93.5,
     scatterKg: 0.5, intake: new Map(), weekdayOffsets: null, trained: new Set() };
   const x = explainUp(base);
@@ -4802,7 +4804,7 @@ check('a normal swing is told with the band it was judged by, measured from the 
 });
 
 check('keeping it off: the hero counts days inside the range, never a streak, and points at the plan when over', async () => {
-  const { pulse } = await import('../src/lib/pulse.ts');
+  const { pulse } = await import('../src/lib/body/pulse.ts');
   const { buildDailyFocus } = await import('../src/lib/coach.ts');
   const w = { trendKg: 74.4, latestKg: 74.6, state: 'answerable', rateKgPerWeek: 0.02, halfWidthKgPerWeek: 0.12, loKgPerWeek: -0.1, hiKgPerWeek: 0.14, n: 40, weighInsNeeded: null };
   const keep = { goalKg: 74, ceilingKg: 75, inside: 41, days: 45, since: '2026-08-20' };
@@ -4915,7 +4917,7 @@ check('the iPhone app reads Apple Health weigh-ins by the same one-a-day rules',
 // --- Importing weigh-ins from another app ------------------------------------
 
 check('a weight history comes in from any app, one morning a day, in kg', async () => {
-  const { parseWeightFile, readingsFrom, guessUnit, appleRecords } = await import('../src/lib/importWeights.ts');
+  const { parseWeightFile, readingsFrom, guessUnit, appleRecords } = await import('../src/lib/body/importWeights.ts');
   const read = (text, unit = 'kg', dayFirst = false) => { const p = parseWeightFile(text); return { p, r: readingsFrom(p, p.unit ?? unit, dayFirst) }; };
 
   // Withings: quoted headers with the unit in them.
@@ -5467,7 +5469,7 @@ check('the way to the goal is a path, not coins: coins mean the chance, and the 
   // 2026-11-10, the coin rule: Progress showed the chance as coins in its hero
   // and the distance as ten more coins just under it ("2 of 10"), so "ten"
   // meant two things on one screen. Coins are the chance; distance is a path.
-  const { slimTrack } = await import('../src/lib/slimTrack.ts');
+  const { slimTrack } = await import('../src/lib/body/slimTrack.ts');
   const t = slimTrack({ startKg: 116, goalKg: 86, currentKg: 106.5, heightCm: 180 });
   assert.equal(t.stops.length, 10);
   assert.equal(t.passed, 3, '113, 110 and 107 are passed');
@@ -5633,7 +5635,7 @@ check('a stall with falling steps names moving less, from the same steps trend a
   // 2026-11-10: the watch inside the app. The stall card reads the steps'
   // trend from signals.ts (today, half walked, left out); "Getting fitter?"
   // and body_signals both assume careful carry-over for a yes/no claim.
-  const { diagnoseStall } = await import('../src/lib/insights.ts');
+  const { diagnoseStall } = await import('../src/lib/body/insights.ts');
   const intake = new Map();
   for (let k = 0; k < 35; k++) intake.set(new Date(Date.UTC(2026, 9, 7 + k)).toISOString().slice(0, 10), { kcal: 1900, items: 4 });
   const base = { pace: 'stalled', intake, floorKcal: 1700, today: '2026-11-10' };
@@ -5714,6 +5716,55 @@ check('the pure core stays pure: no listed module reaches storage, network, brow
     assert.ok(existsSync(f), `${name} is listed but gone: take it off with a reason`);
     const r = why(f);
     assert.equal(r, null, `${name} left the pure core: ${r?.replace(root + '/', '')}`);
+  }
+});
+
+check('every function that runs with the owner\u2019s rights pins its search path, and the owner\u2019s numbers refuse everyone else', async () => {
+  // 2026-11-11 security pass: the database advisor lists five SECURITY DEFINER
+  // functions callable from the app, all on purpose. Each must pin
+  // search_path (or a caller could plant a lookalike table), and
+  // owner_metrics, redefined by many migrations, must keep its owner check.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = '../supabase/migrations';
+  const latest = new Map();
+  for (const f of readdirSync(dir).filter((f) => f.endsWith('.sql')).sort()) {
+    const sql = readFileSync(`${dir}/${f}`, 'utf8');
+    for (const m of sql.matchAll(/create or replace function (public\.\w+)\([\s\S]*?\n\$\$;/gi)) latest.set(m[1], { f, body: m[0] });
+  }
+  const definers = [...latest].filter(([, d]) => /security definer/i.test(d.body));
+  assert.ok(definers.length >= 5, `found ${definers.map(([n]) => n)}`);
+  for (const [name, d] of definers) assert.match(d.body, /set search_path\s*=/i, `${name} (${d.f}) runs with the owner's rights: pin its search_path`);
+  assert.match(latest.get('public.owner_metrics')?.body ?? '', /if not exists \(select 1 from public\.app_owners where user_id = auth\.uid\(\)\) then\s+raise exception/,
+    'owner_metrics answers only the owner');
+});
+
+check('the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area', async () => {
+  // 2026-11-11, decision 0006's first slice (book chapter 5): Body moved into
+  // src/lib/body behind one door for reading (index.ts, pure) and one way in
+  // for a weigh-in (weighIn.ts). The move found the odds asking the Coach area
+  // which way the goal is, and three Nutrition and Health signals functions
+  // living in Body's file. Both fixed; this keeps them fixed.
+  const { readFileSync } = await import('node:fs');
+  const { posix } = await import('node:path');
+  const target = (f, spec) => spec.startsWith('$lib/') ? `src/lib/${spec.slice(5)}`
+    : spec.startsWith('.') ? posix.normalize(posix.join(posix.dirname(f), spec)) : null;
+  const imports = (f) => [...readFileSync(f, 'utf8').matchAll(/^\s*import\s+(?:type\s+)?(?:[^'";]*?from\s+)?['"]([^'"]+)['"]|\bimport\(\s*['"]([^'"]+)['"]\s*\)/gm)]
+    .map((m) => target(f, m[1] ?? m[2])).filter(Boolean).map((t) => t.replace(/\.ts$/, ''));
+  const DOORS = ['src/lib/body', 'src/lib/body/index', 'src/lib/body/weighIn'];
+  const KERNEL = ['src/lib/units', 'src/lib/date'];
+  const SHELL = { 'src/lib/body/weighIn.ts': ['src/lib/db/dexie', 'src/lib/stores/sync', 'src/lib/stores/toast', 'src/lib/haptics', 'src/lib/health/writeBack'] };
+  const files = await srcFiles();
+  assert.ok(files.includes('src/lib/body/index.ts') && files.includes('src/lib/body/insights.ts'), 'Body lives in src/lib/body');
+  for (const f of files) {
+    const inside = f.startsWith('src/lib/body/');
+    for (const t of imports(f)) {
+      if (!inside) {
+        if (t.startsWith('src/lib/body/') || t === 'src/lib/body') assert.ok(DOORS.includes(t), `${f} reaches past Body's door into ${t}: import it from $lib/body`);
+      } else {
+        const ok = t.startsWith('src/lib/body/') || KERNEL.includes(t) || (SHELL[f] ?? []).includes(t);
+        assert.ok(ok, `${f} reaches into another area (${t}): Body may use only itself and ${KERNEL.join(', ')}`);
+      }
+    }
   }
 });
 
@@ -5847,7 +5898,7 @@ check('the chance is honest: simulated people with a known truth get odds within
   // Monday and a quarter of mornings missed, through the app's own estimator:
   // in every band with enough cases, what it said is within 1.5 coins of how
   // often the true rate really was above the floor.
-  const { weightVerdict, chanceOf } = await import('../src/lib/insights.ts');
+  const { weightVerdict, chanceOf } = await import('../src/lib/body/insights.ts');
   const DAY = 864e5; let seed = 42;
   const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
   const gauss = () => { let u = 0, v = 0; while (!u) u = rnd(); while (!v) v = rnd(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); };
@@ -5881,7 +5932,7 @@ check('the chance is honest in the first two weeks too, on quiet and noisy scale
   // doi:10.1371/journal.pone.0232152), 7 to 20 days each. Confident coins (0-2
   // or 8-10) must be no more than 2 coins too sure on any scale, and the
   // average error (Brier score) must stay under 0.2.
-  const { weightVerdict, chanceOf } = await import('../src/lib/insights.ts');
+  const { weightVerdict, chanceOf } = await import('../src/lib/body/insights.ts');
   const DAY = 864e5; let worst = 0, brier = 0, count = 0, at = '';
   for (const sd of [0.4, 0.7, 1.0]) for (const r of [0.2, 0.45, 0.7]) {
     let seed = 11;

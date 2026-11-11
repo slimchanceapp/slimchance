@@ -9,10 +9,9 @@
 //
 // Pure, unit-tested in selfcheck.js. stores/body.ts derives it once
 // (`pulse`), for the hero and the page's glow alike, so they can't disagree.
-import { goalDirection } from './coach.ts';
-import { chanceOf, type Pace, type WeightVerdict } from './insights.ts';
+import { chanceOf, goalDirection, type Pace, type WeightVerdict } from './insights.ts';
 import type { MilestoneState } from './milestone.ts';
-import { changeWord, dwt, dwtNum, unitWord, weightUnit, wt, wtShort } from './units.ts';
+import { changeWord, dwt, dwtNum, unitWord, weightUnit, wt, wtShort } from '../units.ts';
 
 /** Never 'bad': a bad week is amber. "Blown" is the thought that makes it so. */
 export type PulseTone = 'good' | 'ok' | 'warn' | 'na';

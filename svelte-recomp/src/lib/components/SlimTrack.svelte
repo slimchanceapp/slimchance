@@ -5,7 +5,7 @@
   // 2026-11-10). The healthy-weight line is a mark on the path and a number,
   // never a category word.
   import { body } from '$lib/stores/body';
-  import { slimTrack } from '$lib/slimTrack';
+  import { slimTrack } from '$lib/body';
   import { wtShortU } from '$lib/units';
   const t = $derived(slimTrack({ startKg: $body.firstKg, goalKg: $body.goalKg, currentKg: $body.currentKg, heightCm: $body.profile?.heightCm ?? null }));
   const next = $derived(t?.stops.find((s) => s.next) ?? null);

@@ -6,7 +6,7 @@
   // whenever the data changes, the number counts and the ticks or coins light
   // together. Colour comes from `tone` (the verdict palette in app.css) and only
   // ever means data; no verdict yet is the brand's brass.
-  import type { Odds } from '$lib/pulse';
+  import type { Odds } from '$lib/body';
   type Tone = 'good' | 'ok' | 'warn' | 'bad' | 'na';
   let { value = '', unit = '', caption = '', pct = null, tone = 'na', odds = null } = $props<{
     value?: string | number; unit?: string; caption?: string; pct?: number | null; tone?: Tone;

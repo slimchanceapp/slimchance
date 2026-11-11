@@ -25,14 +25,18 @@ Every deploy is checked against all of it.
 
 ## Every change, every deploy
 
-1. **`npm run verify` before every commit:** the whole baseline, the type check
-   and the production build.
+1. **`npm run verify` before every commit:** the whole baseline, the type check,
+   the production build, and the size of what a phone downloads
+   (`scripts/bundle-check.mjs`: all the JavaScript, and what the first screen
+   needs, against `scripts/bundle-budget.json`; it lowers itself when the app
+   shrinks, and raising it takes a reason in the commit).
 2. **Push.** GitHub runs the same verify on every push
    (`.github/workflows/verify.yml`), away from the laptop the change was
    written on.
 3. **`npm run ship` is the only way the web app goes live.** It refuses
    uncommitted or unpushed work, runs verify, and deploys with the commit as the
-   build's version. Then it checks the live site (`scripts/smoke.mjs`): every
+   build's version, and refuses a dependency with a known high or critical
+   vulnerability (`npm audit`). Then it checks the live site (`scripts/smoke.mjs`): every
    address serves that commit, the pages people land on load, and the edge
    functions answer. If that check fails, it rolls back to the deployment that
    was live before.
@@ -52,7 +56,9 @@ suite until it's accepted with `node scripts/personas.mjs --update`, and the
 snapshot's diff goes into the commit, so a change in what people read is
 always seen.
 
-Not covered yet: **edge-function tests** against a local Supabase.
+Not covered yet: **edge-function tests** against a local Supabase, and speed
+measured on a real phone (the bundle check measures what is downloaded, not
+how fast it runs there).
 
 ## Watching the live app
 
@@ -90,6 +96,25 @@ emails the owner (GitHub's own notice).
   - New behaviour goes in a new function, not in a flag threaded through an old
     one.
   - A function asks only for what it uses.
+- **Areas behind doors (DDD, decision 0006).** An area moves into its own
+  folder once a check guards its border. Body is the first (`src/lib/body`):
+  the rest of the app reads it only through `index.ts` and saves a weigh-in
+  only through `weighIn.ts`, and Body uses nothing but itself and the shared
+  kernel (`units`, `date`). The pure core is listed in `scripts/pure-core.txt`.
+  A move changes where code lives, never what it does: the personas snapshot
+  must not change, and the bundle check must not grow.
+- **Security, checked rather than hoped.**
+  - Row-level security on every table, with the own-rows policies, before it
+    joins the sync (audited with a second account).
+  - Every function that spends AI quota checks the signed-in user's daily cap
+    before it reads the request.
+  - Database functions that run with the owner's rights pin their search
+    path, and the owner's numbers answer only the owner (checked in the
+    migrations, so a new one can't drop it).
+  - No key in the repo (checked); GitHub secret scanning and push protection
+    on the public repo; `npm audit` at every ship.
+  - After a migration, run the database advisor and read every warning; the
+    accepted ones are written down in the migration that causes them.
 - **Simple first (KISS, YAGNI).** The smallest change that works, and no code
   for a need that hasn't arrived yet.
 - **Fail loudly.** Errors are recorded (`client_errors`), never swallowed where

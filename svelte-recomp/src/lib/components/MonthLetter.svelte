@@ -7,7 +7,7 @@
   import { liveDailyLogs, liveWeights, liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';
   import { lastMonth, monthLetter } from '$lib/week';
-  import type { MilestoneSetting } from '$lib/milestone';
+  import type { MilestoneSetting } from '$lib/body';
   import { dwt, wt, wtNum, wtShortU } from '$lib/units';
 
   const _daily = liveDailyLogs();

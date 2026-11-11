@@ -5,7 +5,7 @@
 // nothing here praises a weight (teach and be kind). Pure; the trend is the
 // app's one trend (weightVerdict as of a date), never a fit of its own.
 
-import { weightVerdict } from './insights.ts';
+import { weightVerdict } from './body/index.ts';
 import { shiftYmd } from './date.ts';
 
 export interface Period {

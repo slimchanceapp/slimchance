@@ -96,3 +96,62 @@ export function nutritionPatterns(
     weekdayAvgKcal, weekendAvgKcal, weekendGapKcal, insights,
   };
 }
+
+// ---------------------------------------------------------------------------
+// Protein on training days vs rest days
+// ---------------------------------------------------------------------------
+
+export interface ProteinByDayResult {
+  liftDays: number;
+  restDays: number;
+  liftAvgG: number;
+  restAvgG: number;
+  /** restAvg − liftAvg. Positive means protein DROPS on training days. */
+  gapG: number;
+  /** target − liftAvg, i.e. how far short training days fall. */
+  shortOfTargetG: number;
+}
+
+/** Days below this are abandoned logging, not a real intake — same gate adaptiveTdee uses. */
+const MIN_LOGGED_KCAL = 800;
+
+/**
+ * Do they under-eat protein on the days their body is actually repairing?
+ *
+ * Deliberately keyed on hand-logged workout dates rather than watch sessions:
+ * the lift log has months of history where activity_sessions has days. An
+ * insight is only as old as its thinnest input.
+ */
+export function proteinByTrainingDay(
+  foodByDate: Map<string, { protein: number; kcal: number }>,
+  liftDates: Set<string>,
+  proteinTargetG: number,
+  opts: { minDaysEachSide?: number; minGapG?: number; minShortG?: number } = {}
+): ProteinByDayResult | null {
+  const minDays = opts.minDaysEachSide ?? 5;
+  const minGap = opts.minGapG ?? 15;
+  const minShort = opts.minShortG ?? 20;
+
+  const lift: number[] = [];
+  const rest: number[] = [];
+  for (const [date, v] of foodByDate) {
+    if (!v || v.kcal < MIN_LOGGED_KCAL) continue;
+    (liftDates.has(date) ? lift : rest).push(v.protein);
+  }
+  if (lift.length < minDays || rest.length < minDays) return null;
+
+  const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
+  const liftAvg = mean(lift);
+  const restAvg = mean(rest);
+  const gap = restAvg - liftAvg;
+  const short = proteinTargetG - liftAvg;
+
+  // Only worth saying if it is both a real gap AND actually costing them.
+  if (gap < minGap || short < minShort) return null;
+
+  return {
+    liftDays: lift.length, restDays: rest.length,
+    liftAvgG: Math.round(liftAvg), restAvgG: Math.round(restAvg),
+    gapG: Math.round(gap), shortOfTargetG: Math.round(short),
+  };
+}

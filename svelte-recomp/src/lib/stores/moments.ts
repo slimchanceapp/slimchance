@@ -18,7 +18,7 @@ import { usualBreakfast, type QuickFood } from '$lib/quickAdd';
 import { shiftYmd } from '$lib/date';
 import { lastMonth, monthLetter } from '$lib/week';
 import { forecastHere } from '$lib/weather';
-import { OFF_TREND_KG } from '$lib/scale';
+import { OFF_TREND_KG } from '$lib/body';
 import { toUnit, weightUnit, type WeightUnit } from '$lib/units';
 import { eveningFrom } from '$lib/brain';
 import { brainToday } from './brain';

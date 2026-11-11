@@ -12,6 +12,8 @@ git fetch -q origin main
 [ "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)" ] || fail "HEAD is not origin/main: push (or pull) first."
 
 npm run verify
+# Any dependency, build tools included (SvelteKit's runtime ships from devDependencies).
+npm audit --audit-level=high >/dev/null || fail "npm audit found a high or critical vulnerability: run npm audit, fix it, then ship."
 [ -z "$(git status --porcelain --untracked-files=no)" ] || fail "verify changed tracked files (the baseline grew?): commit and push them, then ship again."
 
 SHA=$(git rev-parse --short=12 HEAD)

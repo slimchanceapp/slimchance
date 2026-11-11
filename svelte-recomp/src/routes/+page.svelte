@@ -17,8 +17,8 @@
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { cardNav } from '$lib/actions/cardNav';
-  import { morningsThisWeek } from '$lib/scale';
-  import { saveWeighIn, NeedsConfirm } from '$lib/weighIn';
+  import { morningsThisWeek } from '$lib/body';
+  import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import { body, stall, line, scaleUp, todayPulse } from '$lib/stores/body';
   import { dayOne } from '$lib/stores/dayOne';
   import { coachOn } from '$lib/stores/brain';

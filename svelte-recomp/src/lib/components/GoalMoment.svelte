@@ -9,7 +9,7 @@
   import { userId } from '$lib/stores/user';
   import { todayDate } from '$lib/stores/refresh';
   import { saveLine } from '$lib/commitments';
-  import { LINE_MARGIN_KG } from '$lib/line';
+  import { LINE_MARGIN_KG } from '$lib/body';
   import { haptic } from '$lib/haptics';
   import { wtShortU } from '$lib/units';
 

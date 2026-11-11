@@ -7,7 +7,7 @@ import { upsertRecord } from '$lib/stores/sync';
 import { speak } from '$lib/stores/toast';
 import { haptic } from '$lib/haptics';
 import { writeBackToHealth } from '$lib/health/writeBack';
-import { weighInMessage, offTrend } from '$lib/scale';
+import { weighInMessage, offTrend } from './scale';
 import { dwt, wt } from '$lib/units';
 
 /** The reading is far off the trend: show the message, and save on a second

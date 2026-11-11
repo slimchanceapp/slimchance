@@ -12,8 +12,8 @@
   import Modal from './Modal.svelte';
   import { editing, saveLine, savePlans, saveWhy, saveMilestone } from '$lib/commitments';
   import { CUES, cleanPlans, type Plans } from '$lib/plans';
-  import { suggestLine } from '$lib/line';
-  import { suggestStops, milestoneState, type MilestoneSetting } from '$lib/milestone';
+  import { suggestLine } from '$lib/body';
+  import { suggestStops, milestoneState, type MilestoneSetting } from '$lib/body';
   import { line, body } from '$lib/stores/body';
   import { liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';

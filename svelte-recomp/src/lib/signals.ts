@@ -6,7 +6,7 @@
 // Today-against-your-normal is a different question, answered by readiness.ts.
 // Pure; checked in selfcheck.js.
 
-import { fitWeightLine, CAREFUL_CARRY } from './insights.ts';
+import { fitWeightLine, CAREFUL_CARRY } from './body/index.ts';
 
 export type SignalKind = 'resting_hr' | 'steps' | 'sleep_hours' | 'hrv';
 export interface SignalTrend {
@@ -77,4 +77,120 @@ export function together(chanceLoseIn10: number | null, s: Partial<Record<Signal
   if (chanceLoseIn10 != null && chanceLoseIn10 >= 8 && s.resting_hr?.direction === 'falling')
     return 'Weight coming off and resting heart rate falling: getting lighter and fitter together.';
   return null;
+}
+
+// ---------------------------------------------------------------------------
+// Does the watch corroborate the training the verdict rests on?
+// ---------------------------------------------------------------------------
+
+export interface WatchAgreement {
+  handLoggedDays: number;
+  confirmedDays: number;
+  /** Days the watch saw a strength session that was never hand-logged. */
+  unloggedByHand: number;
+}
+
+/**
+ * Cross-check hand-logged lifting against what the watch independently saw.
+ *
+ * This is the one claim in the app that two instruments can corroborate, which
+ * is exactly what makes it worth showing. Deliberately type-agnostic on the
+ * watch side: watches routinely label lifting as a generic workout, and
+ * demanding an exact type match would manufacture disagreement.
+ *
+ * The copy built on this must never imply the user skipped training — an
+ * unconfirmed day is overwhelmingly a watch on a charger.
+ */
+export function watchAgreement(
+  handLoggedDates: Set<string>,
+  watchSessions: { date: string; duration_min: number; kind?: string }[],
+  opts: { minDurationMin?: number; minHandDays?: number } = {}
+): WatchAgreement | null {
+  const minDur = opts.minDurationMin ?? 20;
+  const minHand = opts.minHandDays ?? 3;
+
+  if (!watchSessions.length) return null;      // no instrument, not a failure
+  if (handLoggedDates.size < minHand) return null;
+
+  const watchDates = new Set(
+    watchSessions.filter((s) => (s.duration_min ?? 0) >= minDur).map((s) => s.date)
+  );
+  let confirmed = 0;
+  for (const d of handLoggedDates) if (watchDates.has(d)) confirmed++;
+
+  let unlogged = 0;
+  for (const s of watchSessions) {
+    if (s.kind === 'strength' && !handLoggedDates.has(s.date)) unlogged++;
+  }
+
+  return {
+    handLoggedDays: handLoggedDates.size,
+    confirmedDays: confirmed,
+    unloggedByHand: unlogged,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// What the heaviest sessions cost the next morning
+// ---------------------------------------------------------------------------
+
+export interface RecoveryCost {
+  pairs: number;
+  heavyRhr: number;
+  lightRhr: number;
+  deltaBpm: number;
+  heavyTonnageKg: number;
+  lightTonnageKg: number;
+}
+
+/**
+ * Split training days at their median tonnage and compare next-morning resting
+ * HR. Rides biometrics (the densest table the app owns) against the lift log.
+ *
+ * Never phrased as proof of causation in the UI: alcohol, illness and a warm
+ * room all move resting HR and the app cannot see any of them.
+ */
+export function recoveryCost(
+  tonnageByDate: Map<string, number>,
+  rhrByDate: Map<string, { rhr: number; sleptHours: number | null }>,
+  nextDay: (ymd: string) => string,
+  opts: { minPairs?: number; minPerBucket?: number; minDeltaBpm?: number } = {}
+): RecoveryCost | null {
+  const minPairs = opts.minPairs ?? 8;
+  const minPerBucket = opts.minPerBucket ?? 4;
+  const minDelta = opts.minDeltaBpm ?? 3;
+
+  const pairs: { ton: number; rhr: number }[] = [];
+  for (const [date, ton] of tonnageByDate) {
+    if (!(ton > 0)) continue;
+    const nxt = rhrByDate.get(nextDay(date));
+    // Requiring sleep too is how we know the watch was actually WORN overnight;
+    // a resting HR with no sleep beside it is usually a stray daytime reading.
+    if (!nxt || nxt.rhr == null || nxt.sleptHours == null) continue;
+    pairs.push({ ton, rhr: nxt.rhr });
+  }
+  if (pairs.length < minPairs) return null;
+
+  const sorted = [...pairs].sort((a, b) => a.ton - b.ton);
+  const mid = Math.floor(sorted.length / 2);
+  const light = sorted.slice(0, mid);
+  const heavy = sorted.slice(sorted.length % 2 === 1 ? mid + 1 : mid);
+  if (light.length < minPerBucket || heavy.length < minPerBucket) return null;
+
+  const mean = (a: { rhr: number }[]) => a.reduce((s, x) => s + x.rhr, 0) / a.length;
+  const meanTon = (a: { ton: number }[]) => a.reduce((s, x) => s + x.ton, 0) / a.length;
+  const hR = mean(heavy), lR = mean(light);
+  const delta = hR - lR;
+
+  // The buckets must actually differ in load, or this is measuring nothing.
+  const hT = meanTon(heavy), lT = meanTon(light);
+  if (lT <= 0 || (hT - lT) / lT < 0.2) return null;
+  if (delta < minDelta) return null;
+
+  return {
+    pairs: pairs.length,
+    heavyRhr: Math.round(hR), lightRhr: Math.round(lR),
+    deltaBpm: Math.round(delta),
+    heavyTonnageKg: Math.round(hT), lightTonnageKg: Math.round(lT),
+  };
 }

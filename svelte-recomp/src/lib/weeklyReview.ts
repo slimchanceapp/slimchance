@@ -5,7 +5,7 @@
 // the gaps into concrete, prioritised adjustments. Pure + unit-tested.
 
 import type { StrengthLog, StrengthSet } from './strength';
-import { weightVerdict } from './insights.ts';
+import { weightVerdict } from './body/index.ts';
 import { dwt } from './units.ts';
 
 export interface WeeklyReviewInput {

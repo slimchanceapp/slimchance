@@ -6,7 +6,7 @@
   // steps) as children, and its streak as `aside`.
   import type { Snippet } from 'svelte';
   import Readout from './Readout.svelte';
-  import type { Odds } from '$lib/pulse';
+  import type { Odds } from '$lib/body';
 
   type Tone = 'good' | 'ok' | 'warn' | 'bad' | 'na';
   let {

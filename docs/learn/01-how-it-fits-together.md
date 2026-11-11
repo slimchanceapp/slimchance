@@ -12,7 +12,7 @@ into the page.
 2. [Design: a system, not a mood](#chapter-2-design-a-system-not-a-mood): tokens, two themes, the coin rule, and how we choose.
 3. [MCP: Slim Chance inside any assistant](#chapter-3-mcp-slim-chance-inside-any-assistant): the protocol, one conversation end to end, and the server we built.
 4. [Evals: how we found out our chance was overconfident](#chapter-4-evals-how-we-found-out-our-chance-was-overconfident): measuring an AI and our own maths against a known truth.
-5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, and the pure core a check now guards.
+5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, the pure core a check now guards, and Body, the first area behind its own doors.
 6. [The AI layer: engines, evidence, and an expensive lesson](#chapter-6-the-ai-layer-engines-evidence-and-an-expensive-lesson): the barcode chain, the day the AI went dark, and the two engines that replaced one.
 7. [Learning from the best: MacroFactor, Oura, Duolingo](#chapter-7-learning-from-the-best-macrofactor-oura-duolingo): reading the leaders' own methods, two faults they showed us, and the tests that proved the fixes.
 8. [Ask about your numbers: retrieval, a tool and a small agent](#chapter-8-ask-about-your-numbers-retrieval-a-tool-and-a-small-agent): finding the right paragraph by meaning, letting a model call our code, and the check that decides what you see.
@@ -494,23 +494,23 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 
 | Word | Means | Its one home |
 |---|---|---|
-| Weigh-in | One morning's reading, saved with a typo guard | `saveWeighIn`, `weighIn.ts` |
-| Trend | Where the weight really is under the daily water noise | `weightVerdict`, `insights.ts` |
-| The chance (coins) | How likely the trend is really going the goal's way | `chanceOf`, `insights.ts`; words in `pulse.ts` |
-| The path | How far from the start to the goal | `slimTrack.ts` |
+| Weigh-in | One morning's reading, saved with a typo guard | `saveWeighIn`, `body/weighIn.ts` |
+| Trend | Where the weight really is under the daily water noise | `weightVerdict`, `body/insights.ts` |
+| The chance (coins) | How likely the trend is really going the goal's way | `chanceOf`, `body/insights.ts`; words in `body/pulse.ts` |
+| The path | How far from the start to the goal | `body/slimTrack.ts` |
 | The budget | The week's calories, not the day's | `weekBudget`, `week.ts` |
 | Learned burn | What this body burns, learned from the log and the scale | `weeklyMaintenance`, `adaptiveTdee.ts` |
 | The floor | The least anyone is ever planned to eat | `CUT_FLOOR`, `tdee.ts` |
 | A trained day | Lifting logged, or 30+ minutes of watch-recorded sport | `trainedDates`, `health/exercise.ts` |
-| A stall | The trend has ruled out the plan's pace | `diagnoseStall`, `insights.ts` |
+| A stall | The trend has ruled out the plan's pace | `diagnoseStall`, `body/insights.ts` |
 | Moments | The morning briefing and the evening hold | `stores/moments.ts` |
 
 ### The map
 
 | Area | What it knows | Core (pure) | Shell (talks to the world) |
 |---|---|---|---|
-| Body | Weigh-ins, trend, chance, path | `insights` `pulse` `line` `slimTrack` `milestone` `units` | `weighIn`, `stores/body` |
-| Nutrition | Food, the week's budget, the learned burn | `food` `week` `adaptiveTdee` `tdee` `mealPlan` | `foodLog`, `foodSources`, the food edge functions |
+| Body (`src/lib/body`) | Weigh-ins, trend, chance, path, ceiling, stops | `insights` `pulse` `line` `slimTrack` `milestone` `scale` `scaleUp` `importWeights`, read through `index.ts` | `weighIn`, `stores/body` |
+| Nutrition | Food, the week's budget, the learned burn | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` | `foodLog`, `foodSources`, the food edge functions |
 | Training | Sessions, programs, lifts | `program` `strength` `liftStalls` `plates` | the Train screen, `health/logActivity` |
 | Health signals | Sleep, resting heart rate, HRV, steps | `signals` `readiness` `fitness` | `health/*` (Health Connect), Apple Health |
 | Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
@@ -519,6 +519,7 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Identity and data | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live` |
 | Metrics | Are we helping? | `fit` | `events`, the Numbers page, `owner_metrics` |
 | The outside world | Other people's AI assistants | `mcp` | `routes/mcp/+server.ts` |
+| Shared kernel | Units and dates, which every area speaks | `units` `date` | `stores/units` |
 
 Two DDD ideas are already here under other names:
 - **Aggregates.** Rows that belong together (a meal, a seeded plan) go
@@ -559,6 +560,58 @@ when any of them stops being pure, naming the import that did it. Put the old
 `units.ts` back and it fails at once: "coach.ts left the pure core: units.ts
 uses localStorage". Like the regression baseline, the list may grow, and
 taking a module off needs a reason in the commit.
+
+### The first area moves: Body
+
+On 2026-11-11 Body got its own folder, `src/lib/body`, with **two doors**.
+`index.ts` is for reading (the trend, the chance, the path) and is pure.
+`weighIn.ts` is the one way to save a weigh-in, and it touches the database.
+They are separate on purpose: one door that also handed out `saveWeighIn`
+would drag the database into every pure module that only reads a trend, and
+the pure-core check would fail them all.
+
+A check now guards the border in both directions. Outside `body/`, a file
+may import only those two doors. Inside, Body may use only itself and the
+**shared kernel** (`units`, `date`). The check was proven by breaking it three
+ways: an outside file reaching past the door, a type reaching past it, and
+Body reaching into Coach. Each failed with the file and the import named.
+(The first try at the third probe was wrong itself: it asked Coach for a
+name that had just moved, so the whole suite crashed. That still fails
+verify, but for the wrong reason, so it was rerun with a real name.)
+
+**What the move found:**
+1. **Body leaned on Coach.** The odds' words asked the Coach area which way
+   the goal is (`goalDirection`). That's Body's own language, so it moved
+   into Body, and Coach now depends on Body, not the other way round.
+2. **Strangers in Body's file.** "Protein on training days" is Nutrition's;
+   "does the watch agree" and "what heavy sessions cost the next morning" are
+   Health signals'. They moved to `nutritionPatterns` and `signals`. The last
+   one has tests but no screen uses it: dead code, and a candidate to delete.
+3. **One idea written three times.** Lose, gain or maintain was its own type
+   in three files. Now there's one, owned by Body.
+4. **The tests weren't enough on their own.** Every check passed, but the
+   type check caught two inline type imports still pointing at the old file.
+   That is why verify runs both.
+
+**How we know nothing else changed:**
+
+| What | Before | After |
+|---|---|---|
+| Checks (including the personas snapshot of what people read) | all pass | all pass, snapshot unchanged |
+| JavaScript a phone may download | 1,075,462 bytes | 1,075,458 bytes |
+| Each page's own file | | the same size, all 11 |
+| The trend maths, 2,000 runs on 400 mornings | about 690–700 ms | about 690–700 ms |
+
+Moving code between folders doesn't change what runs. The real risk to
+speed in a modular monolith is a door that makes pages download more, so
+that is now measured on every verify: `scripts/bundle-check.mjs` sums all the
+JavaScript and what the first screen needs, against
+`scripts/bundle-budget.json`. A deliberate increase raises the budget with a
+reason in the commit, the same way the baseline grows.
+
+**Try it.** Add `import { weightVerdict } from './body/insights.ts';` to the
+top of `src/lib/week.ts` and run `node scripts/selfcheck.js`: "week.ts
+reaches past Body's door". Then take it out.
 
 ### Why not split it into services
 

@@ -161,6 +161,7 @@ equipment is inferred from the exercise name
 every brand has usable setup steps and a Health Connect mention
 every call the app makes on the Moments plugin exists in the APK
 every font-size is a rem, and none is below the 11px floor
+every function that runs with the owner’s rights pins its search path, and the owner’s numbers refuse everyone else
 every function that spends AI or search quota checks for a signed-in user under the daily cap first
 every haptic pattern is a valid vibrate argument
 every notification wears the Slim Chance mark: the coin, in the app’s yellow
@@ -310,6 +311,7 @@ stale weigh-ins outside the window do not prop up a verdict
 stepping back on the scale after a gap is welcomed, not scored
 t-critical is the real t value, not the normal approximation
 the 4-day split alternates lower and upper
+the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area
 the Food hero praises protein when it’s hit and never colours a day still in progress
 the GLP-1 companion keeps a record and never advises
 the Google Play build updates only through Play and loads slimchance.app

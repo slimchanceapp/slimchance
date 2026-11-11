@@ -13,7 +13,7 @@
 		"check:videos": "node scripts/check-videos.mjs",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
 		"ship": "sh scripts/ship.sh",
-		"verify": "node scripts/selfcheck.js && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error && vite build"
+		"verify": "node scripts/selfcheck.js && svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --threshold error && vite build && node scripts/bundle-check.mjs"
 	},
 	"devDependencies": {
 		"@capacitor/android": "^7.6.8",

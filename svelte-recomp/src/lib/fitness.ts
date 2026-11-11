@@ -3,7 +3,7 @@
 // from the log, training days and steps. Each is said only when the data can
 // carry it, and the answer rests on the heart and the lifts. Pure; see
 // selfcheck.js.
-import { fitWeightLine, CAREFUL_CARRY } from './insights.ts';
+import { fitWeightLine, CAREFUL_CARRY } from './body/index.ts';
 import type { StrengthTrend } from './strength.ts';
 import { shiftYmd } from './date.ts';
 

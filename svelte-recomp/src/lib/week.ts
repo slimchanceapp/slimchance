@@ -6,7 +6,7 @@
 // break anything. Pure; see selfcheck.js.
 
 import { mondayOf } from './date.ts';
-import { fitWeightLine, weightVerdict, type WeighIn } from './insights.ts';
+import { fitWeightLine, weightVerdict, type WeighIn } from './body/index.ts';
 
 export interface WeekBudget {
   start: string;

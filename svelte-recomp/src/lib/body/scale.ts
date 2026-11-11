@@ -7,8 +7,8 @@
 // week counts its mornings and starts fresh on Monday, and stepping back on
 // the scale after a gap is welcomed, not scored. Pure; see selfcheck.js.
 
-import { mondayOf } from './date.ts';
-import { dwt, wt, wtNum } from './units.ts';
+import { mondayOf } from '../date.ts';
+import { dwt, wt, wtNum } from '../units.ts';
 
 export interface Said { key: string; title: string; body: string; icon: string; ttl?: number }
 

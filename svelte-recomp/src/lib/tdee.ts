@@ -6,6 +6,7 @@
 
 import { KCAL_PER_KG } from './adaptiveTdee.ts';
 import { wtShortU } from './units.ts';
+import type { GoalDirection } from './body/index.ts';
 
 export interface TdeeInput {
   weightKg: number;
@@ -57,7 +58,7 @@ export function calcTdee(input: TdeeInput): number {
   return Math.round(calcBmr(input) * ACTIVITY_MULTIPLIERS[input.activityLevel]);
 }
 
-export type GoalDirection = 'lose' | 'gain' | 'maintain';
+export type { GoalDirection };
 
 export interface GoalProjection {
   targetKg: number;

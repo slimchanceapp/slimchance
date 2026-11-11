@@ -10,7 +10,7 @@
 // doesn't say its unit, or its dates could be read day-first or month-first,
 // the caller asks rather than guessing. Pure; see selfcheck.js.
 
-import { KG_PER_LB } from './units.ts';
+import { KG_PER_LB } from '../units.ts';
 
 export interface RawReading { date: string; time: string; value: number; unit: 'kg' | 'lb' | null; slashed?: [number, number] }
 export interface ParsedFile {

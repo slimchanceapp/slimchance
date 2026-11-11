@@ -9,7 +9,7 @@
 //
 // Below you, unlike the ceiling (line.ts), which sits above you. Pure; see
 // selfcheck.js.
-import { floorIn, roundStep, wt } from './units.ts';
+import { floorIn, roundStep, wt } from '../units.ts';
 
 /** A stop that was reached, kept so the journal can tell the story. */
 export interface ReachedStop { kg: number; set: string; reached: string }

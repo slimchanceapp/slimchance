@@ -29,25 +29,6 @@ export interface FocusItem {
   videoLabel?: string;
 }
 
-/**
- * Which way the user is trying to move. Everything in this file used to assume
- * 'lose' — copy said "in a deficit", "your cut", "free deficit", "widens the
- * deficit" — which is simply wrong for someone adding muscle, and reads as the
- * app not knowing who it is talking to. Recomp runs in both directions.
- */
-export type GoalDirection = 'lose' | 'gain' | 'maintain';
-
-/** Derive direction from where they are versus where they said they want to be. */
-export function goalDirection(currentWeight: number | null, goalKg: number): GoalDirection {
-  if (currentWeight == null || !goalKg) return 'maintain';
-  const diff = currentWeight - goalKg;
-  // Half a kilo of slack: inside that, "maintain" is the honest description and
-  // nagging someone about a 300 g gap is noise.
-  if (diff > 0.5) return 'lose';
-  if (diff < -0.5) return 'gain';
-  return 'maintain';
-}
-
 export interface CoachInput {
   goalKg: number;
   /** Keeping it off (user_settings.keep_since): holding, not losing. */
@@ -56,14 +37,14 @@ export interface CoachInput {
   /** kg/week; positive = losing. The trend's slope (stores/body), never two readings. */
   rateKgPerWeek: number;
   /** The trend's verdict against the plan's pace — see paceVsPlan. */
-  pace: import('./insights').Pace;
+  pace: import('./body/index.ts').Pace;
   planKgPerWeek: number | null;
   /** Only while a loss is confirmed; null otherwise. */
   weeksToGoal: number | null;
   /** While it's too early to tell: how many more mornings on the scale. */
   weighInsNeeded: number | null;
   /** Set only when the trend has ruled out the plan (stalled or gaining). */
-  stall: import('./insights').StallDiagnosis | null;
+  stall: import('./body/index.ts').StallDiagnosis | null;
   /** Total kg lost since the very first logged weigh-in (the real journey). */
   totalLostKg: number | null;
 

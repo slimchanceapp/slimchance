@@ -302,6 +302,25 @@ function normalCdf(z: number): number {
  *              week (muscle is at risk)
  *   on-pace  — confirmed losing, and the plan's pace is still in the interval
  */
+/**
+ * Which way the user is trying to move. Everything in this file used to assume
+ * 'lose' — copy said "in a deficit", "your cut", "free deficit", "widens the
+ * deficit" — which is simply wrong for someone adding muscle, and reads as the
+ * app not knowing who it is talking to. Recomp runs in both directions.
+ */
+export type GoalDirection = 'lose' | 'gain' | 'maintain';
+
+/** Derive direction from where they are versus where they said they want to be. */
+export function goalDirection(currentWeight: number | null, goalKg: number): GoalDirection {
+  if (currentWeight == null || !goalKg) return 'maintain';
+  const diff = currentWeight - goalKg;
+  // Half a kilo of slack: inside that, "maintain" is the honest description and
+  // nagging someone about a 300 g gap is noise.
+  if (diff > 0.5) return 'lose';
+  if (diff < -0.5) return 'gain';
+  return 'maintain';
+}
+
 export type Pace = 'too-early' | 'gaining' | 'stalled' | 'slower' | 'on-pace' | 'faster';
 
 export function paceVsPlan(v: WeightVerdict | null, planKgPerWeek: number | null, fastKgPerWeek: number | null = null): Pace {
@@ -317,181 +336,6 @@ export function paceVsPlan(v: WeightVerdict | null, planKgPerWeek: number | null
   if (v.loKgPerWeek > Math.max(planKgPerWeek * 1.5, fastKgPerWeek ?? 0)) return 'faster';
   if (v.loKgPerWeek > 0) return 'on-pace';
   return 'too-early';
-}
-
-// ---------------------------------------------------------------------------
-// Protein on training days vs rest days
-// ---------------------------------------------------------------------------
-
-export interface ProteinByDayResult {
-  liftDays: number;
-  restDays: number;
-  liftAvgG: number;
-  restAvgG: number;
-  /** restAvg − liftAvg. Positive means protein DROPS on training days. */
-  gapG: number;
-  /** target − liftAvg, i.e. how far short training days fall. */
-  shortOfTargetG: number;
-}
-
-/** Days below this are abandoned logging, not a real intake — same gate adaptiveTdee uses. */
-const MIN_LOGGED_KCAL = 800;
-
-/**
- * Do they under-eat protein on the days their body is actually repairing?
- *
- * Deliberately keyed on hand-logged workout dates rather than watch sessions:
- * the lift log has months of history where activity_sessions has days. An
- * insight is only as old as its thinnest input.
- */
-export function proteinByTrainingDay(
-  foodByDate: Map<string, { protein: number; kcal: number }>,
-  liftDates: Set<string>,
-  proteinTargetG: number,
-  opts: { minDaysEachSide?: number; minGapG?: number; minShortG?: number } = {}
-): ProteinByDayResult | null {
-  const minDays = opts.minDaysEachSide ?? 5;
-  const minGap = opts.minGapG ?? 15;
-  const minShort = opts.minShortG ?? 20;
-
-  const lift: number[] = [];
-  const rest: number[] = [];
-  for (const [date, v] of foodByDate) {
-    if (!v || v.kcal < MIN_LOGGED_KCAL) continue;
-    (liftDates.has(date) ? lift : rest).push(v.protein);
-  }
-  if (lift.length < minDays || rest.length < minDays) return null;
-
-  const mean = (a: number[]) => a.reduce((s, x) => s + x, 0) / a.length;
-  const liftAvg = mean(lift);
-  const restAvg = mean(rest);
-  const gap = restAvg - liftAvg;
-  const short = proteinTargetG - liftAvg;
-
-  // Only worth saying if it is both a real gap AND actually costing them.
-  if (gap < minGap || short < minShort) return null;
-
-  return {
-    liftDays: lift.length, restDays: rest.length,
-    liftAvgG: Math.round(liftAvg), restAvgG: Math.round(restAvg),
-    gapG: Math.round(gap), shortOfTargetG: Math.round(short),
-  };
-}
-
-// ---------------------------------------------------------------------------
-// Does the watch corroborate the training the verdict rests on?
-// ---------------------------------------------------------------------------
-
-export interface WatchAgreement {
-  handLoggedDays: number;
-  confirmedDays: number;
-  /** Days the watch saw a strength session that was never hand-logged. */
-  unloggedByHand: number;
-}
-
-/**
- * Cross-check hand-logged lifting against what the watch independently saw.
- *
- * This is the one claim in the app that two instruments can corroborate, which
- * is exactly what makes it worth showing. Deliberately type-agnostic on the
- * watch side: watches routinely label lifting as a generic workout, and
- * demanding an exact type match would manufacture disagreement.
- *
- * The copy built on this must never imply the user skipped training — an
- * unconfirmed day is overwhelmingly a watch on a charger.
- */
-export function watchAgreement(
-  handLoggedDates: Set<string>,
-  watchSessions: { date: string; duration_min: number; kind?: string }[],
-  opts: { minDurationMin?: number; minHandDays?: number } = {}
-): WatchAgreement | null {
-  const minDur = opts.minDurationMin ?? 20;
-  const minHand = opts.minHandDays ?? 3;
-
-  if (!watchSessions.length) return null;      // no instrument, not a failure
-  if (handLoggedDates.size < minHand) return null;
-
-  const watchDates = new Set(
-    watchSessions.filter((s) => (s.duration_min ?? 0) >= minDur).map((s) => s.date)
-  );
-  let confirmed = 0;
-  for (const d of handLoggedDates) if (watchDates.has(d)) confirmed++;
-
-  let unlogged = 0;
-  for (const s of watchSessions) {
-    if (s.kind === 'strength' && !handLoggedDates.has(s.date)) unlogged++;
-  }
-
-  return {
-    handLoggedDays: handLoggedDates.size,
-    confirmedDays: confirmed,
-    unloggedByHand: unlogged,
-  };
-}
-
-// ---------------------------------------------------------------------------
-// What the heaviest sessions cost the next morning
-// ---------------------------------------------------------------------------
-
-export interface RecoveryCost {
-  pairs: number;
-  heavyRhr: number;
-  lightRhr: number;
-  deltaBpm: number;
-  heavyTonnageKg: number;
-  lightTonnageKg: number;
-}
-
-/**
- * Split training days at their median tonnage and compare next-morning resting
- * HR. Rides biometrics (the densest table the app owns) against the lift log.
- *
- * Never phrased as proof of causation in the UI: alcohol, illness and a warm
- * room all move resting HR and the app cannot see any of them.
- */
-export function recoveryCost(
-  tonnageByDate: Map<string, number>,
-  rhrByDate: Map<string, { rhr: number; sleptHours: number | null }>,
-  nextDay: (ymd: string) => string,
-  opts: { minPairs?: number; minPerBucket?: number; minDeltaBpm?: number } = {}
-): RecoveryCost | null {
-  const minPairs = opts.minPairs ?? 8;
-  const minPerBucket = opts.minPerBucket ?? 4;
-  const minDelta = opts.minDeltaBpm ?? 3;
-
-  const pairs: { ton: number; rhr: number }[] = [];
-  for (const [date, ton] of tonnageByDate) {
-    if (!(ton > 0)) continue;
-    const nxt = rhrByDate.get(nextDay(date));
-    // Requiring sleep too is how we know the watch was actually WORN overnight;
-    // a resting HR with no sleep beside it is usually a stray daytime reading.
-    if (!nxt || nxt.rhr == null || nxt.sleptHours == null) continue;
-    pairs.push({ ton, rhr: nxt.rhr });
-  }
-  if (pairs.length < minPairs) return null;
-
-  const sorted = [...pairs].sort((a, b) => a.ton - b.ton);
-  const mid = Math.floor(sorted.length / 2);
-  const light = sorted.slice(0, mid);
-  const heavy = sorted.slice(sorted.length % 2 === 1 ? mid + 1 : mid);
-  if (light.length < minPerBucket || heavy.length < minPerBucket) return null;
-
-  const mean = (a: { rhr: number }[]) => a.reduce((s, x) => s + x.rhr, 0) / a.length;
-  const meanTon = (a: { ton: number }[]) => a.reduce((s, x) => s + x.ton, 0) / a.length;
-  const hR = mean(heavy), lR = mean(light);
-  const delta = hR - lR;
-
-  // The buckets must actually differ in load, or this is measuring nothing.
-  const hT = meanTon(heavy), lT = meanTon(light);
-  if (lT <= 0 || (hT - lT) / lT < 0.2) return null;
-  if (delta < minDelta) return null;
-
-  return {
-    pairs: pairs.length,
-    heavyRhr: Math.round(hR), lightRhr: Math.round(lR),
-    deltaBpm: Math.round(delta),
-    heavyTonnageKg: Math.round(hT), lightTonnageKg: Math.round(lT),
-  };
 }
 
 // ---------------------------------------------------------------------------

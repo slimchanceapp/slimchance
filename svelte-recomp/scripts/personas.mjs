@@ -6,16 +6,16 @@
 // wobble keep every run the same.
 import './clock.mjs';
 import { writeFileSync } from 'node:fs';
-import { weightVerdict, paceVsPlan } from '../src/lib/insights.ts';
-import { pulse } from '../src/lib/pulse.ts';
+import { weightVerdict, paceVsPlan } from '../src/lib/body/insights.ts';
+import { pulse } from '../src/lib/body/pulse.ts';
 import { dayOnePlan } from '../src/lib/dayOne.ts';
-import { explainUp } from '../src/lib/scaleUp.ts';
+import { explainUp } from '../src/lib/body/scaleUp.ts';
 import { fitness } from '../src/lib/fitness.ts';
 import { weeklyReview } from '../src/lib/weeklyReview.ts';
 import { situationalNudges } from '../src/lib/situational.ts';
 import { trainedDates } from '../src/lib/health/exercise.ts';
 import { strengthTrend } from '../src/lib/strength.ts';
-import { morningsThisWeek } from '../src/lib/scale.ts';
+import { morningsThisWeek } from '../src/lib/body/scale.ts';
 import { SITES, nextDose, sitesByRest, reportText } from '../src/lib/meds.ts';
 import { kindWord } from '../src/lib/kind.ts';
 import { lessonFor } from '../src/lib/lessons.ts';

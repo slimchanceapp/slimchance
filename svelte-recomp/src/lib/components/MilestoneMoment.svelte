@@ -7,7 +7,7 @@
   import { body } from '$lib/stores/body';
   import { liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';
-  import { suggestStops, HELD_DAYS, type MilestoneSetting } from '$lib/milestone';
+  import { suggestStops, HELD_DAYS, type MilestoneSetting } from '$lib/body';
   import { saveMilestone, markStopReached } from '$lib/commitments';
   import { haptic } from '$lib/haptics';
   import { wt, wtNum, wtShort } from '$lib/units';

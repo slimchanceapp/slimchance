@@ -31,3 +31,11 @@
 ## What would change it
 A second developer working in parallel, or one area needing its own deploy or
 its own limits (for example the MCP server under heavy outside traffic).
+
+## Progress
+- **2026-11-11: Body moved** into `svelte-recomp/src/lib/body`, behind
+  `index.ts` (reading) and `weighIn.ts` (saving a weigh-in), with a check on
+  both directions of its border. Same behaviour (all checks and the personas
+  snapshot unchanged), same size (1,075,462 bytes of JavaScript before,
+  1,075,458 after), same speed (the trend maths timed in both trees). Book
+  chapter 5 has what the move found.

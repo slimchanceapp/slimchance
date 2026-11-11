@@ -8,7 +8,7 @@
 // number that counts. A day that's merely inside the usual swing gets told
 // exactly that. Pure; see selfcheck.js.
 
-import { dwt, wt } from './units.ts';
+import { dwt, wt } from '../units.ts';
 
 export interface UpInput {
   today: string;

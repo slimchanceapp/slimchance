@@ -17,8 +17,8 @@
 // A client on 2026-07-28 gets the spec's own "unsupported version" answer
 // listing these, and falls back to one of them.
 
-import { weightVerdict, chanceOf, type WeighIn } from './insights.ts';
-import { oddsOf } from './pulse.ts';
+import { weightVerdict, chanceOf, type WeighIn } from './body/index.ts';
+import { oddsOf } from './body/index.ts';
 import { signalTrend, together, type SignalKind, type SignalTrend } from './signals.ts';
 
 export const SUPPORTED = ['2025-11-25', '2025-06-18'];
