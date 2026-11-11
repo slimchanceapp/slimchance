@@ -48,6 +48,12 @@ Every deploy is checked against all of it.
    after the release is published.
 5. **A change people will see is looked at on a phone-sized screen** before it
    ships. The suite can't see layout.
+6. **A database change is a migration, never a click.** Apply it with
+   `node scripts/apply-migration.mjs` (it records the version), then
+   `sh scripts/replay-migrations.sh --drift` must say "drift: none": every
+   migration replayed on an empty database rebuilds exactly what production
+   enforces. GitHub replays them all whenever one changes
+   (`.github/workflows/migrations.yml`).
 
 **Personas** (`scripts/personas.mjs`): made-up people run through the app's
 pure logic, each one from something that broke for a real person. What they
@@ -84,7 +90,9 @@ emails the owner (GitHub's own notice).
 - **All or nothing (ACID).**
   - Rows that belong together are saved in one request (`upsertRecords`).
   - A migration runs in one transaction, is safe to run twice, and is recorded
-    in `schema_migrations`.
+    in `schema_migrations`. Nothing is made by hand: the migrations alone
+    rebuild the database (checked by replaying them, and by selfcheck for
+    every synced table).
   - Isolation is row-level security: every table gets it, with the four
     own-rows policies, before it joins the sync.
   - The server holds the record; the phone's copy is a cache.

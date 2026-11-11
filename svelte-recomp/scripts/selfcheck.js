@@ -5657,6 +5657,23 @@ check('readiness can say "an easy day" from a watch that never sends HRV', async
   assert.equal(readyFromNormal({ date: '2026-10-21', hrv: 61, resting_hr: 58, sleep_hours: 7.5 }, withHrv)?.word, 'Fair', 'HRV normal: a high pulse alone is moderate, not rest');
 });
 
+check('every table the app syncs or exports is created by a migration, so the repo can rebuild its backend', async () => {
+  // 2026-11-11: replaying the migrations on an empty database failed: seven
+  // tables had been made by hand (20260710000000_tables_made_by_hand.sql now
+  // records them). scripts/replay-migrations.sh replays them all (CI does, on
+  // every migration change); this is the cheap half that needs no database.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const dir = '../supabase/migrations';
+  const sql = readdirSync(dir).filter((f) => f.endsWith('.sql')).map((f) => readFileSync(`${dir}/${f}`, 'utf8')).join('\n');
+  const listed = (file, name) => {
+    const m = readFileSync(file, 'utf8').match(new RegExp(`${name}[^=]*=\\s*\\[([^\\]]*)\\]`));
+    return [...(m?.[1] ?? '').matchAll(/'([a-z_]+)'/g)].map((x) => x[1]);
+  };
+  const tables = [...new Set([...listed('src/lib/stores/sync.ts', 'const TABLES'), ...listed('src/lib/exportData.ts', 'EXPORT_TABLES')])];
+  assert.ok(tables.length >= 15, `found ${tables}`);
+  for (const t of tables) assert.match(sql, new RegExp(`create table (if not exists )?(public\\.)?${t}\\b`, 'i'), `${t} is synced or exported but no migration creates it`);
+});
+
 check('Slim Chance offers no medical features: no medication log and no rehab program (Google Play)', async () => {
   // 2026-11-11: Google Play rejected the closed test. Medical features
   // (medication management, physical therapy and rehabilitation) may only be

@@ -168,6 +168,7 @@ every notification wears the Slim Chance mark: the coin, in the app’s yellow
 every program exercise but the walks comes with a video
 every quick-log activity is a real Health Connect exercise type
 every synced table names its conflict key in one map
+every table the app syncs or exports is created by a migration, so the repo can rebuild its backend
 every template produces a full, valid week
 every verdict carries evidence the user can check
 every video id is a well-formed YouTube id

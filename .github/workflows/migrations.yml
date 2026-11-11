@@ -1,0 +1,25 @@
+# Every migration, replayed on an empty database whenever one changes: the
+# repo must always be able to rebuild its own backend (ENGINEERING.md). Until
+# 2026-11-11 it couldn't, because seven tables had been made by hand. The
+# comparison with production (--drift) needs the owner's access token, so it
+# runs on the laptop after a migration is applied, not here.
+name: Migrations
+
+on:
+  push:
+    branches: [main]
+    paths: ['supabase/migrations/**', 'svelte-recomp/scripts/replay-migrations.sh']
+  pull_request:
+    paths: ['supabase/migrations/**', 'svelte-recomp/scripts/replay-migrations.sh']
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+jobs:
+  replay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - run: sh svelte-recomp/scripts/replay-migrations.sh

@@ -641,6 +641,37 @@ which let the slip pass; it is 0.2% now.
 top of `src/lib/week.ts` and run `node scripts/selfcheck.js`: "week.ts
 reaches past Body's door". Then take it out.
 
+### Can the repo rebuild its own database?
+
+A boundary in the code is worth little if the database underneath can't be
+rebuilt from the repo. So on 2026-11-11 every migration was replayed, in
+order, on an empty copy of the database (Supabase's own Postgres image, in a
+throwaway container): `sh scripts/replay-migrations.sh`.
+
+16 of 37 failed. Seven tables, settings and food logs among them, had been
+made by hand in the dashboard in July, before every change went through a
+migration. The later migrations altered tables that, as far as the repo
+knew, didn't exist. Self-hosting from the repo was impossible, and so was
+recovery from it.
+
+The fix read each table's exact definition from production's catalog and
+wrote it down as a migration of "the table as it first was". The later
+migrations add the rest, as they did in production. It is safe to run twice,
+so on production it changed nothing.
+
+Then the replayed database was compared with production, line by line:
+columns, keys, checks, indexes, row security, policies, functions and who may
+call them, triggers, scheduled jobs and the storage bucket. That is **drift
+detection**, and it found four more hand-made things: a column, two indexes,
+and four policies that duplicated others exactly. A second migration recorded
+the first three and removed the duplicates. Now all 39 migrations rebuild
+exactly what production enforces, 468 lines compared, and GitHub replays
+them whenever one changes.
+
+**Try it.** `sh scripts/replay-migrations.sh` (it needs Docker). Then add
+`create table public.scratch (id int);` to a migration file and run it with
+`--drift`: the comparison names the table production doesn't have.
+
 ### Why not split it into services
 
 Microservices draw the boundaries with a network: each area becomes its own
@@ -1099,6 +1130,11 @@ our own guide.
   values can't drag much: the middle of how far each value sits from the middle.
 - **Normal range:** where a person's own mornings usually land; a morning
   outside it is a signal, one inside it is noise.
+- **Migration:** one file of database changes, applied once, in order, and
+  kept forever, so the database's whole history can be replayed.
+- **Schema drift:** a difference between what the migrations build and what
+  production really has, usually from a change made by hand.
+- **Idempotent:** safe to run twice; the second run changes nothing.
 - **False alarm and catch rate:** how often a warning fires when nothing is
   wrong, and how often it fires when something is. A useful warning has few of
   the first and many of the second.
