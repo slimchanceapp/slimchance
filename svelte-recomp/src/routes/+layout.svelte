@@ -656,9 +656,6 @@
       <span>Period-aware weight</span><span class="menu-val">{cycleOn ? 'On' : 'Off'}</span>
     </button>
     {#if cycleOn}<div class="menu-note">Mark the first day of each period on Today. After three cycles Slim Chance learns how much your weight moves around a period and explains those mornings. Off by default; turning it off keeps the dates you marked.</div>{/if}
-    <a class="menu-item" href="{base}/meds" onclick={() => (menuOpen = false)}>
-      <span>GLP-1 companion</span>
-    </a>
     <div class="menu-sec">Your data</div>
     <button class="menu-item" onclick={() => { menuOpen = false; importOpen.set(true); }}>
       <span>Import weigh-ins</span><span class="menu-val">From another app</span>

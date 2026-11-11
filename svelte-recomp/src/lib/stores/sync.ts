@@ -32,7 +32,7 @@ async function dropStrays(table: string, data: any[]) {
   await dexieTable(table).where('user_id').equals(uid).filter((r: any) => !ids.has(r.id)).delete();
 }
 
-const TABLES = ['alarms', 'daily_logs', 'checks', 'tracks', 'weights', 'steps', 'sessions', 'user_settings', 'workout_schedule', 'workout_sessions_custom', 'workout_logs', 'food_logs', 'biometrics', 'recipes_custom', 'activity_sessions', 'medications', 'med_events'] as const;
+const TABLES = ['alarms', 'daily_logs', 'checks', 'tracks', 'weights', 'steps', 'sessions', 'user_settings', 'workout_schedule', 'workout_sessions_custom', 'workout_logs', 'food_logs', 'biometrics', 'recipes_custom', 'activity_sessions'] as const;
 
 function dexieTable(table: string) {
   return db.table(table);
@@ -220,8 +220,6 @@ export const CONFLICT: Record<(typeof TABLES)[number], string> = {
   biometrics: 'user_id,date',
   recipes_custom: 'id',
   activity_sessions: 'id',
-  medications: 'id',
-  med_events: 'id',
 };
 
 export async function upsertRecord(table: string, data: Record<string, any>) {

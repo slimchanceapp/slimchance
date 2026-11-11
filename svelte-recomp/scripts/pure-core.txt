@@ -28,7 +28,6 @@ liftStalls.ts
 body/line.ts
 mcp.ts
 mealPlan.ts
-meds.ts
 body/milestone.ts
 muscleVolume.ts
 nextWeight.ts

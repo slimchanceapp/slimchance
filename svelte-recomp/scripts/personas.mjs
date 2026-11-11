@@ -16,7 +16,6 @@ import { situationalNudges } from '../src/lib/situational.ts';
 import { trainedDates } from '../src/lib/health/exercise.ts';
 import { strengthTrend } from '../src/lib/strength.ts';
 import { morningsThisWeek } from '../src/lib/body/scale.ts';
-import { SITES, nextDose, sitesByRest, reportText } from '../src/lib/meds.ts';
 import { kindWord } from '../src/lib/kind.ts';
 import { lessonFor } from '../src/lib/lessons.ts';
 
@@ -94,33 +93,10 @@ function newcomerDaySeven() {
   };
 }
 
-/** The GLP-1 companion (2026-10-30): a weekly dose stepped up once, a few
- *  feelings, one blood test, and the report a doctor would read. */
-function glp1User() {
-  const med = { id: 'm', name: 'semaglutide', dose: 0.5, unit: 'mg', every_days: 7, weekday: 3, time: '09:00', started: day(56), stopped: null };
-  const events = [];
-  for (let k = 56; k >= 0; k -= 7) events.push({ id: `d${k}`, med_id: 'm', kind: 'dose', date: day(k), dose: k > 28 ? 0.25 : 0.5, site: SITES[((56 - k) / 7) % SITES.length] });
-  events.push(
-    { id: 'e1', med_id: 'm', kind: 'effect', date: day(54), symptom: 'Nausea', severity: 2 },
-    { id: 'e2', med_id: 'm', kind: 'effect', date: day(27), symptom: 'Nausea', severity: 1 },
-    { id: 'e3', med_id: 'm', kind: 'effect', date: day(26), symptom: 'Constipation', severity: 1 },
-    { id: 'l1', med_id: null, kind: 'lab', date: day(20), test: 'HbA1c', value: 6.1, unit: '%', ref_low: 4, ref_high: 5.6 },
-  );
-  const trend = [];
-  for (let k = 63; k >= 0; k--) trend.push({ date: day(k), trendKg: +(104 - (63 - k) * 0.12).toFixed(1) });
-  return {
-    next: nextDose(med, events, TODAY),
-    sites: sitesByRest(events).slice(0, 2),
-    report: reportText({ med, events, today: TODAY, trend, proteinAvgG: 95, proteinTargetG: 130,
-      training: 'Trained 3 days in the last four weeks, as in the four before.', unit: 'kg' }).split('\n'),
-  };
-}
-
 export function runPersonas() {
   return {
     'a watch-only gym-goer': watchGymGoer(),
     'a stranger on morning two': strangerMorningTwo(),
-    'a GLP-1 user': glp1User(),
     'a newcomer on their seventh morning': newcomerDaySeven(),
   };
 }

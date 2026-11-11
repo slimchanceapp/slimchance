@@ -3340,13 +3340,6 @@ check('6+ on five of seven mornings stops offering to wait: see a physio', () =>
   assert.equal(once.physio, false, 'one bad morning is "back off", not "see someone"');
 });
 
-check('red before day one offers “Start a week later”, from the saved start', async () => {
-  const { readFileSync } = await import('node:fs');
-  const c = readFileSync('src/lib/components/BackRebuild.svelte', 'utf8');
-  assert.match(c, /offerLater = \$derived\(week === 0 && advice\.tone === 'bad' && advice\.ratedToday && !advice\.physio\)/);
-  assert.match(c, /program\?\.start && week === 0 \? program\.start : nextMonday\(today\)/, 'the label shows the real start date');
-});
-
 check('a program session can never be saved over the user’s own plan', async () => {
   const { readFileSync } = await import('node:fs');
   const page = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
@@ -3955,84 +3948,6 @@ check('an iPhone home-screen app fills the screen: the status bar’s strip is m
   assert.match(layout, /#app\{[^}]*height:calc\(100dvh \+ var\(--ios-gap,0px\)\)/);
   assert.match(readFileSync('src/app.css', 'utf8'), /\nhtml\{height:calc\(100% \+ var\(--ios-gap,0px\)\)\}/, 'the page grows with it, once, or it clips the app');
   assert.ok(!/id="sync-dot"/.test(layout), 'one status dot in the top bar, not two');
-});
-
-check('the doctor report says what was recorded, and nothing the app concluded', async () => {
-  // 2026-10-30: blood tests as typed beside the lab's own range, never judged;
-  // a report the person shows or sends themselves.
-  const { reportText, labResults, labLine, doseSteps, feelingSummary, proteinAverage } = await import('../src/lib/meds.ts');
-  const med = { id: 'm', name: 'semaglutide', dose: 0.5, unit: 'mg', every_days: 7, weekday: 3, time: '09:00', started: '2026-09-02', stopped: null };
-  const ev = [['2026-09-02', 0.25, 'Belly, left'], ['2026-09-09', 0.25, 'Belly, right'], ['2026-09-30', 0.5, 'Thigh, left'], ['2026-10-28', 0.5, 'Belly, left']]
-    .map(([date, dose, site]) => ({ id: date, med_id: 'm', kind: 'dose', date, dose, site }));
-  ev.push({ id: 'e1', med_id: 'm', kind: 'effect', date: '2026-09-03', symptom: 'Nausea', severity: 2 },
-    { id: 'e2', med_id: 'm', kind: 'effect', date: '2026-10-01', symptom: 'Nausea', severity: 1 },
-    { id: 'e3', med_id: 'm', kind: 'effect', date: '2026-10-02', symptom: 'Constipation', severity: 1 },
-    { id: 'e4', med_id: 'm', kind: 'effect', date: '2026-07-01', symptom: 'Headache', severity: 3 },
-    { id: 'l1', med_id: null, kind: 'lab', date: '2026-10-12', test: 'HbA1c', value: 5.9, unit: '%', ref_low: 4, ref_high: 5.6 },
-    { id: 'l2', med_id: null, kind: 'lab', date: '2026-07-01', test: 'hba1c ', value: 6.2, unit: '%', ref_low: 4, ref_high: 5.6 },
-    { id: 'l3', med_id: null, kind: 'lab', date: '2026-08-01', test: 'ALT', value: 31, unit: 'U/L', ref_low: null, ref_high: 45 });
-  assert.deepEqual(doseSteps(ev, 'm'), [{ from: '2026-09-02', dose: 0.25 }, { from: '2026-09-30', dose: 0.5 }]);
-  assert.deepEqual(feelingSummary(ev, '2026-08-07'), [{ symptom: 'Nausea', times: 2, worst: 2 }, { symptom: 'Constipation', times: 1, worst: 1 }], 'twelve weeks back, the oldest left out');
-  const labs = labResults(ev);
-  assert.deepEqual(labs.map((x) => [x.test, x.results.length]), [['HbA1c', 2], ['ALT', 1]], 'one test whatever the spelling, newest first');
-  assert.equal(labLine(labs[0].results[0]), '5.9 % (lab range 4–5.6)');
-  assert.equal(labLine(labs[1].results[0]), '31 U/L (lab range up to 45)');
-  assert.equal(proteinAverage([{ date: '2026-10-29', protein: 120 }, { date: '2026-10-20', protein: 100 }, { date: '2026-10-01', protein: 50 }, { date: '2026-10-28', protein: 0 }], '2026-10-30'), 110);
-  const r = reportText({ med, events: ev, today: '2026-10-30', unit: 'kg', proteinAvgG: 112, proteinTargetG: 144,
-    trend: [{ date: '2026-08-30', trendKg: 112.4 }, { date: '2026-09-15', trendKg: null }, { date: '2026-10-29', trendKg: 108.1 }],
-    training: 'Trained 2 days in the last four weeks, down from 11.' }).split('\n');
-  assert.equal(r[0], 'Slim Chance: medication record');
-  assert.match(r[1], /^Prepared 30 Oct 2026 by the person it belongs to, from what they recorded\. Not a medical document\.$/);
-  assert.ok(r.includes('Doses logged in the last 12 weeks: 4 (last 28 Oct, Belly, left).'));
-  assert.ok(r.includes('Weight trend since starting: 112.4 kg on 30 Aug, 108.1 kg on 29 Oct (down 4.3 kg in 9 weeks).'));
-  assert.ok(r.includes('- Nausea: 2 times, at worst moderate'));
-  assert.ok(!r.some((l) => /Headache/.test(l)), 'a feeling older than twelve weeks stays out');
-  assert.ok(r.includes('- HbA1c: 5.9 % (lab range 4–5.6) on 12 Oct; 6.2 % (lab range 4–5.6) on 1 Jul'));
-  assert.ok(r.includes('Keeping muscle: protein averaged 112 g a day over the last two weeks (their target 144 g); trained 2 days in the last four weeks, down from 11.'));
-  assert.ok(!r.some((l) => /high|low|normal|abnormal|elevated|should|recommend/i.test(l.replace('lab range', ''))), 'no verdict on any number');
-  const pounds = reportText({ med, events: [], today: '2026-10-30', unit: 'lb', proteinAvgG: null, proteinTargetG: null, training: null,
-    trend: [{ date: '2026-08-30', trendKg: 112.4 }, { date: '2026-10-29', trendKg: 108.1 }] });
-  assert.match(pounds, /Weight trend since starting: 247\.8 lb on 30 Aug, 238\.3 lb on 29 Oct \(down 9\.5 lb in 9 weeks\)\./, 'in the person\'s own unit');
-});
-
-check('the GLP-1 companion keeps a record and never advises', async () => {
-  // 2026-10-30, the owner: a GLP-1 companion as a Plus extra, "a tracker only".
-  const { nextDose, sitesByRest, needsPrescriber, medAlarm, dayWord, SITES } = await import('../src/lib/meds.ts');
-  const med = { id: 'm', name: 'semaglutide', dose: 0.5, unit: 'mg', every_days: 7, weekday: 3, time: '09:00', started: '2026-10-26', stopped: null };
-  const dose = (date, site = null) => ({ id: date, med_id: 'm', kind: 'dose', date, dose: 0.5, site });
-  assert.deepEqual(nextDose(med, [], '2026-10-26'), { date: '2026-10-28', inDays: 2, doneToday: false }, 'the first Wednesday from the start');
-  assert.deepEqual(nextDose(med, [dose('2026-10-28')], '2026-10-28'), { date: '2026-11-04', inDays: 7, doneToday: true });
-  assert.equal(nextDose(med, [dose('2026-10-29')], '2026-10-30').date, '2026-11-04', 'a day late keeps the set weekday');
-  assert.equal(nextDose(med, [], '2026-10-30').inDays, -2, 'by the schedule it was due on Wednesday');
-  assert.equal(nextDose({ ...med, every_days: 1, weekday: null }, [dose('2026-10-29')], '2026-10-30').date, '2026-10-30');
-  assert.equal(nextDose({ ...med, stopped: '2026-10-30' }, [], '2026-10-30'), null);
-  const r = sitesByRest([dose('2026-10-14', 'Belly, left'), dose('2026-10-21', 'Belly, right'), dose('2026-10-28', 'Belly, left')]);
-  assert.equal(r.length, SITES.length);
-  assert.deepEqual(r.slice(0, 4).map((x) => x.site), ['Thigh, left', 'Thigh, right', 'Arm, left', 'Arm, right'], 'unused sites first, in body order');
-  assert.deepEqual(r.slice(-2), [{ site: 'Belly, right', last: '2026-10-21' }, { site: 'Belly, left', last: '2026-10-28' }]);
-  assert.ok(needsPrescriber({ symptom: 'Nausea', severity: 3 }));
-  assert.ok(needsPrescriber({ symptom: 'Stomach pain', severity: 2 }));
-  assert.ok(!needsPrescriber({ symptom: 'Nausea', severity: 2 }));
-  const a = medAlarm(med, 'u', 'Europe/Bratislava');
-  assert.deepEqual([a.id, a.auto_key, a.days, a.time, a.enabled], ['m', 'med:m', [3], '09:00', true]);
-  assert.equal(a.message, '0.5 mg, as your prescriber set it.');
-  assert.equal(medAlarm({ ...med, every_days: 14 }, 'u', 'UTC').enabled, false, 'the alarms table repeats by weekday');
-  assert.equal(medAlarm({ ...med, stopped: '2026-10-30' }, 'u', 'UTC').enabled, false);
-  assert.equal(dayWord('2026-10-29', '2026-10-30'), 'yesterday');
-  // A tracker only, in words too: nothing tells anyone what to take or what they have.
-  const { readFileSync } = await import('node:fs');
-  for (const f of ['src/lib/meds.ts', 'src/routes/meds/+page.svelte']) {
-    assert.doesNotMatch(readFileSync(f, 'utf8'), /take it now|you should|skip (a|your|the) dose|increase (the|your) dose|double (the|your)|probably|might be (a|an) /i, f);
-  }
-  // Isolation before sync: RLS and the four own-row policies, then the lists.
-  const sql = readFileSync('../supabase/migrations/20261030160000_medications.sql', 'utf8');
-  const sync = readFileSync('src/lib/stores/sync.ts', 'utf8');
-  for (const t of ['medications', 'med_events']) {
-    assert.match(sql, new RegExp(`alter table public\\.${t} enable row level security`));
-    for (const p of ['select', 'insert', 'update', 'delete']) assert.match(sql, new RegExp(`create policy "own_rows_${p}" on public\\.${t}`));
-    assert.match(sync, new RegExp(`'${t}'`));
-  }
-  assert.match(readFileSync('static/privacy.html', 'utf8'), /<strong>Medication<\/strong>, only if you use the GLP-1 companion/);
 });
 
 check('the coach plans the next days inside the floor, and the app does every sum', async () => {
@@ -5295,7 +5210,7 @@ check('settings come in six named groups, and the morning briefing is one tap fr
   const groups = [...menu.matchAll(/<div class="menu-sec">([^<]+)<\/div>/g)].map((m) => m[1]);
   assert.deepEqual(groups, ['Reminders', 'Display', 'Extras', 'Your data', 'About', 'Account']);
   assert.match(menu, /<div class="menu-sec">Reminders<\/div>\s*<a class="menu-item" href="\{base\}\/alarms"/);
-  for (const row of ['Theme', 'Text size', 'Weight in', 'Haptics', 'AI coach', 'Period-aware weight', 'GLP-1 companion', 'Import weigh-ins', 'Export my data', 'Export as spreadsheet', 'Privacy', 'Source code', 'Delete my account'])
+  for (const row of ['Theme', 'Text size', 'Weight in', 'Haptics', 'AI coach', 'Period-aware weight', 'Import weigh-ins', 'Export my data', 'Export as spreadsheet', 'Privacy', 'Source code', 'Delete my account'])
     assert.ok(menu.includes(`>${row}<`), `${row} is still there`);
 });
 
@@ -5362,18 +5277,6 @@ check('a session built in the Quick Builder is logged like any other', async () 
   assert.match(markup, /\{@render exerciseLog\(asPlan\(ex\), 'custom'\)\}/);
   assert.match(train, /async function saveLog\(ex: PlanExercise, key: string \| null = sessionKey\)/);
   assert.match(train, /session_key: key, sets,/);
-});
-
-check('a program offer can be put away, and found again', async () => {
-  // The owner, 2026-11-03: injury-free, the Back Rebuild offer had no way to
-  // go; and a back can flare up again.
-  const { readFileSync } = await import('node:fs');
-  const offer = readFileSync('src/lib/components/ProgramOffer.svelte', 'utf8');
-  assert.match(offer, /onclick=\{notNow\}>Not now</);
-  assert.match(offer, /\{#if away && !open\}\s*<button class="po-row" onclick=\{\(\) => \(open = true\)\}>/, 'put away, it is one line that opens it again');
-  assert.doesNotMatch(readFileSync('src/lib/components/BackRebuild.svelte', 'utf8'), /Coming back from a back injury\?/, 'the running program’s card no longer carries the offer');
-  const train = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
-  assert.ok(train.indexOf('<ProgramOffer />') > train.indexOf('<h3>Quick Builder</h3>'), 'at the bottom of the plan');
 });
 
 check('the morning notification takes a weight on the number pad', async () => {
@@ -5627,7 +5530,7 @@ check('nothing promises a paid tier: Slim Chance is free, so no Plus label or su
   // Decision 0001 (2026-11-05) dropped Plus; on 2026-11-10 the menu, the
   // medication page and the landing page still announced it.
   const { readFileSync } = await import('node:fs');
-  for (const f of ['src/routes/+layout.svelte', 'src/routes/meds/+page.svelte', 'static/about/index.html', 'static/privacy.html'])
+  for (const f of ['src/routes/+layout.svelte', 'static/about/index.html', 'static/privacy.html'])
     assert.doesNotMatch(readFileSync(f, 'utf8'), /Plus preview|Slim Chance Plus|optional Plus|subscription on its way|Part of Plus/i, f);
 });
 
@@ -5736,6 +5639,25 @@ check('every function that runs with the owner\u2019s rights pins its search pat
   for (const [name, d] of definers) assert.match(d.body, /set search_path\s*=/i, `${name} (${d.f}) runs with the owner's rights: pin its search_path`);
   assert.match(latest.get('public.owner_metrics')?.body ?? '', /if not exists \(select 1 from public\.app_owners where user_id = auth\.uid\(\)\) then\s+raise exception/,
     'owner_metrics answers only the owner');
+});
+
+check('Slim Chance offers no medical features: no medication log and no rehab program (Google Play)', async () => {
+  // 2026-11-11: Google Play rejected the closed test. Medical features
+  // (medication management, physical therapy and rehabilitation) may only be
+  // published by an organization account; ours is personal. The GLP-1
+  // companion (never used by anyone) and the Back Rebuild offer (no program
+  // running) left the app, and the declaration is health and fitness only.
+  const { readFileSync, existsSync } = await import('node:fs');
+  for (const f of ['src/routes/meds/+page.svelte', 'src/lib/meds.ts', 'src/lib/components/BackRebuild.svelte', 'src/lib/components/ProgramOffer.svelte'])
+    assert.ok(!existsSync(f), `${f} is back: a medical feature needs an organization account on Google Play`);
+  const files = await srcFiles();
+  for (const f of files) {
+    const s = readFileSync(f, 'utf8').replace(/\/\/.*$/gm, '').replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*?-->/g, '');
+    assert.doesNotMatch(s, /GLP-1 companion|\/meds\b|Coming back from a back injury/, `${f} offers a medical feature`);
+  }
+  for (const f of ['static/about/index.html', 'static/privacy.html']) assert.doesNotMatch(readFileSync(f, 'utf8'), /GLP-1|medication log/i, f);
+  const listing = readFileSync('store/play/LISTING.md', 'utf8');
+  assert.doesNotMatch(listing, /medication and treatment management|physical therapy and rehabilitation/i, 'the Play declaration is health and fitness only');
 });
 
 check('the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area', async () => {

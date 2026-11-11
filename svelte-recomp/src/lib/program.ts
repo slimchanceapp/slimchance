@@ -1,3 +1,7 @@
+// ponytail: inert since 2026-11-11. Nothing can start a program any more (Google
+// Play counts rehabilitation as a medical feature, which needs an organization
+// account), and nobody had one running. Retire this with its readers (coach,
+// body, Train, the morning rating) once the program's future is decided.
 // Training programs that temporarily take over the gym days — pure logic,
 // covered by scripts/selfcheck.js.
 //

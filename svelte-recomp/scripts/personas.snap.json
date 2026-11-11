@@ -74,42 +74,6 @@
       "days": 2
     }
   },
-  "a GLP-1 user": {
-    "next": {
-      "date": "2026-11-11",
-      "inDays": 7,
-      "doneToday": true
-    },
-    "sites": [
-      {
-        "site": "Thigh, right",
-        "last": "2026-09-30"
-      },
-      {
-        "site": "Arm, left",
-        "last": "2026-10-07"
-      }
-    ],
-    "report": [
-      "Slim Chance: medication record",
-      "Prepared 4 Nov 2026 by the person it belongs to, from what they recorded. Not a medical document.",
-      "",
-      "Medication: semaglutide, 0.5 mg, once a week (Wednesdays), since 9 Sept 2026.",
-      "Dose steps: 0.25 mg from 9 Sept; 0.5 mg from 7 Oct.",
-      "Doses logged in the last 12 weeks: 9 (last 4 Nov, Thigh, left).",
-      "",
-      "Weight trend since starting: 103.2 kg on 9 Sept, 96.4 kg on 4 Nov (down 6.8 kg in 8 weeks).",
-      "",
-      "How they felt, last 12 weeks:",
-      "- Nausea: 2 times, at worst moderate",
-      "- Constipation: 1 time, at worst mild",
-      "",
-      "Blood tests, as typed from the lab report:",
-      "- HbA1c: 6.1 % (lab range 4–5.6) on 15 Oct",
-      "",
-      "Keeping muscle: protein averaged 95 g a day over the last two weeks (their target 130 g); trained 3 days in the last four weeks, as in the four before."
-    ]
-  },
   "a newcomer on their seventh morning": {
     "trend": {
       "state": "too-noisy",

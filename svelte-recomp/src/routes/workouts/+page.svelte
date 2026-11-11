@@ -18,8 +18,6 @@
   import { trainingTone } from '$lib/week';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
-  import ProgramOffer from '$lib/components/ProgramOffer.svelte';
-  import BackRebuild from '$lib/components/BackRebuild.svelte';
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/nextWeight';
   import { speak } from '$lib/stores/toast';
   import { haptic } from '$lib/haptics';
@@ -923,7 +921,6 @@
     { v: nextTraining ? nextTraining.dayName.slice(0, 3) : '—', l: 'next up' }
   ]} />
 
-<BackRebuild onOpenSession={(k) => (sessionKey = k)} />
 
 <!-- The coach arranges your own sessions over the days left (pact m14). -->
 <TrainPlan
@@ -1037,7 +1034,6 @@
   {/if}
 
   <!-- Programs, at the bottom: offered, and put away with "Not now". -->
-  <ProgramOffer />
 
 {:else}
   <!-- What actually happened, day by day. Hand-logged sets and watch sessions

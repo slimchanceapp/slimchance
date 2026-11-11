@@ -19,7 +19,6 @@ export const EXPORT_TABLES = [
   'alarms', 'daily_logs', 'checks', 'tracks', 'weights', 'steps', 'sessions',
   'user_settings', 'workout_schedule', 'workout_sessions_custom',
   'workout_logs', 'food_logs', 'biometrics', 'recipes_custom', 'activity_sessions',
-  'medications', 'med_events',
 ] as const;
 
 export type ExportTable = (typeof EXPORT_TABLES)[number];

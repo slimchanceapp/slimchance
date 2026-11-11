@@ -83,9 +83,12 @@ Slim Chance is a tracker and a guide, not medical advice. If you have a medical 
   location with other users, buying digital goods. Expect PEGI 3 / Everyone.
 - **Target audience:** 18 and over only.
 - **News app:** No. **Government app:** No. **Financial features:** none.
-- **Health apps:** yes, health features: activity and fitness tracking; nutrition and
-  weight management; medication and treatment management (a medication log and dose
-  reminders, never dosing advice). It is not a medical device.
+- **Health apps:** yes, health and fitness only: activity and fitness; nutrition and
+  weight management; period tracking (period-aware weight); sleep management. Nothing
+  under Medical: a personal developer account may not publish medical features (Play
+  rejected the first submission on 2026-11-11 for declaring medication and treatment
+  management and rehabilitation; the GLP-1 companion and the Back Rebuild offer left
+  the app). It is not a medical device.
 
 ### Data safety
 
@@ -108,7 +111,7 @@ Central, Open-Meteo) only process a request on Slim Chance's behalf, which is no
 | Personal info | User IDs | the account's internal id | Required | No | Account management, App functionality |
 | Personal info | Other info | sex, year of birth, height (for the calorie budget) | Required | No | App functionality |
 | Health and fitness | Fitness info | weight, food and nutrition, workouts, steps, heart rate, sleep, distance, calories burned | Required | No | App functionality |
-| Health and fitness | Health info | medications, doses, side effects, blood tests, period start, back-pain rating, body fat | Optional | No | App functionality |
+| Health and fitness | Health info | period start, body fat | Optional | No | App functionality |
 | Photos and videos | Photos | progress photos (kept); food and body-fat photos (sent for an estimate, not kept) | Optional | No | App functionality |
 | Location | Approximate location | rounded to about a kilometre, for the morning weather; not stored | Optional | **Yes** | App functionality |
 | App activity | App interactions | the days the app was opened, setup steps reached, one-tap answers, the link tag | Required | No | Analytics |

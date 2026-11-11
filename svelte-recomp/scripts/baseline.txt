@@ -22,6 +22,7 @@ OFF products keep kJ-only energy and names in any language
 Progress answers "am I getting there?" first, then fitter, this week, details, goals
 RPE prefers real heart rate over the activity-type guess
 Samsung is recognised — the gap that broke the old regex
+Slim Chance offers no medical features: no medication log and no rehab program (Google Play)
 Today shows one next thing at a time, and today’s plan
 Today stays calm: one card for the day, no cards that said a little each
 Today’s Focus is one voice, and silent on a good day
@@ -80,7 +81,6 @@ a plan shows at its moment, the most specific moment first
 a planned meal is logged in one tap, at its planned grams, and ticks itself off
 a profile is only complete when TDEE can actually be computed
 a profile with zero logs still produces real targets and a real date
-a program offer can be put away, and found again
 a program session can never be saved over the user’s own plan
 a program starts on the coming Monday and counts weeks from it
 a reading dated today is fresh; older is stale; none is missing
@@ -286,7 +286,6 @@ recovers true maintenance from intake + weight trend
 recovery cost needs buckets that actually differ in load
 recovery cost requires the watch to have been worn overnight
 recovery percentage tracks elapsed time against the window
-red before day one offers “Start a week later”, from the saved start
 refresh writes in batches: no save per day, no unpaged pull
 refuses a verdict off a single lift
 refuses to guess without enough logged days
@@ -313,7 +312,6 @@ t-critical is the real t value, not the normal approximation
 the 4-day split alternates lower and upper
 the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area
 the Food hero praises protein when it’s hit and never colours a day still in progress
-the GLP-1 companion keeps a record and never advises
 the Google Play build updates only through Play and loads slimchance.app
 the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8
 the Stoic lines rotate by date, never at random, and each is sourced
@@ -343,7 +341,6 @@ the coach’s evening note never names a time or a session that will have passed
 the coach’s plan is kept, and its meals are ticked as they are logged
 the confirmation names real numbers, not "done"
 the declared brand wins over the heuristic
-the doctor report says what was recorded, and nothing the app concluded
 the evening hold on a weekday: a Stoic line first, then the evening plan and what’s left
 the export covers EVERY table the app syncs
 the first week shows one next step at a time, only before a trend

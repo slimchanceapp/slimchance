@@ -11,8 +11,7 @@
   import { noteEvent } from '$lib/events';
   import { CALENDAR_KEY, calendarUrl } from '$lib/reminder';
   import { saveAccountOpen, importOpen } from '$lib/stores/notices';
-  import { liveProfile, liveMedications, liveMedEvents } from '$lib/stores/live';
-  import { nextDose, dayWord } from '$lib/meds';
+  import { liveProfile } from '$lib/stores/live';
   import { DEFAULT_SESSIONS } from '$lib/data/workoutPlanDefaults';
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
@@ -41,7 +40,6 @@
   import FitAsk from '$lib/components/FitAsk.svelte';
   import { primaryActivity, trainedDates } from '$lib/health/exercise';
   import WeekCheckIn from '$lib/components/WeekCheckIn.svelte';
-  import BackRebuild from '$lib/components/BackRebuild.svelte';
   import { badmintonRule } from '$lib/program';
   import { nowTick, todayDate } from '$lib/stores/refresh';
   import WeightInput from '$lib/components/WeightInput.svelte';
@@ -49,11 +47,6 @@
 
   const dayIdx = $derived(new Date($nowTick).getDay());
   const today = $derived($todayDate);
-  // The GLP-1 companion's next dose, while a medication is being taken.
-  const _meds = liveMedications();
-  const _medEvents = liveMedEvents();
-  const med = $derived((($_meds as any[]) ?? []).find((m) => !m.stopped) ?? null);
-  const medNext = $derived(med ? nextDose(med, ($_medEvents as any[]) ?? [], today as string) : null);
   const dateLine = $derived(new Date($nowTick).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' }));
 
   const _weights = liveWeights();
@@ -449,17 +442,7 @@
     </span>
     <span class="td-go" aria-hidden="true">›</span>
   </div>
-  {#if med && medNext}
-    <div class="td-row" use:cardNav={`${base}/meds`}>
-      <span class="td-k">Meds</span>
-      <span class="td-v">{med.name}{#if medNext.doneToday}{' '}<span class="td-done">✓ done</span>{:else}{medNext.inDays < 0 ? ': due ' : ' '}{dayWord(medNext.date, today as string)}{/if}</span>
-      <span class="td-go" aria-hidden="true">›</span>
-    </div>
-  {/if}
 </div>
-
-<!-- Only while a program runs: the one-tap morning rating that paces it. -->
-<BackRebuild compact />
 
 <!-- The editors the plans step and the plan moments open. -->
 <Commitments />
@@ -545,7 +528,6 @@
   .td{padding:6px 14px}
   .td-row{display:flex;align-items:baseline;gap:12px;padding:9px 0;cursor:pointer;-webkit-tap-highlight-color:transparent}
   .td-row + .td-sub + .td-row,.td-meals + .td-row,.td-plan + .td-row{border-top:1px solid var(--border);margin-top:9px}
-  .td-row + .td-row{border-top:1px solid var(--border)}
   .td-k{font-family:var(--font-label);font-size:0.8125rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);min-width:76px}
   .td-v{flex:1;min-width:0;font-size:0.9375rem;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .td-v b{font-family:var(--font-display);font-size:1.25rem;font-weight:700}

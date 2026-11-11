@@ -25,8 +25,6 @@ const stepResults = writable<any[]>([]);
 const trackResults = writable<any[]>([]);
 const activityResults = writable<any[]>([]);
 const customRecipeResults = writable<any[]>([]);
-const medResults = writable<any[]>([]);
-const medEventResults = writable<any[]>([]);
 const profileResult = writable<any | null>(null);
 // Distinguishes "not loaded yet" from "loaded and genuinely empty" — without
 // this the onboarding gate flashes on every launch before user_settings arrives.
@@ -130,16 +128,6 @@ userId.subscribe((uid) => {
   liveQuery(() => db.table('recipes_custom').where('user_id').equals(uid).sortBy('created_at')).subscribe({
     next: (data) => customRecipeResults.set(data),
     error: () => customRecipeResults.set([])
-  });
-
-  liveQuery(() => db.table('medications').where('user_id').equals(uid).toArray()).subscribe({
-    next: (data) => medResults.set(data),
-    error: () => medResults.set([])
-  });
-
-  liveQuery(() => db.table('med_events').where('user_id').equals(uid).sortBy('date')).subscribe({
-    next: (data) => medEventResults.set(data),
-    error: () => medEventResults.set([])
   });
 });
 
@@ -305,13 +293,4 @@ export function liveProfile() {
 // "no profile yet" apart from "still loading".
 export function liveProfileLoaded() {
   return { subscribe: profileLoaded.subscribe };
-}
-
-// The GLP-1 companion: medications as prescribed, and their doses and
-// feelings, oldest first (src/lib/meds.ts).
-export function liveMedications() {
-  return { subscribe: medResults.subscribe };
-}
-export function liveMedEvents() {
-  return { subscribe: medEventResults.subscribe };
 }
