@@ -312,6 +312,7 @@ the 4-day split alternates lower and upper
 the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area
 the Food hero praises protein when it’s hit and never colours a day still in progress
 the Google Play build updates only through Play and loads slimchance.app
+the Health signals area keeps its boundary: the app reaches it only through its doors, and it builds only on Body and Training
 the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8
 the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body
 the Stoic lines rotate by date, never at random, and each is sourced

@@ -16,14 +16,14 @@
 // 2026-11-11: the old score (14-day average, 8 h of sleep as the target) called
 // 0.0% of strained mornings an easy day and 0.1% even moderate; the person's own
 // range calls 55% easy and 87% at least moderate, with 1.0% of ordinary
-// mornings called easy. src/lib/readiness.ts readyToday uses readyFromNormal.
+// mornings called easy. src/lib/health/readiness.ts readyToday uses readyFromNormal.
 //
 // 2026-11-11: without HRV (the owner's watch has never sent one) the rule
 // could never say "easy day": 0% of strained mornings. Resting heart rate 2 SD
 // over normal, or 1.5 SD with a night an hour short, now decides it. Across
 // strain effects of +3 to +7 bpm and -0.3 to -1 h of sleep it catches 22-51%,
 // with 1.1-2.0% of ordinary mornings called easy (stricter rules caught half).
-import { readyFromNormal } from '../src/lib/readiness.ts';
+import { readyFromNormal } from '../src/lib/health/readiness.ts';
 
 // The old score, kept here only as this eval's "before" line (it left the app
 // on 2026-11-11: nothing used it once readyToday read the person's own range).

@@ -14,7 +14,7 @@ date.ts
 dayOne.ts
 exportData.ts
 fit.ts
-fitness.ts
+health/fitness.ts
 nutrition/food.ts
 nutrition/foodCoach.ts
 freshness.ts
@@ -40,14 +40,14 @@ profile.ts
 program.ts
 body/pulse.ts
 nutrition/quickAdd.ts
-readiness.ts
+health/readiness.ts
 recomp.ts
 body/scale.ts
 body/scaleUp.ts
 sinceStart.ts
-signals.ts
+health/signals.ts
 situational.ts
-sleepPerformance.ts
+health/sleepPerformance.ts
 body/slimTrack.ts
 training/strength.ts
 nutrition/tdee.ts
@@ -67,3 +67,9 @@ training/data/workouts.ts
 training/data/workoutPlanDefaults.ts
 training/data/planTemplates.ts
 training/recovery.ts
+health/index.ts
+health/sleep.ts
+health/dedupe.ts
+health/scaleWeights.ts
+health/permissions.ts
+health/watches.ts

@@ -8,7 +8,7 @@
   import { DEFAULT_SESSIONS } from '$lib/training';
   import { muscleVolume } from '$lib/training';
   import { liftStalls } from '$lib/training';
-  import { sleepPerformance } from '$lib/sleepPerformance';
+  import { sleepPerformance } from '$lib/health';
   import { trainingHeatmap } from '$lib/training';
   import { sessionMuscleLoad } from '$lib/training';
 

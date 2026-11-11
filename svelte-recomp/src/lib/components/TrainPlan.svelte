@@ -7,7 +7,7 @@
   import { coachOn, coachNotes } from '$lib/stores/brain';
   import { todayDate } from '$lib/stores/refresh';
   import { liveBiometrics } from '$lib/stores/live';
-  import { readyToday } from '$lib/readiness';
+  import { readyToday } from '$lib/health';
   import { shiftYmd, mondayOf } from '$lib/date';
   import { supabase } from '$lib/db/client';
   import { checkTrainPlan, type CheckedTrainPlan, type TrainDay } from '$lib/training';

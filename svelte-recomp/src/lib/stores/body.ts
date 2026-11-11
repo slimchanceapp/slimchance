@@ -21,7 +21,7 @@ import { resolveCalorieTarget, burnFloor, calcTdee, type LiveTargetResult, type 
 import { proteinTargetG, ageFrom } from '$lib/profile';
 import { parseCalorieTarget } from '$lib/coach';
 import { mondayOf, shiftYmd } from '$lib/date';
-import { signalTrend } from '$lib/signals';
+import { signalTrend } from '$lib/health';
 import { weekBudget, weekShape, type WeekBudget, type WeekShape } from '$lib/nutrition';
 import { LINE_MARGIN_KG, lineState, type LineState } from '$lib/body';
 import { heldUnder, milestoneState, type MilestoneState } from '$lib/body';
@@ -30,7 +30,7 @@ import { programWeek } from '$lib/program';
 import { explainUp, type UpExplained } from '$lib/body';
 import { sinceStart, type SinceStart } from '$lib/sinceStart';
 import { cycleInfo, cycleNote } from '$lib/cycle';
-import { fitness as fitnessOf, type Fitness } from '$lib/fitness';
+import { fitness as fitnessOf, type Fitness } from '$lib/health';
 import { strengthTrend } from '$lib/training';
 
 export interface DayIntake { kcal: number; protein: number; carbs: number; fat: number; items: number }

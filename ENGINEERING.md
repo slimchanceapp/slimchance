@@ -106,11 +106,13 @@ emails the owner (GitHub's own notice).
   - A function asks only for what it uses.
 - **Areas behind doors (DDD, decision 0006).** An area moves into its own
   folder once a check guards its border. Body (`src/lib/body`), Nutrition
-  (`src/lib/nutrition`) and Training (`src/lib/training`) so far: the rest of
-  the app reads each only through its `index.ts` and writes only through its
-  named shell doors (`weighIn.ts`; `foodLog.ts`, `foodSources.ts`;
-  `logActivity.ts`). Body and Training use nothing but themselves and the
-  shared kernel (`units`, `date`); Nutrition also builds on Body's door. One rule in
+  (`src/lib/nutrition`), Training (`src/lib/training`) and Health signals
+  (`src/lib/health`) so far: the rest of the app reads each only through its
+  `index.ts` and reaches the outside only through its named shell doors
+  (`weighIn.ts`; `foodLog.ts`, `foodSources.ts`; `logActivity.ts`;
+  `healthConnect.ts`, `writeBack.ts`, `watches.ts`). Body and Training use
+  nothing but themselves and the shared kernel (`units`, `date`); Nutrition
+  builds on Body; Health signals on Body and Training. One rule in
   selfcheck (`areaBorder`) guards every area. The pure core is listed in `scripts/pure-core.txt`.
   A move changes where code lives, never what it does: the personas snapshot
   must not change, and the bundle check must not grow.

@@ -10,7 +10,7 @@ import { weightVerdict, paceVsPlan } from '../src/lib/body/insights.ts';
 import { pulse } from '../src/lib/body/pulse.ts';
 import { dayOnePlan } from '../src/lib/dayOne.ts';
 import { explainUp } from '../src/lib/body/scaleUp.ts';
-import { fitness } from '../src/lib/fitness.ts';
+import { fitness } from '../src/lib/health/fitness.ts';
 import { weeklyReview } from '../src/lib/weeklyReview.ts';
 import { situationalNudges } from '../src/lib/situational.ts';
 import { trainedDates } from '../src/lib/training/exercise.ts';

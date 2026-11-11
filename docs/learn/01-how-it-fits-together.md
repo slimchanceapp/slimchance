@@ -512,7 +512,7 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Body (`src/lib/body`) | Weigh-ins, trend, chance, path, ceiling, stops | `insights` `pulse` `line` `slimTrack` `milestone` `scale` `scaleUp` `importWeights`, read through `index.ts` | `weighIn`, `stores/body` |
 | Nutrition (`src/lib/nutrition`) | Food, the week's budget, the learned burn, meal plans | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` `foodCoach` `quickAdd`, read through `index.ts` | `foodLog`, `foodSources`, the food edge functions |
 | Training (`src/lib/training`) | Sessions, lifts, plates, the exercise library, watch workouts, the trained day | `strength` `liftStalls` `plates` `trainPlan` `nextWeight` `muscleVolume` `trainingHeatmap` `exercise`, read through `index.ts` | the Train screen, `logActivity` |
-| Health signals | Sleep, resting heart rate, HRV, steps | `signals` `readiness` `fitness` | `health/*` (Health Connect), Apple Health |
+| Health signals (`src/lib/health`) | Sleep, resting heart rate, HRV, steps, the morning read | `signals` `readiness` `fitness` `sleepPerformance` `sleep` `dedupe`, read through `index.ts` | `healthConnect`, `writeBack`, `watches`; Apple Health |
 | Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
 | Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
 | Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
@@ -658,6 +658,24 @@ importer anywhere: dead code, deleted.
 Same behaviour (every check, snapshot unchanged), same speed (building a
 year of watch workouts: about 4.2 s per 200 runs before and after), and the
 size moved by 39 bytes in all, 15 on the first screen: module names.
+
+### The fourth area: Health signals
+
+Health signals came last that day: the watch's signals each against the
+person's own normal, the morning read, "getting fitter?" and sleep against
+training, now beside the Health Connect adapters in `src/lib/health`. Health
+Connect itself is reached only through three shell doors. Health builds on
+Body and Training; reaching into Nutrition or Coach fails.
+
+Before it moved, `readiness.ts` was split: the per-muscle recovery windows
+were Training's, so they went there; a training-load ratio whose card had
+been cut was dead, and went with its four checks; the old readiness score
+survives only inside its eval, as the "before" line it still serves. One rule
+changed too: the purity check had treated everything in `health/` as an
+adapter by its folder. It now judges each file by what it imports, and five
+of them turned out pure.
+
+The JavaScript built from it is byte-for-byte the same as before the move.
 
 ### Can the repo rebuild its own database?
 

@@ -6,7 +6,7 @@
 // Today-against-your-normal is a different question, answered by readiness.ts.
 // Pure; checked in selfcheck.js.
 
-import { fitWeightLine, CAREFUL_CARRY } from './body/index.ts';
+import { fitWeightLine, CAREFUL_CARRY } from '../body/index.ts';
 
 export type SignalKind = 'resting_hr' | 'steps' | 'sleep_hours' | 'hrv';
 export interface SignalTrend {

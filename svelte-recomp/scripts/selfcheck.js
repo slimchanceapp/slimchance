@@ -57,14 +57,14 @@ const { ymd, todayYmd, mondayOf, shiftYmd } = await import('../src/lib/date.ts')
 const { foldDailyFocus, todaysFocus } = await import('../src/lib/coach.ts');
 const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
 const { proteinByTrainingDay } = await import('../src/lib/nutrition/nutritionPatterns.ts');
-const { watchAgreement, recoveryCost } = await import('../src/lib/signals.ts');
+const { watchAgreement, recoveryCost } = await import('../src/lib/health/signals.ts');
 const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/training/exercise.ts');
 
 const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, isSameSessionAsLogged } =
   await import('../src/lib/training/exercise.ts');
 const { calcBmr, calcTdee, projectGoalWithTdee, resolveCalorieTarget } = await import('../src/lib/nutrition/tdee.ts');
 const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/lib/nutrition/adaptiveTdee.ts');
-const { readyFromNormal } = await import('../src/lib/readiness.ts');
+const { readyFromNormal } = await import('../src/lib/health/readiness.ts');
 const { recoveryState, exerciseModifier } = await import('../src/lib/training/recovery.ts');
 const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/training/strength.ts');
 const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/coach.ts');
@@ -2980,7 +2980,7 @@ check('celebrate is a distinct multi-beat crescendo', () => {
 // ── Analysis bundle: muscle volume, lift stalls, sleep↔perf, nutrition, heatmap ──
 const { muscleVolume, SET_FLOOR, SET_CEILING } = await import('../src/lib/training/muscleVolume.ts');
 const { liftStalls } = await import('../src/lib/training/liftStalls.ts');
-const { sleepPerformance } = await import('../src/lib/sleepPerformance.ts');
+const { sleepPerformance } = await import('../src/lib/health/sleepPerformance.ts');
 const { nutritionPatterns } = await import('../src/lib/nutrition/nutritionPatterns.ts');
 const { trainingHeatmap } = await import('../src/lib/training/trainingHeatmap.ts');
 
@@ -4085,7 +4085,7 @@ check('a phone\'s first sync reads a month back, so day one has a heart answer',
 check('getting fitter: the heart and the lifts answer it, plainly, and only when the data can', async () => {
   // 2026-10-30, the owner: people want to lose weight and know they're getting
   // fitter, not fancy numbers.
-  const { fitness } = await import('../src/lib/fitness.ts');
+  const { fitness } = await import('../src/lib/health/fitness.ts');
   const none = { direction: 'insufficient', avgPct: 0, liftsUp: 0, liftsDown: 0, comparableLifts: 0, topMover: null, windowDays: 21 };
   const day = (k) => { const d = new Date('2026-10-30T12:00:00'); d.setDate(d.getDate() - k); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
   let seed = 5; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647 - 0.5);
@@ -5304,7 +5304,7 @@ check('a day is celebrated for protein, or for a budget kept while fed enough, n
 
 check('the watch reads as words on Today: how hard to train, beside the person’s own normal', async () => {
   // The owner, 2026-11-03: the watch's data arrived every day and was shown nowhere.
-  const { readyToday } = await import('../src/lib/readiness.ts');
+  const { readyToday } = await import('../src/lib/health/readiness.ts');
   const week = Array.from({ length: 7 }, (_, i) => ({ date: `2026-10-2${i}`, sleep_hours: 7.5, resting_hr: 58, hrv: 45 }));
   const good = readyToday({ date: '2026-11-03', sleep_hours: 7.8, resting_hr: 56, hrv: 48 }, week);
   assert.equal(good?.tone, 'good');
@@ -5322,7 +5322,7 @@ check('readiness catches a strained morning against the person’s own normal ra
   // people with strained spells: it called 0.0% of strained mornings an easy
   // day. Judged against each person's own range it calls 55% of them easy (87%
   // at least moderate) and only 1% of ordinary mornings easy.
-  const { readyToday } = await import('../src/lib/readiness.ts');
+  const { readyToday } = await import('../src/lib/health/readiness.ts');
   const hrv = [44, 51, 47, 39, 49, 46, 53, 42, 48, 45, 50, 43, 47, 52];
   const rhr = [58, 56, 59, 57, 60, 58, 56, 59, 57, 58, 61, 57, 58, 56];
   const sleep = [7.2, 7.8, 6.9, 7.5, 8.1, 7.0, 7.6, 7.3, 7.9, 7.1, 7.4, 7.7, 6.8, 7.5];
@@ -5437,8 +5437,8 @@ check('any AI assistant can ask Slim Chance for the trend and the chance over MC
 
 check('a watch beside the scale: each signal its own honest trend, the scale explained by steps, and no health score', async () => {
   // The owner, 2026-11-10: "use resting heart rate and NEAT too". Separate
-  // signals from the same line fit as the weight (src/lib/signals.ts).
-  const { signalTrend, together } = await import('../src/lib/signals.ts');
+  // signals from the same line fit as the weight (src/lib/health/signals.ts).
+  const { signalTrend, together } = await import('../src/lib/health/signals.ts');
   const { bodySignals } = await import('../src/lib/mcp.ts');
   const day = (k) => new Date(Date.UTC(2026, 9, 7 + k)).toISOString().slice(0, 10);
   const wob = [1, -1, 0.5, -0.5, 0, 0.8, -0.8];
@@ -5471,7 +5471,7 @@ check('the watch cries wolf no more than about one time in twenty: a flat signal
   // is long) let a flat resting heart rate or step count be called rising or
   // falling up to 14% of the time. A direction is a yes/no claim, so it now
   // assumes the careful end of carry-over (signals.ts CAREFUL_CARRY).
-  const { signalTrend } = await import('../src/lib/signals.ts');
+  const { signalTrend } = await import('../src/lib/health/signals.ts');
   const DAY = 864e5; let worst = 0, at = '';
   for (const [kind, base, sd] of [['resting_hr', 60, 1.5], ['resting_hr', 60, 3], ['steps', 8000, 3000]]) for (const r of [0.2, 0.5, 0.7]) {
     let seed = 3;
@@ -5520,8 +5520,8 @@ check('a stall with falling steps names moving less, from the same steps trend a
   const { readFileSync } = await import('node:fs');
   const body = readFileSync('src/lib/stores/body.ts', 'utf8');
   assert.match(body, /steps: signalTrend\('steps', .*filter\(\(\[d\]\) => d < \$body\.today\)/, 'the stall reads signals.ts, without today');
-  assert.match(readFileSync('src/lib/fitness.ts', 'utf8'), /fitWeightLine\([^;]*, 90, CAREFUL_CARRY\)/, 'Getting fitter? makes its yes/no claim the careful way');
-  assert.match(readFileSync('src/lib/signals.ts', 'utf8'), /fitWeightLine\(pts, asOfMs, undefined, CAREFUL_CARRY\)/);
+  assert.match(readFileSync('src/lib/health/fitness.ts', 'utf8'), /fitWeightLine\([^;]*, 90, CAREFUL_CARRY\)/, 'Getting fitter? makes its yes/no claim the careful way');
+  assert.match(readFileSync('src/lib/health/signals.ts', 'utf8'), /fitWeightLine\(pts, asOfMs, undefined, CAREFUL_CARRY\)/);
 });
 
 check('the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8', async () => {
@@ -5558,14 +5558,15 @@ check('the pure core stays pure: no listed module reaches storage, network, brow
   const { readFileSync, readdirSync, statSync, existsSync } = await import('node:fs');
   const { join, dirname, resolve } = await import('node:path');
   const root = resolve('src/lib');
-  const IMPURE = /^(svelte|svelte\/|\$env|\$app|@supabase|dexie|@capacitor|\$lib\/(stores|db|components|health)\b)/;
+  const IMPURE = /^(svelte|svelte\/|\$env|\$app|@supabase|dexie|@capacitor|\$lib\/(stores|db|components)\b)/;
   const GLOBALS = /\b(fetch|window|navigator|document|localStorage|sessionStorage|indexedDB|Capacitor|matchMedia|setTimeout|setInterval|Notification)\b/;
   const memo = new Map();
   const why = (f, seen = new Set()) => {
     if (memo.has(f)) return memo.get(f);
     if (seen.has(f)) return null;
     seen.add(f);
-    if (/\/(stores|db|components|health)\//.test(f) || f.endsWith('.svelte')) return `${f} is a shell module`;
+    // health/ is an area now (2026-11-11): its files are judged by what they import.
+    if (/\/(stores|db|components)\//.test(f) || f.endsWith('.svelte')) return `${f} is a shell module`;
     const src = readFileSync(f, 'utf8');
     const code = src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/(['"`])(?:\\.|(?!\1)[^\\])*\1/g, '""');
     let reason = code.match(GLOBALS) ? `${f} uses ${code.match(GLOBALS)[1]}` : null;
@@ -5613,7 +5614,7 @@ check('readiness can say "an easy day" from a watch that never sends HRV', async
   // 2026-11-11: the owner's Samsung watch has never sent HRV through Health
   // Connect, and without it the morning read could only say Fair or Good.
   // Resting heart rate and sleep decide "Low" then (scripts/eval-readiness.mjs).
-  const { readyFromNormal } = await import('../src/lib/readiness.ts');
+  const { readyFromNormal } = await import('../src/lib/health/readiness.ts');
   const hist = Array.from({ length: 20 }, (_, k) => ({ date: `2026-10-${String(k + 1).padStart(2, '0')}`, hrv: null, resting_hr: 55 + (k % 3) - 1, sleep_hours: 7.5 + ((k % 2) ? 0.3 : -0.3) }));
   const day = (resting_hr, sleep_hours) => readyFromNormal({ date: '2026-10-21', hrv: null, resting_hr, sleep_hours }, hist)?.word;
   assert.equal(day(55, 7.5), 'Good', 'an ordinary morning');
@@ -5717,6 +5718,18 @@ check('a workout finds its heart rate by binary search, with the same answer as 
   assert.equal(got.length, exercises.length);
   for (const s of got) assert.equal(s.avg_hr, plain(Date.parse(s.start), Date.parse(s.end)), s.start);
   assert.ok(got.some((s) => s.avg_hr != null) && got.some((s) => s.avg_hr == null) === got.some((s) => plain(Date.parse(s.start), Date.parse(s.end)) == null));
+});
+
+check('the Health signals area keeps its boundary: the app reaches it only through its doors, and it builds only on Body and Training', async () => {
+  // 2026-11-11, the fourth slice: the watch's signals, the morning read,
+  // "getting fitter?" and sleep against training joined the Health Connect
+  // adapters in health/, behind index.ts; Health Connect itself is reached
+  // only through healthConnect.ts, writeBack.ts and watches.ts. The move took
+  // Training's muscle-recovery windows out of readiness.ts first.
+  await areaBorder('health', { doors: ['healthConnect', 'writeBack', 'watches'], uses: ['body', 'training'], shell: {
+    'healthConnect.ts': ['src/lib/db/dexie', 'src/lib/db/client', 'src/lib/stores/sync', 'src/lib/platform', 'src/lib/stores/notices'],
+    'writeBack.ts': ['src/lib/platform'],
+  } });
 });
 
 check('the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area', async () => {

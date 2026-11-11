@@ -48,3 +48,8 @@ its own limits (for example the MCP server under heavy outside traffic).
   behind `index.ts`, with `logActivity.ts` as its shell door; it builds on no
   other area. The watch-workout maths left `health/` and joined the pure
   core; a dead checklist file was deleted. Same behaviour, speed and size.
+- **2026-11-11: Health signals moved** into `svelte-recomp/src/lib/health`
+  beside the Health Connect adapters, behind `index.ts`; Health Connect is
+  reached only through `healthConnect.ts`, `writeBack.ts` and `watches.ts`.
+  Muscle recovery went to Training first; dead load code went. Built output
+  byte-for-byte unchanged. Left: Moments, Coach, Identity and data, Metrics.

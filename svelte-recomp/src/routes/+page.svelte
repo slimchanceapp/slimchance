@@ -4,7 +4,7 @@
   // The scoreboard (the big number, the odds coins, the pace, the goal chips)
   // lives on Progress, so each number is said once.
   import { liveWeights, liveSchedule, liveWorkoutSessions, liveSessionCompletions, liveDailySteps, liveWorkoutLogs, liveActivitySessions, liveDailyLogs, liveFoodLogs, liveBiometrics } from '$lib/stores/live';
-  import { readyToday } from '$lib/readiness';
+  import { readyToday } from '$lib/health';
   import { shiftYmd } from '$lib/date';
   import { upsertRecord } from '$lib/stores/sync';
   import { userId, user, isTrial } from '$lib/stores/user';

@@ -19,7 +19,7 @@
 
 import { weightVerdict, chanceOf, type WeighIn } from './body/index.ts';
 import { oddsOf } from './body/index.ts';
-import { signalTrend, together, type SignalKind, type SignalTrend } from './signals.ts';
+import { signalTrend, together, type SignalKind, type SignalTrend } from './health/index.ts';
 
 export const SUPPORTED = ['2025-11-25', '2025-06-18'];
 const LB = 2.20462;
