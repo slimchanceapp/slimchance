@@ -9,6 +9,7 @@ BMR falls with age and rises with mass
 Back Rebuild looks after the neck as well as the lower back
 CI fails loudly rather than shipping an unsignable APK
 Epley e1RM levels different rep ranges
+Food and Train answer their own question: no goal notes, no parked or load-balance cards
 Food, Train and Progress open on the same scoreboard hero; Today on the weigh-in
 Friday is the stronger signal: the weekend named, the plan, the reason, and the same line every week
 Gemini only where Google allows it, Gemma for everyone, the free text services only for typed food

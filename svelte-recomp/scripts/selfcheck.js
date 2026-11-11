@@ -5252,6 +5252,17 @@ check('account deletion has its own address, for Google Play', async () => {
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /<span>Delete my account<\/span>/, 'named as the menu names it');
 });
 
+check('Food and Train answer their own question: no goal notes, no parked or load-balance cards', async () => {
+  // 2026-11-11, the simplify plan of 10-31 (one question per screen): the goal
+  // lives on Progress, so Food and Train stop repeating it or nagging for it;
+  // Train loses the "Analytics are parked" card and the acute:chronic load card.
+  const { readFileSync } = await import('node:fs');
+  const food = readFileSync('src/routes/recipes/+page.svelte', 'utf8');
+  const train = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  for (const [name, src] of [['Food', food], ['Train', train]]) assert.doesNotMatch(src, /Progress → Body &amp; Goals/, `${name} doesn't send people to set a goal`);
+  assert.doesNotMatch(train, /Analytics are parked|Training Load Balance/);
+});
+
 check('settings come in six named groups, and the morning briefing is one tap from them', async () => {
   // 2026-11-11 (the simplify plan of 10-31: 13 rows in one list): Reminders,
   // Display, Extras, Your data, About, Account. The same morning a briefing

@@ -2,8 +2,8 @@
   import { userId } from '$lib/stores/user';
   import CoachPlan from '$lib/components/CoachPlan.svelte';
   import { upsertRecord, syncStatus } from '$lib/stores/sync';
-  import { liveFoodLogs, liveGoalReason, liveCustomRecipes } from '$lib/stores/live';
-  import { goalSummary, goalDirection } from '$lib/coach';
+  import { liveFoodLogs, liveCustomRecipes } from '$lib/stores/live';
+  import { goalDirection } from '$lib/coach';
   import { body } from '$lib/stores/body';
   import Modal from '$lib/components/Modal.svelte';
   import MiniChart from '$lib/components/MiniChart.svelte';
@@ -60,7 +60,6 @@
   const proteinTargetG = $derived($body.proteinTargetG);
   const liveTarget = $derived($body.target);
   const latestBodyFat = $derived($body.bodyFatPct);
-  const _goalReason = liveGoalReason();
 
   const todayFoods = $derived(
     $_foodLogs
@@ -466,11 +465,6 @@
   </div>
 {/if}
 
-{#if $_goalReason}
-  <div class="note-box">🎯 {goalSummary($_goalReason)}</div>
-{:else}
-  <div class="note-box warn">🎯 No plan yet — set one in <strong>Progress → Body &amp; Goals</strong>.</div>
-{/if}
 {:else if view === 'history'}
 {#if kcalTrend.length >= 2}
   <div class="card">

@@ -23,9 +23,9 @@
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/nextWeight';
   import { speak } from '$lib/stores/toast';
   import { haptic } from '$lib/haptics';
-  import { sessionLoad, acuteChronicRatio, MUSCLE_RECOVERY_HOURS, recoveryState, exerciseModifier } from '$lib/readiness';
+  import { MUSCLE_RECOVERY_HOURS, recoveryState, exerciseModifier } from '$lib/readiness';
   import type { RecoveryStatus } from '$lib/readiness';
-  import { sessionMuscleLoad, activityLoadAU, isSameSessionAsLogged, trainedDates as trainedOn } from '$lib/health/exercise';
+  import { sessionMuscleLoad, isSameSessionAsLogged, trainedDates as trainedOn } from '$lib/health/exercise';
   import { todayYmd, mondayOf } from '$lib/date';
   import { nowTick, todayDate } from '$lib/stores/refresh';
   import { logManualActivity, QUICK_ACTIVITIES } from '$lib/health/logActivity';
@@ -44,8 +44,7 @@
   const _gymProfile = liveProfile();
   const gymProgram = $derived(($_gymProfile as any)?.program ?? null);
   const inProgram = $derived(programActive(gymProgram, $todayDate));
-  let showParked = $state(false);
-  const analytics = $derived(!inProgram || showParked);
+  const analytics = $derived(!inProgram);
   let builderMode = $state(false);
   let selectedGroup = $state<string | null>(null);
   // UPCOMING = what to do next. HISTORY = what actually happened.
@@ -502,33 +501,6 @@
     return `${(h / 24).toFixed(1)}d ago`;
   }
 
-  // — Training load balance (WHOOP-style acute:chronic ratio) —
-  // Uses the validated session-RPE method (Foster et al. 2001): training
-  // load = total sets logged that day × ~3 min/set × an assumed RPE of 7
-  // (a reasonable default for logged working sets; we don't currently
-  // capture subjective RPE per session). Compares the last 7 days'
-  // average daily load to the last 28 days' -- a ratio consistently
-  // above ~1.5 is a well-documented injury-risk signal in sports science.
-  // Watch sessions count too: an acute:chronic ratio computed from gym sets
-  // alone was blind to two badminton nights a week, so it under-read training
-  // stress exactly when injury risk was highest. Watch sessions use real
-  // duration × an HR-derived RPE (better than the set-count proxy); a watch
-  // session that is the same gym session you already typed in is dropped by
-  // isSameSessionAsLogged() so one workout can't be counted twice.
-  const trainingLoad = $derived.by(() => {
-    const byDate = new Map<string, number>();
-    for (const log of $_logs) {
-      byDate.set(log.date, (byDate.get(log.date) ?? 0) + log.sets.length);
-    }
-    const loads = new Map<string, number>();
-    for (const [date, setCount] of byDate) loads.set(date, sessionLoad(setCount, 7));
-    const loggedDates = new Set(byDate.keys());
-    for (const a of ($_activity as any[]) || []) {
-      if (isSameSessionAsLogged(a, loggedDates)) continue; // don't count one session twice
-      loads.set(a.date, (loads.get(a.date) ?? 0) + activityLoadAU(a));
-    }
-    return acuteChronicRatio([...loads.entries()].map(([date, loadAU]) => ({ date, loadAU })), today);
-  });
 
   // — Insights & inspiration from the workout history —
   // The log already captures every set; this turns that raw history into a
@@ -536,7 +508,6 @@
   // muscle, training frequency) that feed straight back into the goal:
   // preserving/adding lean mass while dieting.
   let showInsights = $state(false);
-  let showLoadHelp = $state(false);
 
   function activityWhen(iso: string): string {
     const d = new Date(iso);
@@ -1108,38 +1079,6 @@
     </div>
   {/if}
 
-  {#if analytics && trainingLoad.zone !== 'no-data'}
-    <div class="card">
-      <div class="flex jb ac">
-        <div class="card-lbl" style="margin-bottom:0">Training Load Balance</div>
-        <button class="flip-btn" onclick={() => showLoadHelp = !showLoadHelp}>{showLoadHelp ? 'Hide ▲' : 'What is this? ▾'}</button>
-      </div>
-      <div class="load-gauge" style="margin-top:10px">
-        <div class="load-track">
-          <!-- Sweet-spot band (ratio 0.8–1.3) shaded on the 0–2.0 scale. -->
-          <div class="load-sweet-band"></div>
-          <div class="load-fill" class:undertrained={trainingLoad.zone === 'undertrained'} class:sweet={trainingLoad.zone === 'sweet-spot'} class:caution={trainingLoad.zone === 'caution'} class:risk={trainingLoad.zone === 'high-risk'}
-            style="width:{Math.min(100, ((trainingLoad.ratio ?? 0) / 2) * 100)}%"></div>
-        </div>
-        <div class="load-ratio">{trainingLoad.ratio?.toFixed(2) ?? '--'}</div>
-      </div>
-      <div class="load-scale"><span>0</span><span>0.8</span><span>1.3</span><span>1.5</span><span>2.0+</span></div>
-      <div class="load-label">
-        {#if trainingLoad.zone === 'undertrained'}<b>Undertrained (&lt;0.8).</b> Room to push harder — add a little volume this week.
-        {:else if trainingLoad.zone === 'sweet-spot'}<b>Sweet spot (0.8–1.3).</b> Well-balanced — this is exactly where you want to be.
-        {:else if trainingLoad.zone === 'caution'}<b>Caution (1.3–1.5).</b> Ramping up fast — hold volume steady and prioritise recovery.
-        {:else}<b>High risk (&gt;1.5).</b> Load is spiking vs your norm — ease off a session to avoid injury.{/if}
-      </div>
-      <div class="load-reason">Last 7 days: <b>{Math.round(trainingLoad.acuteAvg)}</b> AU/day · 28-day norm: <b>{Math.round(trainingLoad.chronicAvg)}</b> AU/day</div>
-      {#if showLoadHelp}
-        <div class="load-help">
-          <p><b>What it is:</b> the <b>acute:chronic workload ratio</b> — this week's average training load ÷ your last-4-weeks average. It's a validated injury-risk signal from sports science (WHOOP uses the same idea).</p>
-          <p><b>How load is estimated:</b> sets logged × ~3 min/set × effort (session-RPE method, Foster 2001). More sets / heavier weeks push the number up.</p>
-          <p><b>What it should look like:</b> hover around <b>1.0</b> and stay inside <b>0.8–1.3</b>. That means you're progressing steadily without sudden spikes. Sitting below 0.8 for weeks means you're detraining; repeatedly above 1.5 is where injury risk climbs. The goal is a slow, steady climb — not big jumps.</p>
-        </div>
-      {/if}
-    </div>
-  {/if}
 
   {#if analytics && historyInsights}
     <div class="card">
@@ -1341,11 +1280,6 @@
   {/if}
 </div>
 
-{#if $_goalReason}
-  <div class="note-box">🏋️ Training keeps muscle while the scale drops.</div>
-{:else}
-  <div class="note-box warn">🏋️ Set a goal in <strong>Progress → Body &amp; Goals</strong>.</div>
-{/if}
 
 {#if analytics}
 <div class="flip-viewport" style="height:{recoveryFlipped ? recBackH : recFrontH}px">
@@ -1413,23 +1347,10 @@
 
 {#if analytics}
   <WorkoutInsights />
-{:else}
-  <button type="button" class="card parked" onclick={() => (showParked = true)}>
-    <span class="card-lbl">Analytics are parked</span>
-    <span class="parked-msg">
-      Volume, load balance and muscle recovery measure you against your old heavy training. In Back Rebuild light
-      loads are the plan, so they wait until it ends{gymProgram ? ` on ${new Date(programEnd(gymProgram) + 'T12:00:00').toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}` : ''}.
-    </span>
-    <span class="parked-go">Show them anyway</span>
-  </button>
 {/if}
 {/if}
 
 <style>
-  .parked{display:block;width:100%;text-align:left;font:inherit;color:inherit;cursor:pointer}
-  .parked .card-lbl{display:block}
-  .parked-msg{display:block;font-size:0.8125rem;line-height:1.5;color:var(--muted)}
-  .parked-go{display:block;margin-top:8px;font-size:0.8125rem;font-weight:700;color:var(--text);text-decoration:underline;text-underline-offset:3px;text-decoration-color:var(--border2)}
   .mlog{margin-top:12px}
   .mlog-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:6px;margin-bottom:12px}
   .mlog-act{display:flex;flex-direction:column;align-items:center;gap:3px;background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:9px 4px;cursor:pointer;font-family:inherit;transition:border-color .15s var(--ease)}
@@ -1535,21 +1456,6 @@
   .mrd-ex{font-size:0.6875rem;color:var(--text);background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:3px 7px}
   .mrd-ex-meta{color:var(--muted);font-size:0.6875rem}
 
-  .load-gauge{display:flex;align-items:center;gap:10px}
-  .load-track{flex:1;height:10px;background:var(--bg3);border-radius:5px;overflow:hidden;position:relative}
-  .load-sweet-band{position:absolute;top:0;bottom:0;left:40%;width:25%;background:rgba(46,204,113,.18);border-left:1px dashed rgba(46,204,113,.5);border-right:1px dashed rgba(46,204,113,.5)}
-  .load-fill{height:100%;transition:width .3s var(--ease);position:relative}
-  .load-fill.undertrained{background:#60a5fa}
-  .load-fill.sweet{background:var(--green,#2ecc71)}
-  .load-fill.caution{background:#ffd166}
-  .load-fill.risk{background:#ff6b6b}
-  .load-ratio{font-size:1rem;font-weight:800;color:var(--text);min-width:40px;text-align:right}
-  .load-scale{display:flex;justify-content:space-between;font-size:0.6875rem;color:var(--muted);margin-top:3px;padding-right:50px}
-  .load-label{font-size:0.6875rem;color:var(--muted);margin-top:8px;line-height:1.45}
-  .load-reason{font-size:0.6875rem;color:var(--muted);margin-top:6px}
-  .load-help{margin-top:10px;padding:10px;background:var(--bg3);border-radius:10px;font-size:0.7188rem;color:var(--text);line-height:1.5}
-  .load-help p{margin:0 0 8px}
-  .load-help p:last-child{margin-bottom:0}
 
   .ins-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:10px 0}
   .ins-stat{background:var(--bg3);border-radius:10px;padding:8px;text-align:center}
