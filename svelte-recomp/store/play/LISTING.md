@@ -144,8 +144,8 @@ Background reading: **No**. Each permission and what it is for:
 3. **Create release:** when asked about app signing, choose **Use a Google-generated key**
    (Play App Signing). The bundle is signed with our upload key, which stays on the laptop
    and in GitHub's secrets.
-4. Upload `slimchance-play.aab` (build 20, version 2.5; CI artifact `slimchance-play-aab`, a copy
-   at `~/Downloads/slimchance-play/slimchance-play-build20.aab`). Release name: `20 (2.5)`.
+4. Upload `slimchance-play.aab` (build 21, version 2.6; CI artifact `slimchance-play-aab`, a copy
+   at `~/Downloads/slimchance-play/slimchance-play-build21.aab`). Release name: `21 (2.6)`.
    Release notes:
    ```
    The first test build. Thank you for trying it: hello@slimchance.app reaches the person who builds it.
