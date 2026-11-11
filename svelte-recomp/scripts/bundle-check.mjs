@@ -3,7 +3,7 @@
 // entry, the app, the layout and Today, with every chunk they import). Moving
 // code between areas (decision 0006) must never make a phone download more.
 // Over budget fails verify. A deliberate increase raises the budget in the same
-// commit, with the reason, like baseline.txt; a decrease lowers it on its own.
+// commit, with the reason, like baseline.txt; a drop of over 1% lowers it on its own.
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 
 const OUT = '.svelte-kit/output/client';
@@ -27,7 +27,7 @@ const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 let over = false, lower = false;
 for (const k of ['total', 'first']) {
   if (now[k] > budget[k] * SLACK) { over = true; console.error(`bundle-check: ${k} JavaScript is ${kb(now[k])}, over its budget of ${kb(budget[k])}. Find what grew, or raise the budget in ${BUDGET} with the reason in the commit.`); }
-  else if (now[k] < budget[k]) lower = true;
+  else if (now[k] * SLACK < budget[k]) lower = true; // only a real drop (over 1%) moves it, so a few bytes don't stop a ship
 }
 if (over) process.exit(1);
 if (lower) writeFileSync(BUDGET, JSON.stringify({ total: Math.min(now.total, budget.total), first: Math.min(now.first, budget.first) }, null, 2) + '\n');
