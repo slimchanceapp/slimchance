@@ -69,17 +69,45 @@ export function computeReadiness(
  *  person's own normal of the last two weeks. */
 export function readyToday(today: BiometricEntry | undefined, history: BiometricEntry[]):
   { word: ReadinessResult['label']; advice: string; detail: string; tone: 'good' | 'ok' | 'warn' } | null {
-  const r = computeReadiness(today, history);
-  if (!r || !today) return null;
-  const normal = (k: 'resting_hr' | 'hrv') => average(history.map((h) => h[k]).filter((v): v is number => v != null));
+  // Judged against the person's own normal range since 2026-11-11: the score
+  // above said "ready" on 99.9% of strained mornings (scripts/eval-readiness.mjs).
+  return readyFromNormal(today, history);
+}
+
+/** Readiness against the person's own normal RANGE, not their average: a
+ *  morning counts only when it sits outside the spread their own mornings
+ *  usually have. HRV on a log scale (it swings by ratios), resting heart rate in
+ *  beats, sleep against their own usual night. No verdict on HRV or resting
+ *  heart rate until 7 mornings make a normal (Oura learns for two weeks). */
+export function readyFromNormal(today: BiometricEntry | undefined, history: BiometricEntry[]):
+  { word: ReadinessResult['label']; advice: string; detail: string; tone: 'good' | 'ok' | 'warn' } | null {
+  if (!today) return null;
+  const spread = (xs: number[], floor: number) => {
+    if (xs.length < 7) return null;
+    const m = xs.reduce((a, b) => a + b, 0) / xs.length;
+    const sd = Math.sqrt(xs.reduce((a, b) => a + (b - m) ** 2, 0) / (xs.length - 1));
+    return { m, sd: Math.max(sd, floor) };
+  };
+  const hrvN = spread(history.map((h) => h.hrv).filter((v): v is number => v != null && v > 0).map(Math.log), 0.04);
+  const rhrN = spread(history.map((h) => h.resting_hr).filter((v): v is number => v != null), 1);
+  const nights = history.slice(-14).map((h) => h.sleep_hours).filter((v): v is number => v != null);
+  const usualSleep = nights.length >= 5 ? nights.reduce((a, b) => a + b, 0) / nights.length : null;
+  const zHrv = hrvN && today.hrv ? (Math.log(today.hrv) - hrvN.m) / hrvN.sd : null;
+  const zRhr = rhrN && today.resting_hr != null ? (today.resting_hr - rhrN.m) / rhrN.sd : null;
+  const short = usualSleep != null && today.sleep_hours != null ? usualSleep - today.sleep_hours : null;
+  if (zHrv == null && zRhr == null && short == null) return null;
+  const h = zHrv ?? 0, r = zRhr ?? 0, s = short ?? 0;
+  const word: ReadinessResult['label'] =
+    (h <= -1.5 && (r >= 1 || s >= 1)) || h <= -2.5 || (r >= 2.5 && h <= -0.5) ? 'Low'
+    : h <= -1 || r >= 1.5 || s >= 1.5 ? 'Fair'
+    : h >= 0.5 && r <= 0 && s <= 0.3 ? 'Great'
+    : 'Good';
   const bits: string[] = [];
-  if (today.sleep_hours != null) bits.push(`slept ${(+today.sleep_hours).toFixed(1)} h`);
-  const rhr = normal('resting_hr');
-  if (today.resting_hr != null) bits.push(`resting ${Math.round(today.resting_hr)}${rhr ? ` (normal ${Math.round(rhr)})` : ''}`);
-  const hrv = normal('hrv');
-  if (today.hrv != null) bits.push(`HRV ${Math.round(today.hrv)}${hrv ? ` (normal ${Math.round(hrv)})` : ''}`);
-  const advice = r.label === 'Great' || r.label === 'Good' ? 'Ready for a hard session.' : r.label === 'Fair' ? 'Train, but keep it moderate.' : 'An easy day: a walk or light work.';
-  return { word: r.label, advice, detail: bits.join(' · '), tone: r.label === 'Low' ? 'warn' : r.label === 'Fair' ? 'ok' : 'good' };
+  if (today.sleep_hours != null) bits.push(`slept ${(+today.sleep_hours).toFixed(1)} h${usualSleep != null ? ` (usual ${usualSleep.toFixed(1)})` : ''}`);
+  if (today.resting_hr != null) bits.push(`resting ${Math.round(today.resting_hr)}${rhrN ? ` (normal ${Math.round(rhrN.m)})` : ''}`);
+  if (today.hrv != null) bits.push(`HRV ${Math.round(today.hrv)}${hrvN ? ` (normal ${Math.round(Math.exp(hrvN.m))})` : ''}`);
+  const advice = word === 'Great' || word === 'Good' ? 'Ready for a hard session.' : word === 'Fair' ? 'Train, but keep it moderate.' : 'An easy day: a walk or light work.';
+  return { word, advice, detail: bits.join(' · '), tone: word === 'Low' ? 'warn' : word === 'Fair' ? 'ok' : 'good' };
 }
 
 function average(nums: number[]): number | null {

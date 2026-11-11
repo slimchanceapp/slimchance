@@ -274,6 +274,7 @@ protein-by-training-day ignores abandoned logging days
 protein-by-training-day stays silent without both sides
 quantities read the way people type them
 quick-log activity labels are the ones a human would expect
+readiness catches a strained morning against the person’s own normal range, and lets an ordinary wobble pass
 readiness returns null with nothing logged
 readiness weights HRV and sleep, and works with partial data
 recovers true maintenance from intake + weight trend

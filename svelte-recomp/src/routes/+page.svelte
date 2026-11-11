@@ -205,7 +205,7 @@
   const _bio = liveBiometrics();
   const ready = $derived.by(() => {
     const rows = ($_bio as any[]) ?? [];
-    const since = shiftYmd(-14, new Date(`${today}T12:00:00`));
+    const since = shiftYmd(-60, new Date(`${today}T12:00:00`));
     return readyToday(rows.find((b) => b.date === today), rows.filter((b) => b.date < today && b.date >= since));
   });
 

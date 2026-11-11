@@ -5307,12 +5307,32 @@ check('the watch reads as words on Today: how hard to train, beside the person鈥
   const week = Array.from({ length: 7 }, (_, i) => ({ date: `2026-10-2${i}`, sleep_hours: 7.5, resting_hr: 58, hrv: 45 }));
   const good = readyToday({ date: '2026-11-03', sleep_hours: 7.8, resting_hr: 56, hrv: 48 }, week);
   assert.equal(good?.tone, 'good');
-  assert.equal(good?.detail, 'slept 7.8 h 路 resting 56 (normal 58) 路 HRV 48 (normal 45)');
+  assert.equal(good?.detail, 'slept 7.8 h (usual 7.5) 路 resting 56 (normal 58) 路 HRV 48 (normal 45)');
   const tired = readyToday({ date: '2026-11-03', sleep_hours: 4.5, resting_hr: 66, hrv: 25 }, week);
   assert.match(tired?.advice ?? '', /easy day|moderate/, 'a short night and a high resting rate ask for an easier day');
   assert.equal(readyToday(undefined, week), null, 'nothing from the watch today, nothing said');
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<span class="td-k">Body<\/span>/, 'a row in today鈥檚 plan');
+});
+
+check('readiness catches a strained morning against the person鈥檚 own normal range, and lets an ordinary wobble pass', async () => {
+  // 2026-11-11, chapter 7 (Oura, and HRV-guided training): the old score never
+  // said anything but "ready". scripts/eval-readiness.mjs, 3,000 simulated
+  // people with strained spells: it called 0.0% of strained mornings an easy
+  // day. Judged against each person's own range it calls 55% of them easy (87%
+  // at least moderate) and only 1% of ordinary mornings easy.
+  const { readyToday } = await import('../src/lib/readiness.ts');
+  const hrv = [44, 51, 47, 39, 49, 46, 53, 42, 48, 45, 50, 43, 47, 52];
+  const rhr = [58, 56, 59, 57, 60, 58, 56, 59, 57, 58, 61, 57, 58, 56];
+  const sleep = [7.2, 7.8, 6.9, 7.5, 8.1, 7.0, 7.6, 7.3, 7.9, 7.1, 7.4, 7.7, 6.8, 7.5];
+  const days = hrv.map((h, i) => ({ date: `2026-10-${String(10 + i).padStart(2, '0')}`, hrv: h, resting_hr: rhr[i], sleep_hours: sleep[i] }));
+  const strained = readyToday({ date: '2026-11-03', hrv: 36, resting_hr: 63, sleep_hours: 6.4 }, days);
+  assert.equal(strained?.word, 'Low', `HRV a fifth under normal and resting +5: an easy day, got ${strained?.word}`);
+  const wobble = readyToday({ date: '2026-11-03', hrv: 44, resting_hr: 58, sleep_hours: 7.2 }, days); // within one spread of normal
+  assert.ok(wobble?.word === 'Good' || wobble?.word === 'Great', `an ordinary morning is still ready, got ${wobble?.word}`);
+  const { readFileSync } = await import('node:fs');
+  for (const f of ['src/routes/+page.svelte', 'src/lib/components/TrainPlan.svelte'])
+    assert.match(readFileSync(f, 'utf8'), /const since = shiftYmd\(-60,/, `${f} gives readiness two months to learn a normal from`);
 });
 
 check('the way to the goal is a path, not coins: coins mean the chance, and the healthy line is a place, never a word', async () => {

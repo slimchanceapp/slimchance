@@ -28,7 +28,7 @@
   });
   const ready = $derived.by(() => {
     const rows = ($_bio as any[]) ?? [];
-    const since = shiftYmd(-14, noon(today));
+    const since = shiftYmd(-60, noon(today));
     return readyToday(rows.find((b) => b.date === today), rows.filter((b) => b.date < today && b.date >= since));
   });
   const easyToday = $derived(ready?.word === 'Low');
