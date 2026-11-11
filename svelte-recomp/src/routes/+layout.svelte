@@ -406,6 +406,10 @@
   // user as "the app crashed/froze". Surface it instead of hiding it.
   $effect(() => {
     function onError(e: ErrorEvent) {
+      // "Script error." with no error is the browser hiding an error from a
+      // script on another site (a test harness, an extension): nothing of ours
+      // to show or fix (2026-11-11, Play's test devices).
+      if (!e.error && e.message === 'Script error.') return;
       console.error('Uncaught error:', e.error || e.message);
       crashMsg = (e.error?.message || e.message || 'Unknown error').slice(0, 200);
       // Persist it. Until this existed, every error the user hit vanished on

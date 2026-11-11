@@ -137,7 +137,9 @@ function startOfDaysAgo(n: number): Date {
 /** Lazily resolve the native plugin (dynamic import keeps it out of SSR/prerender). */
 async function getNative(): Promise<{ Capacitor: any; HealthConnect: any } | null> {
   try {
-    if (!isAndroidApp()) return null;
+    // The plugin, not just Android: a phone without it (Play's test devices,
+    // 2026-11-11) has no Health Connect, which is not an error.
+    if (!isAndroidApp() || !hasPlugin('HealthConnect')) return null;
     const { Capacitor } = await import('@capacitor/core');
     const { HealthConnect } = await import('@kiwi-health/capacitor-health-connect');
     return { Capacitor, HealthConnect };

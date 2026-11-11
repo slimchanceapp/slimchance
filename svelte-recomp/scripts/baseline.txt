@@ -242,6 +242,7 @@ nothing in the weekly ritual assumes someone to send it to
 nothing is written for a permission that was not granted
 nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere
 nutrition patterns: low protein and a weekend blowout surface; the hour eaten is never judged
+old phone browsers get the newer built-ins the app uses, and Health Connect is used only where its plugin is
 on Google Play the app is app.slimchance; the direct download keeps its id
 one definition of "trained today", and the watch counts
 one place says which phone this is, and Android-only parts ask for Android

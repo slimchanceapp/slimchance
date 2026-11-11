@@ -4761,7 +4761,7 @@ check('one place says which phone this is, and Android-only parts ask for Androi
       assert.doesNotMatch(src, /isNativePlatform|getPlatform\(/, `${f} asks the platform itself; use $lib/platform`);
     }
     if (src.includes("import('@kiwi-health/capacitor-health-connect')")) {
-      assert.match(src, /if \(!isAndroidApp\(\)\) return/, `${f} reaches Health Connect without asking for Android`);
+      assert.match(src, /if \(!isAndroidApp\(\)( \|\| !hasPlugin\('HealthConnect'\))?\) return/, `${f} reaches Health Connect without asking for Android`);
     }
   }
   assert.match(readFileSync('src/lib/stores/nativeUpdate.ts', 'utf8'), /const isNative = isAndroidApp\(\);/, 'the APK updater runs on Android only');
@@ -5530,6 +5530,36 @@ check('Train opens on the week: how training is going waits in one closed row, a
     assert.equal(page.indexOf(part, at + 1), -1, `${part} appears once`);
   }
   assert.doesNotMatch(page, /Log a workout to see/, 'an empty card explains; it never asks for logging');
+});
+
+check('old phone browsers get the newer built-ins the app uses, and Health Connect is used only where its plugin is', async () => {
+  // 2026-11-11: Google Play's pre-launch test phones (WebViews older than
+  // Chrome 92) crashed Today on .at(); randomUUID (onboarding, saving food) and
+  // AbortSignal.timeout (food search) would have failed next. The polyfills
+  // are installed before any page runs, and a newer built-in the app starts
+  // using without one fails here.
+  const { installPolyfills } = await import('../src/lib/polyfills.ts');
+  function A() {} function S() {}
+  const g = { Array: A, String: S, crypto: { getRandomValues: (b) => globalThis.crypto.getRandomValues(b) }, AbortSignal: {}, AbortController, setTimeout };
+  installPolyfills(g);
+  assert.equal(g.Array.prototype.at.call([1, 2, 3], -1), 3);
+  assert.equal(g.Array.prototype.at.call([1, 2, 3], 5), undefined);
+  assert.equal(g.String.prototype.at.call('abc', 0), 'a');
+  assert.match(g.crypto.randomUUID(), /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  const sig = g.AbortSignal.timeout(5);
+  await new Promise((r) => setTimeout(r, 30));
+  assert.equal(sig.aborted, true);
+  const native = Array.prototype.at; installPolyfills(globalThis);
+  assert.equal(Array.prototype.at, native, 'a no-op where the browser has it');
+  const { readFileSync, readdirSync } = await import('node:fs');
+  assert.match(readFileSync('src/hooks.client.ts', 'utf8'), /installPolyfills\(globalThis\)/);
+  // Newer than the build's target (Chrome 87, Safari 14) and not polyfilled.
+  const NEWER = /\.findLast(Index)?\(|Object\.hasOwn\(|\bstructuredClone\(|\.to(Sorted|Reversed|Spliced)\(|AbortSignal\.any\(|Object\.groupBy\(|Promise\.withResolvers\(|Array\.fromAsync\(/;
+  const files = readdirSync('src', { recursive: true }).map((f) => `src/${f}`).filter((f) => /\.(ts|svelte)$/.test(f) && !f.startsWith('src/routes/mcp/'));
+  for (const f of files) assert.doesNotMatch(readFileSync(f, 'utf8').replace(/\/\/.*$/gm, ''), NEWER, `${f} uses a built-in old phones lack: polyfill it in src/lib/polyfills.ts or avoid it`);
+  assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /if \(!isAndroidApp\(\) \|\| !hasPlugin\('HealthConnect'\)\) return null;/);
+  assert.match(readFileSync('src/lib/health/writeBack.ts', 'utf8'), /if \(!hasPlugin\('HealthConnect'\)\) return/);
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /if \(!e\.error && e\.message === 'Script error\.'\) return;/, 'another site\'s hidden error is not our crash');
 });
 
 check('Slim Chance offers no medical features: no medication log and no rehab program (Google Play)', async () => {
