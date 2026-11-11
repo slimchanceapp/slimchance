@@ -42,3 +42,20 @@ arithmetic reliably, so the split above keeps both promises.
 Small models passing our golden sets as often as the cloud on mid-range
 phones, and the Android WebView running them reliably: then an optional
 model download becomes worth its size.
+
+## Next step (2026-11-11)
+- **What exists:** ML Kit's GenAI Prompt API (beta) reaches Gemini Nano
+  through Android's AICore on phones with recent Snapdragon, Dimensity and
+  Tensor chips: check the model's status (available, downloadable or
+  unavailable), download it, warm it up, generate. There is a per-app
+  quota, and it is validated for English. It needs native code, so it means
+  a new app build and a Play review.
+- **First, a probe:** Diagnostics shows whether this phone has a model,
+  shipped in one native build with the home-screen widget, after the
+  morning-briefing test (both touch the moments machinery).
+- **Then the test that decides:** the evening note's golden set
+  (`scripts/eval-coach.mjs`) run on the phone through a hidden Diagnostics
+  button, graded by `checkReply`, against the cloud's pass rate. The job
+  moves only if the phone does at least as well.
+- Sources: [Prompt API, get started](https://developers.google.com/ml-kit/genai/prompt/android/get-started),
+  [Android Developers blog, May 2025](https://android-developers.googleblog.com/2025/05/on-device-gen-ai-apis-ml-kit-gemini-nano.html).

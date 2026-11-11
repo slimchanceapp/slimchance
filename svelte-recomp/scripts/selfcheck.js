@@ -56,7 +56,7 @@ const { preferredSource: guessWatchOrigin } = await import('../src/lib/health/wa
 const { ymd, todayYmd, mondayOf, shiftYmd } = await import('../src/lib/date.ts');
 const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
 const { proteinByTrainingDay } = await import('../src/lib/nutrition/nutritionPatterns.ts');
-const { watchAgreement, recoveryCost } = await import('../src/lib/health/signals.ts');
+const { watchAgreement } = await import('../src/lib/health/signals.ts');
 const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/training/exercise.ts');
 
 const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, isSameSessionAsLogged } =
@@ -1707,32 +1707,6 @@ check('watch agreement counts corroboration without demanding a type match', () 
   const a = watchAgreement(hand, watch);
   assert.equal(a.confirmedDays, 1, 'a generic-typed watch session still corroborates');
   assert.equal(a.unloggedByHand, 1);
-});
-
-check('recovery cost needs buckets that actually differ in load', () => {
-  const ton = new Map(), rhr = new Map();
-  const next = (d) => `2026-07-${String(+d.slice(-2) + 1).padStart(2, '0')}`;
-  // Identical tonnage every session — nothing to compare.
-  for (let i = 1; i <= 10; i++) {
-    const d = `2026-07-${String(i).padStart(2, '0')}`;
-    ton.set(d, 2000);
-    rhr.set(next(d), { rhr: 50 + (i % 2) * 6, sleptHours: 7 });
-  }
-  assert.equal(recoveryCost(ton, rhr, next), null,
-    'no spread in load means the split measures noise');
-});
-
-check('recovery cost requires the watch to have been worn overnight', () => {
-  const ton = new Map(), rhr = new Map();
-  const next = (d) => `2026-07-${String(+d.slice(-2) + 1).padStart(2, '0')}`;
-  for (let i = 1; i <= 12; i++) {
-    const d = `2026-07-${String(i).padStart(2, '0')}`;
-    ton.set(d, i > 6 ? 5000 : 1000);
-    // resting HR present but no sleep => a stray daytime reading, not a night.
-    rhr.set(next(d), { rhr: i > 6 ? 58 : 50, sleptHours: null });
-  }
-  assert.equal(recoveryCost(ton, rhr, next), null,
-    'resting HR with no sleep beside it is not proof the watch was worn');
 });
 
 

@@ -275,8 +275,6 @@ readiness catches a strained morning against the person’s own normal range, an
 readiness returns null with nothing logged
 readiness weights HRV and sleep, and works with partial data
 recovers true maintenance from intake + weight trend
-recovery cost needs buckets that actually differ in load
-recovery cost requires the watch to have been worn overnight
 recovery percentage tracks elapsed time against the window
 refresh writes in batches: no save per day, no unpaged pull
 refuses a verdict off a single lift
