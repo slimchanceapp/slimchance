@@ -79,9 +79,10 @@ export function readyToday(today: BiometricEntry | undefined, history: Biometric
  *  usually have. HRV on a log scale (it swings by ratios), resting heart rate in
  *  beats, sleep against their own usual night. No verdict on HRV or resting
  *  heart rate until 7 mornings make a normal (Oura learns for two weeks). */
-export function readyFromNormal(today: BiometricEntry | undefined, history: BiometricEntry[]):
-  { word: ReadinessResult['label']; advice: string; detail: string; tone: 'good' | 'ok' | 'warn' } | null {
-  if (!today) return null;
+/** This morning against the person's own normal: HRV (on a log scale) and
+ *  resting heart rate as z-scores against their history, and sleep as hours
+ *  short of their usual. Null where there's no reading or not yet a normal. */
+export function normalZ(today: BiometricEntry, history: BiometricEntry[]) {
   const spread = (xs: number[], floor: number) => {
     if (xs.length < 7) return null;
     const m = xs.reduce((a, b) => a + b, 0) / xs.length;
@@ -92,13 +93,29 @@ export function readyFromNormal(today: BiometricEntry | undefined, history: Biom
   const rhrN = spread(history.map((h) => h.resting_hr).filter((v): v is number => v != null), 1);
   const nights = history.slice(-14).map((h) => h.sleep_hours).filter((v): v is number => v != null);
   const usualSleep = nights.length >= 5 ? nights.reduce((a, b) => a + b, 0) / nights.length : null;
-  const zHrv = hrvN && today.hrv ? (Math.log(today.hrv) - hrvN.m) / hrvN.sd : null;
-  const zRhr = rhrN && today.resting_hr != null ? (today.resting_hr - rhrN.m) / rhrN.sd : null;
-  const short = usualSleep != null && today.sleep_hours != null ? usualSleep - today.sleep_hours : null;
+  return {
+    hrvN, rhrN, usualSleep,
+    zHrv: hrvN && today.hrv ? (Math.log(today.hrv) - hrvN.m) / hrvN.sd : null,
+    zRhr: rhrN && today.resting_hr != null ? (today.resting_hr - rhrN.m) / rhrN.sd : null,
+    short: usualSleep != null && today.sleep_hours != null ? usualSleep - today.sleep_hours : null,
+  };
+}
+
+export function readyFromNormal(today: BiometricEntry | undefined, history: BiometricEntry[]):
+  { word: ReadinessResult['label']; advice: string; detail: string; tone: 'good' | 'ok' | 'warn' } | null {
+  if (!today) return null;
+  const { hrvN, rhrN, usualSleep, zHrv, zRhr, short } = normalZ(today, history);
   if (zHrv == null && zRhr == null && short == null) return null;
   const h = zHrv ?? 0, r = zRhr ?? 0, s = short ?? 0;
+  // Without HRV (most Samsung watches don't share it with Health Connect: the
+  // owner's account has never had one) the HRV rule could never say Low.
+  // Resting heart rate and sleep decide it instead (eval-readiness, no-HRV
+  // rows: 22-51% of strained mornings caught, 1-2% of ordinary ones called easy).
+  const low = zHrv == null
+    ? r >= 2 || (r >= 1.5 && s >= 1)
+    : (h <= -1.5 && (r >= 1 || s >= 1)) || h <= -2.5 || (r >= 2.5 && h <= -0.5);
   const word: ReadinessResult['label'] =
-    (h <= -1.5 && (r >= 1 || s >= 1)) || h <= -2.5 || (r >= 2.5 && h <= -0.5) ? 'Low'
+    low ? 'Low'
     : h <= -1 || r >= 1.5 || s >= 1.5 ? 'Fair'
     : h >= 0.5 && r <= 0 && s <= 0.3 ? 'Great'
     : 'Good';

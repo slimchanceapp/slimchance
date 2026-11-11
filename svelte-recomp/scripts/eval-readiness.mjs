@@ -17,6 +17,12 @@
 // 0.0% of strained mornings an easy day and 0.1% even moderate; the person's own
 // range calls 55% easy and 87% at least moderate, with 1.0% of ordinary
 // mornings called easy. src/lib/readiness.ts readyToday uses readyFromNormal.
+//
+// 2026-11-11: without HRV (the owner's watch has never sent one) the rule
+// could never say "easy day": 0% of strained mornings. Resting heart rate 2 SD
+// over normal, or 1.5 SD with a night an hour short, now decides it. Across
+// strain effects of +3 to +7 bpm and -0.3 to -1 h of sleep it catches 22-51%,
+// with 1.1-2.0% of ordinary mornings called easy (stricter rules caught half).
 import { computeReadiness, readyFromNormal } from '../src/lib/readiness.ts';
 
 const N = Number(process.argv[2]) || 3000;
@@ -59,6 +65,9 @@ for (let i = 0; i < N; i++) {
     const before = (n) => rows.filter((x) => x.date < r.date && x.date >= day(k - n));
     add('old: 14-day average, 8 h sleep', r.strained, computeReadiness(r, before(14))?.label);
     add('own normal range (60 days)', r.strained, readyFromNormal(r, before(60))?.word);
+    // The same mornings from a watch that never shares HRV (most Samsung ones).
+    const noHrv = (x) => ({ ...x, hrv: null });
+    add('own normal range, no HRV', r.strained, readyFromNormal(noHrv(r), before(60).map(noHrv))?.word);
   }
 }
 

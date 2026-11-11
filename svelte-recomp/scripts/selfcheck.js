@@ -5641,6 +5641,22 @@ check('every function that runs with the owner\u2019s rights pins its search pat
     'owner_metrics answers only the owner');
 });
 
+check('readiness can say "an easy day" from a watch that never sends HRV', async () => {
+  // 2026-11-11: the owner's Samsung watch has never sent HRV through Health
+  // Connect, and without it the morning read could only say Fair or Good.
+  // Resting heart rate and sleep decide "Low" then (scripts/eval-readiness.mjs).
+  const { readyFromNormal } = await import('../src/lib/readiness.ts');
+  const hist = Array.from({ length: 20 }, (_, k) => ({ date: `2026-10-${String(k + 1).padStart(2, '0')}`, hrv: null, resting_hr: 55 + (k % 3) - 1, sleep_hours: 7.5 + ((k % 2) ? 0.3 : -0.3) }));
+  const day = (resting_hr, sleep_hours) => readyFromNormal({ date: '2026-10-21', hrv: null, resting_hr, sleep_hours }, hist)?.word;
+  assert.equal(day(55, 7.5), 'Good', 'an ordinary morning');
+  assert.equal(day(58, 7.5), 'Low', 'resting heart rate well over normal');
+  assert.equal(day(56.5, 6.2), 'Low', 'a little over normal, and an hour and more short');
+  assert.equal(day(56.5, 7.4), 'Fair', 'a little over normal on a full night');
+  // With HRV the rule is the one eval-readiness chose: unchanged.
+  const withHrv = hist.map((h, k) => ({ ...h, hrv: 60 + (k % 3) }));
+  assert.equal(readyFromNormal({ date: '2026-10-21', hrv: 61, resting_hr: 58, sleep_hours: 7.5 }, withHrv)?.word, 'Fair', 'HRV normal: a high pulse alone is moderate, not rest');
+});
+
 check('Slim Chance offers no medical features: no medication log and no rehab program (Google Play)', async () => {
   // 2026-11-11: Google Play rejected the closed test. Medical features
   // (medication management, physical therapy and rehabilitation) may only be
