@@ -215,6 +215,9 @@ jobs:
 
   publish:
     needs: update
+    # Only main releases: a branch can be built and emulator-tested by hand
+    # (workflow_dispatch) without replacing what installed apps update to.
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - name: Download this build
