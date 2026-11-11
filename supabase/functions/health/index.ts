@@ -1,5 +1,5 @@
 // GET with the x-health-token header: the live app's last 24 hours in totals.
-// New kinds of error, sign-ups and finished setups, reminders that couldn't
+// New kinds of error, new accounts, finished setups, reminders that couldn't
 // be set, AI calls. Nothing about any one person. Read once a day by
 // .github/workflows/health-digest.yml, which emails the owner when something
 // new needs a look. SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are injected by
@@ -16,15 +16,27 @@ async function rest(path: string): Promise<any[]> {
   return r.json();
 }
 
+/** New accounts in the window, as two totals (health_signups: the service
+ *  role alone may call it, and it returns counts, never who). */
+async function signups(since: string): Promise<{ trials: number; accounts: number }> {
+  const r = await fetch(`${BASE}/rest/v1/rpc/health_signups`, {
+    method: 'POST', headers: { apikey: KEY, Authorization: `Bearer ${KEY}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ p_since: since }),
+  });
+  if (!r.ok) throw new Error(`health_signups: ${r.status}`);
+  return r.json();
+}
+
 Deno.serve(async (req) => {
   if (!TOKEN || req.headers.get('x-health-token') !== TOKEN) return new Response('Not found', { status: 404 });
   const since = new Date(Date.now() - 24 * 3_600_000).toISOString();
   try {
-    const [errors, events, ai, credit] = await Promise.all([
+    const [errors, events, ai, credit, joined] = await Promise.all([
       rest(`client_errors?select=fingerprint,message,kind,route,user_id&last_seen=gte.${since}`),
       rest(`app_events?select=event,user_id&at=gte.${since}`),
       rest(`ai_usage_global?select=bucket,calls&day=gte.${since.slice(0, 10)}`),
       geminiCredit(),
+      signups(since),
     ]);
     // A kind of error is new when nobody had it before this window.
     const prints = [...new Set(errors.map((e) => e.fingerprint))];
@@ -47,6 +59,7 @@ Deno.serve(async (req) => {
       errors: errorsOut.sort((a, b) => Number(b.new) - Number(a.new) || b.people - a.people),
       events: Object.fromEntries(Object.entries(people).map(([k, v]) => [k, v.size])),
       ai: aiOut,
+      signups: joined,
       // Gemini's prepaid balance, checked with one token: photos, labels and
       // the coach stop when it runs out (2026-11-10).
       ai_credit: credit,

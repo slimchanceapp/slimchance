@@ -3896,6 +3896,7 @@ check('a daily digest says what broke, in totals, and only new errors raise the 
   // answers only its own token, with totals; the digest fails the run (GitHub
   // emails him) for a kind of error nobody had before, or a failed check.
   const { digest } = await import('./health-digest.mjs');
+  const { readFileSync } = await import('node:fs');
   const quiet = digest({ since: 'x', events: { open: 5, setup_1: 3, setup_done: 2, reminder_failed: 1 }, ai: { ai: 4 }, errors: [{ new: false, message: 'old', people: 2, route: '/' }] });
   assert.equal(quiet.alarm, false, 'a reminder the browser couldn\'t take is the normal calendar path, not an alarm');
   assert.ok(quiet.lines.includes('- Opened the app: 5 people; started setup: 3; finished: 2'));
@@ -3904,7 +3905,14 @@ check('a daily digest says what broke, in totals, and only new errors raise the 
   assert.ok(loud.lines.some((l) => /NEW \(1 person, \/meds\): TypeError/.test(l)));
   assert.equal(digest({ failed: 'client_errors: 500' }).alarm, true);
   assert.equal(digest(null).alarm, true, 'no answer at all is an alarm');
-  const { readFileSync } = await import('node:fs');
+  // 2026-11-11: new accounts in totals; a jump in trials, or the shared AI
+  // allowance nearly used, raises the alarm too.
+  const day = (signups, ai) => digest({ since: 'x', events: {}, ai, errors: [], signups });
+  assert.equal(day({ trials: 3, accounts: 1 }, { ai: 40 }).alarm, false, 'a normal day');
+  assert.ok(day({ trials: 3, accounts: 1 }, { ai: 40 }).lines.includes('- New accounts: 3 trials, 1 with an email'));
+  assert.equal(day({ trials: 41, accounts: 0 }, { ai: 40 }).alarm, true, 'a jump in trials');
+  assert.equal(day({ trials: 3, accounts: 0 }, { ai: 120 }).alarm, true, 'the shared AI allowance nearly used');
+  assert.match(readFileSync('../supabase/migrations/20261111140000_trial_pool_and_signups.sql', 'utf8'), /revoke all on function public\.health_signups\(timestamptz\) from public, anon, authenticated;/, 'only the service role counts accounts');
   const fn = readFileSync('../supabase/functions/health/index.ts', 'utf8');
   assert.match(fn, /if \(!TOKEN \|\| req\.headers\.get\('x-health-token'\) !== TOKEN\) return new Response\('Not found', \{ status: 404 \}\);/);
   assert.match(fn, /people: p\.people\.size \}\)\)/, 'error kinds carry a count of people, never who');

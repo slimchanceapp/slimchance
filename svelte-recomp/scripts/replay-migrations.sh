@@ -43,6 +43,7 @@ create or replace function storage.foldername(name text) returns text[] language
 alter table storage.buckets owner to postgres;
 alter table storage.objects owner to postgres;
 -- And what Supabase's auth service adds to the image's auth schema.
+alter table auth.users add column if not exists is_anonymous boolean not null default false;
 create or replace function auth.jwt() returns jsonb language sql stable as $f$
   select coalesce(nullif(current_setting('request.jwt.claim', true), ''), nullif(current_setting('request.jwt.claims', true), ''))::jsonb
 $f$;
