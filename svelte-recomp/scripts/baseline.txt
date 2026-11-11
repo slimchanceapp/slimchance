@@ -62,6 +62,7 @@ a log that leaves food out still steers: the target is in its own units
 a longer match costs more recovery than a short one
 a maintenance goal rewards holding, not drifting
 a meal photo waits for a few optional words before it goes
+a meal plan a little off its day is fitted by the app, which does the sums: the AI only picks the food
 a morning reminder is set only where it can arrive, at the person’s own time, or offered in their calendar
 a name is used only when there is one
 a next stop is reached when the trend stays there three days, not on one lucky morning

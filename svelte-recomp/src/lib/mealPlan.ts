@@ -102,6 +102,10 @@ export function todaysMeals(plan: CheckedPlan | null, today: string, logged: str
   return day.meals.map((m) => ({ ...m, done: m.items.every((x) => have.has(x.food.toLowerCase())) }));
 }
 
+/** How far the app will scale a day's portions to its aim: more than one and
+ *  a half times off in either direction means the plan itself is wrong. */
+const FIT_MIN = 0.67, FIT_MAX = 1.5;
+
 /** Recompute the AI's plan from the table and accept it only inside the rules. */
 export function checkPlan(reply: PlanReply | null | undefined, f: { days: string[]; dayKcal: number; floorKcal: number; proteinTargetG: number; foods: PlanFood[] }): CheckedPlan {
   const fail = (why: string): CheckedPlan => ({ ok: false, why, days: [], note: '' });
@@ -126,9 +130,28 @@ export function checkPlan(reply: PlanReply | null | undefined, f: { days: string
           protein: Math.round(items.reduce((s, x) => s + x.protein, 0)), items });
       }
     }
+    if (!meals.length) return fail(`no meals for ${date}`);
+    // The AI picks the food; the app does the sums (decision 0004). A day a
+    // little off its aim is scaled to it in 5 g steps, the foods unchanged.
+    // Before this, 4 in 6 of Gemma's plans were refused over a sum
+    // (scripts/eval-coach.mjs, 2026-11-11). Further off than one and a half
+    // times, it's the AI's plan that's wrong, and it's refused as before.
+    const sum = meals.reduce((s, m) => s + m.kcal, 0);
+    const off = sum > f.dayKcal + 150 || sum < f.floorKcal - 50;
+    const k = off ? f.dayKcal / sum : 1;
+    if (off && k >= FIT_MIN && k <= FIT_MAX) {
+      for (const m of meals) {
+        m.items = m.items.map((x) => {
+          const food = table.get(x.food.toLowerCase())!;
+          const g = Math.max(5, Math.round((x.grams * k) / 5) * 5);
+          return { food: x.food, grams: g, kcal: Math.round((food.kcal * g) / 100), protein: Math.round(food.protein * g) / 100 };
+        });
+        m.kcal = m.items.reduce((s, x) => s + x.kcal, 0);
+        m.protein = Math.round(m.items.reduce((s, x) => s + x.protein, 0));
+      }
+    }
     const kcal = meals.reduce((s, m) => s + m.kcal, 0);
     const protein = Math.round(meals.reduce((s, m) => s + m.items.reduce((t, x) => t + x.protein, 0), 0));
-    if (!meals.length) return fail(`no meals for ${date}`);
     if (kcal < f.floorKcal - 50) return fail(`${date} comes to ${kcal} kcal, under the floor of ${f.floorKcal}`);
     if (kcal > f.dayKcal + 150) return fail(`${date} comes to ${kcal} kcal, over the day's ${f.dayKcal}`);
     if (protein < f.proteinTargetG * 0.9) return fail(`${date} has ${protein} g protein, short of ${f.proteinTargetG}`);

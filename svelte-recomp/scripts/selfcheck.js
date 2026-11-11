@@ -4048,13 +4048,39 @@ check('the coach plans the next days inside the floor, and the app does every su
   refuse([{ time: '15:00', items: [{ food: 'Chicken breast, raw', grams: 300 }] }], /under the floor of 1500/);
   refuse([{ time: '15:00', items: [{ food: 'Pizza', grams: 300 }] }], /isn't in the food table/);
   refuse([{ time: '15:00', items: [{ food: 'Olive oil', grams: 150 }, { food: 'Apple', grams: 400 }] }], /short of 173/);
-  refuse([{ time: '15:00', items: [{ food: 'Chicken breast, raw', grams: 1000 }, { food: 'Olive oil', grams: 100 }] }], /over the day's 1500/);
+  refuse([{ time: '15:00', items: [{ food: 'Chicken breast, raw', grams: 1000 }, { food: 'Olive oil', grams: 300 }] }], /over the day's 1500/);
   assert.equal(checkPlan(plan(good.days[0].meals.map((m) => ({ time: m.time, items: m.items.map((x) => ({ food: x.food, grams: x.grams })) })), 'Eat 300 g of chicken'), facts).note, '', 'a number in the AI\'s words is dropped: every number shown is the app\'s');
   const { readFileSync } = await import('node:fs');
   const fn = readFileSync('../supabase/functions/coach/index.ts', 'utf8');
   for (const rule of [/Use only foods from facts\.foods, by their exact name/, /Never go under facts\.floorKcal: a hard day to pay back an earlier one is not allowed/, /with no numbers in it/, /Never judge meal times or fasting/]) assert.match(fn, rule);
   assert.match(readFileSync('src/lib/components/CoachPlan.svelte', 'utf8'), /\{#if \$coachOn && dayKcal && days\.length\}/, 'only for people who turned the coach on');
   assert.match(readFileSync('static/privacy.html', 'utf8'), /When you ask it to plan your next days/);
+});
+
+check('a meal plan a little off its day is fitted by the app, which does the sums: the AI only picks the food', async () => {
+  // 2026-11-11, scripts/eval-coach.mjs: Gemma's meal plans passed the checks
+  // first time in only 2 of 6 situations, every miss a day's sum (2,474 kcal on a
+  // 2,300 day, 1,390 under a 1,500 floor). Decision 0004: the AI is the planner,
+  // never the calculator. A day within reach is scaled to the day's aim, in 5 g
+  // steps; one more than 1.5 times off, or short of protein after fitting, is
+  // still refused.
+  const { planFoods, checkPlan } = await import('../src/lib/mealPlan.ts');
+  const foods = planFoods([]);
+  const day = (meals) => ({ days: [{ date: '2026-11-13', meals }], note: 'Your usual hours.' });
+  const big = [{ time: '15:00', items: [{ food: 'Chicken breast, raw', grams: 700 }, { food: 'Olive oil', grams: 60 }, { food: 'Apple', grams: 300 }] },
+    { time: '21:00', items: [{ food: 'Whey protein powder', grams: 60 }, { food: 'Egg', grams: 180 }] }];
+  const over = checkPlan(day(big), { days: ['2026-11-13'], dayKcal: 1700, floorKcal: 1500, proteinTargetG: 150, foods }); // the plan sums to 2,017
+  assert.equal(over.ok, true, over.why);
+  assert.ok(over.days[0].kcal <= 1700 + 150 && over.days[0].kcal >= 1500, `fitted to the day, got ${over.days[0].kcal}`);
+  assert.deepEqual(over.days[0].meals.flatMap((m) => m.items.map((x) => x.food)), ['Chicken breast, raw', 'Olive oil', 'Apple', 'Whey protein powder', 'Egg'], 'the same foods: only the portions change');
+  assert.ok(over.days[0].meals.every((m) => m.items.every((x) => x.grams % 5 === 0)), 'portions in 5 g steps');
+  const under = checkPlan(day(big), { days: ['2026-11-13'], dayKcal: 2900, floorKcal: 2800, proteinTargetG: 150, foods });
+  assert.equal(under.ok, true, under.why);
+  assert.ok(under.days[0].kcal >= 2800 - 50, `raised to the floor, got ${under.days[0].kcal}`);
+  const far = checkPlan(day(big), { days: ['2026-11-13'], dayKcal: 900, floorKcal: 800, proteinTargetG: 60, foods });
+  assert.equal(far.ok, false, 'a day more than 1.5 times over is the AI\'s mistake to fix, not ours');
+  const lean = checkPlan(day([{ time: '15:00', items: [{ food: 'Olive oil', grams: 150 }, { food: 'Apple', grams: 900 }] }]), { days: ['2026-11-13'], dayKcal: 1500, floorKcal: 1500, proteinTargetG: 120, foods });
+  assert.match(lean.why ?? '', /short of 120/, 'protein is checked after fitting');
 });
 
 check('personas read the same as last time, or the change was meant', async () => {
