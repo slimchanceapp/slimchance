@@ -5,7 +5,7 @@
   // logged sets, body-fat measurements, food. None of it needed new input; it just
   // had nowhere to be read together. See $lib/recomp.ts for the reasoning.
   import { liveWeights, liveWorkoutLogs, liveTracks, liveFoodLogs, liveGoal, liveActivitySessions } from '$lib/stores/live';
-  import { body, stall, fitness, line, todayPulse } from '$lib/stores/body';
+  import { body, stall, fitness, line, todayPulse, beforeAfter } from '$lib/stores/body';
   import { editing } from '$lib/commitments';
   import { cleanPlans } from '$lib/plans';
   import { upsertRecord } from '$lib/stores/sync';
@@ -162,6 +162,12 @@
 
 
   function kg(n: number) { return dwt(n, 2); }
+  /** A period's pace in words: level when its interval straddles zero. */
+  function paceWords(p: { kgPerWeek: number; lo: number; hi: number } | null): string {
+    if (!p) return 'too early to say';
+    if (p.lo <= 0 && p.hi >= 0) return 'about level';
+    return `${p.kgPerWeek > 0 ? 'down' : 'up'} ${dwt(Math.abs(p.kgPerWeek))} a week`;
+  }
   const rateWord = $derived(wv && wv.rateKgPerWeek >= 0 ? 'down' : 'up');
 
   // Does protein collapse on the days the body is actually repairing? Keyed on
@@ -421,6 +427,25 @@
     </div>
   </DetailRow>
 {/if}
+<DetailRow title="Is it working?" hint="Your first two weeks against your last two">
+  {#if $beforeAfter}
+    {@const f = $beforeAfter.first}
+    {@const r = $beforeAfter.recent}
+    <table class="iw">
+      <thead><tr><th></th><th>First two weeks</th><th>Last two weeks</th></tr></thead>
+      <tbody>
+        <tr><td>Mornings weighed</td><td>{f.weighed}</td><td>{r.weighed}</td></tr>
+        <tr><td>Days logged</td><td>{f.logged}</td><td>{r.logged}</td></tr>
+        <tr><td>Days trained</td><td>{f.trained}</td><td>{r.trained}</td></tr>
+        <tr><td>The trend</td><td>{paceWords(f.pace)}</td><td>{paceWords(r.pace)}</td></tr>
+      </tbody>
+    </table>
+    {#if $beforeAfter.habit}<p class="iw-p">{$beforeAfter.habit}</p>{/if}
+    <p class="iw-note">Your own numbers: they show what changed, not why.</p>
+  {:else}
+    <p class="iw-note">After four weeks of weigh-ins, this puts your first two weeks beside your last two.</p>
+  {/if}
+</DetailRow>
 <DetailRow title="Your weeks" hint="Where the food goes in your week, and your Sunday notes">
   <WeekShape />
   <WeekJournal />
@@ -565,4 +590,10 @@
   /* Same-page jump now that Body & Goals lives on this screen, so it's a button
      rather than a link — but it must read identically to the other nb-links. */
   .nb-btn{background:none;border:none;padding:0;cursor:pointer;font-family:inherit;text-align:left}
+  .iw{width:100%;border-collapse:collapse;font-size:0.875rem;margin:4px 0 10px}
+  .iw th{font-size:0.6875rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);text-align:right;padding:4px 0 6px}
+  .iw td{padding:7px 0;border-top:1px solid var(--border);text-align:right;font-variant-numeric:tabular-nums}
+  .iw td:first-child,.iw th:first-child{text-align:left;color:var(--muted)}
+  .iw-p{margin:0 0 6px;font-weight:600}
+  .iw-note{margin:0;font-size:0.75rem;color:var(--muted)}
 </style>

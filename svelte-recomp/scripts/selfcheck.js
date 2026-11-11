@@ -4720,6 +4720,29 @@ check('a day with nothing planned says so, not its weekday twice', async () => {
   assert.match(src, /byDow\.get\(dow\) \|\| \{ day_of_week: dow, label: 'Nothing planned', session_key: null, note: '' \}/);
 });
 
+check('is it working: the first two weeks against the last two, in the person’s own numbers', async () => {
+  // 2026-11-11 (planned 10-18 as the owner's before-and-after): what changed,
+  // never why; behaviour first, and no word of praise for a weight.
+  const { sinceStart } = await import('../src/lib/sinceStart.ts');
+  const day = (k) => shiftYmd(k, new Date('2026-10-01T12:00:00'));
+  const weights = [], logged = [], trained = [];
+  for (let k = 0; k <= 40; k++) {
+    if (k < 14 ? k % 3 === 0 : k % 4 !== 1) weights.push({ date: day(k), weight: +(100 - k * 0.07 + (k % 2 ? 0.3 : -0.3)).toFixed(1) });
+    if (k < 14 ? k % 2 === 0 : true) logged.push(day(k));
+    if (k % 7 === 2) trained.push(day(k));
+  }
+  assert.equal(sinceStart({ today: day(26), weights, logged, trained }), null, 'not before four weeks');
+  const s = sinceStart({ today: day(40), weights, logged, trained });
+  assert.deepEqual([s.first.weighed, s.first.logged, s.first.trained], [5, 7, 2]);
+  assert.deepEqual([s.recent.weighed, s.recent.logged, s.recent.trained], [11, 14, 2]);
+  assert.equal(s.recent.from, day(27), 'the last two weeks never share a day with the first');
+  assert.ok(s.recent.pace && s.recent.pace.kgPerWeek > 0.3 && s.recent.pace.kgPerWeek < 0.7, `the app's own trend: ${JSON.stringify(s.recent.pace)}`);
+  assert.equal(s.habit, 'You log your food more often than in your first two weeks.');
+  assert.doesNotMatch(JSON.stringify(s), /great|well done|proud|amazing/i, 'no praise for a weight');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/routes/progress/+page.svelte', 'utf8'), /<DetailRow title="Is it working\?"/, 'a row on Progress');
+});
+
 check('a normal swing is told with the band it was judged by, measured from the trend', async () => {
   // 2026-11-11, the new store screenshots: "Up 0.9 kg from yesterday. That's
   // inside your usual day-to-day swing of about ±0.5 kg." The test was twice the

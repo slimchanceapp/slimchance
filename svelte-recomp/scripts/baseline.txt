@@ -196,6 +196,7 @@ hunger on low protein is answered with protein, not calories
 implausible birth years are rejected, not fed to the calorie formula
 implausible results are downgraded rather than shown
 in pounds the hero, the coach and the weigh-in all speak pounds; in kg nothing changed
+is it working: the first two weeks against the last two, in the person’s own numbers
 it asks once a week, only once the week is over, never on an empty account
 it falls back to the start weight until the first weigh-in lands
 it survives a brand-new account with nothing measured

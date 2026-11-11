@@ -28,6 +28,7 @@ import { heldUnder, milestoneState, type MilestoneState } from '$lib/milestone';
 import { pulse, type KeepInput, type Pulse } from '$lib/pulse';
 import { programWeek } from '$lib/program';
 import { explainUp, type UpExplained } from '$lib/scaleUp';
+import { sinceStart, type SinceStart } from '$lib/sinceStart';
 import { cycleInfo, cycleNote } from '$lib/cycle';
 import { fitness as fitnessOf, type Fitness } from '$lib/fitness';
 import { strengthTrend } from '$lib/strength';
@@ -244,6 +245,18 @@ export const fitness: Readable<Fitness> = derived(
     strength: strengthTrend(($logs as any[]) ?? [], { asOf: Date.parse(`${$today}T12:00:00`) }),
     since: [...($steps as Map<string, number>).keys(), ...(($bio as any[]) ?? []).map((b) => b.date), ...(($activity as any[]) ?? []).map((a) => a.date), ...(($logs as any[]) ?? []).map((l) => l.date)]
       .filter(Boolean).sort()[0] ?? null,
+  }),
+);
+
+/** "Is it working?": the first two weeks against the last two, from the same
+ *  weigh-ins, food days and trained days as everything else (src/lib/sinceStart.ts). */
+export const beforeAfter: Readable<SinceStart | null> = derived(
+  [liveWeights(), body, liveWorkoutLogs(), liveActivitySessions(), todayDate],
+  ([$w, $b, $logs, $activity, $today]) => sinceStart({
+    today: $today as string,
+    weights: (($w as any[]) ?? []).filter((x) => x?.date && x.weight != null).map((x) => ({ date: x.date as string, weight: +x.weight })),
+    logged: [...$b.intake.keys()],
+    trained: trainedDates([], ($activity as any[]) ?? [], ($logs as any[]) ?? []),
   }),
 );
 
