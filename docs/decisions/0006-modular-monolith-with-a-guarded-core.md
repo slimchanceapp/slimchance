@@ -57,4 +57,9 @@ its own limits (for example the MCP server under heavy outside traffic).
   "is it for you?" question behind `index.ts`, events counted only through
   `events.ts`. **Identity and data stays the platform** (`db/`, `stores/`):
   every area reads and writes through it, so a border around it would guard
-  nothing. Left: Moments and Coach, as one slice (each reads the other).
+  nothing.
+- **2026-11-12: Moments and Coach moved**, together, into
+  `svelte-recomp/src/lib/moments` and `src/lib/coach`: Coach builds on
+  Moments, never the reverse (a probe of the reverse failed). The inert Back
+  Rebuild program went first, with every reader of it. The map is done: seven
+  areas behind their doors, one rule guarding all of them.

@@ -17,7 +17,7 @@
 // Web keeps the service-worker path — see scheduleAlarms() in routes/alarms/+page.svelte.
 
 import { nudgeFireAt, type Nudge } from './situational.ts';
-import { isAndroidApp, isNativeApp } from './platform.ts';
+import { isAndroidApp, isNativeApp } from '../platform.ts';
 
 export interface AlarmRow {
   id: string;

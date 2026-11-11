@@ -8,7 +8,7 @@
   import { upsertRecord } from '$lib/stores/sync';
   import { userId } from '$lib/stores/user';
   import { todayDate } from '$lib/stores/refresh';
-  import { saveLine } from '$lib/commitments';
+  import { saveLine } from '$lib/moments/commitments';
   import { LINE_MARGIN_KG } from '$lib/body';
   import { haptic } from '$lib/haptics';
   import { wtShortU } from '$lib/units';

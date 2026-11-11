@@ -9,16 +9,16 @@ import { body } from './body';
 import { liveDailyLogs, liveFoodLogs, liveProfile, liveSchedule, liveWeights, liveWorkoutSessions } from './live';
 import { upsertRecord } from './sync';
 import { userId } from './user';
-import { composeBriefing, type Briefing, type DayForecast } from '$lib/briefing';
-import { composeHold, holdAfter, HOLD_UNTIL } from '$lib/hold';
-import { cleanPlans, sportOf } from '$lib/plans';
+import { composeBriefing, type Briefing, type DayForecast } from '$lib/moments';
+import { composeHold, holdAfter, HOLD_UNTIL } from '$lib/moments';
+import { cleanPlans, sportOf } from '$lib/moments';
 import { usualBreakfast, type QuickFood } from '$lib/nutrition';
 import { shiftYmd } from '$lib/date';
-import { lastMonth, monthLetter } from '$lib/journal';
-import { forecastHere } from '$lib/weather';
+import { lastMonth, monthLetter } from '$lib/moments';
+import { forecastHere } from '$lib/moments/weather';
 import { OFF_TREND_KG } from '$lib/body';
 import { toUnit, weightUnit, type WeightUnit } from '$lib/units';
-import { eveningFrom } from '$lib/brain';
+import { eveningFrom } from '$lib/coach';
 import { brainToday } from './brain';
 
 /** user_settings.briefing: the morning switch and time, and the evening's. */

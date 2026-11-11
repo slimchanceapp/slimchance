@@ -1,6 +1,6 @@
 // coach — the AI behind Slim Chance's evening message, its one "noticed" line and
 // its notes on what it has learned about the person. The app sends the day's
-// facts, built from its own stores (src/lib/brain.ts buildFacts); this writes
+// facts, built from its own stores (src/lib/coach/brain.ts buildFacts); this writes
 // the reply, and the app checks every reply before a word of it is shown
 // (checkReply there). Nothing here computes a number about the person.
 //

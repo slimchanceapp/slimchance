@@ -4,7 +4,7 @@
 import { writable, get } from 'svelte/store';
 import { upsertRecord } from '$lib/stores/sync';
 import { userId } from '$lib/stores/user';
-import { cleanPlans, type Plans } from '$lib/plans';
+import { cleanPlans, type Plans } from '$lib/moments/plans';
 import { nextMilestone, type MilestoneSetting } from '$lib/body';
 
 /** Which editor is open, wherever it was opened from. */

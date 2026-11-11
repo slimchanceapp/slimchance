@@ -12,7 +12,7 @@
 //   - it may choose silence: a day that needs nothing gets nothing.
 // I/O lives in stores/brain.ts, the prompt in supabase/functions/coach.
 
-import { holdAfter } from './hold.ts';
+import { holdAfter } from '../moments/index.ts';
 
 export interface DayRow {
   date: string; dow: string;

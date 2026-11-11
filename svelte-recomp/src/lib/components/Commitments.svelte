@@ -10,8 +10,8 @@
   // next stop instead of being saved as a ceiling you're already 8 kg over.
   import { untrack } from 'svelte';
   import Modal from './Modal.svelte';
-  import { editing, saveLine, savePlans, saveWhy, saveMilestone } from '$lib/commitments';
-  import { CUES, cleanPlans, type Plans } from '$lib/plans';
+  import { editing, saveLine, savePlans, saveWhy, saveMilestone } from '$lib/moments/commitments';
+  import { CUES, cleanPlans, type Plans } from '$lib/moments';
   import { suggestLine } from '$lib/body';
   import { suggestStops, milestoneState, type MilestoneSetting } from '$lib/body';
   import { line, body } from '$lib/stores/body';

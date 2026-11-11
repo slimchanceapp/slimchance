@@ -6,7 +6,7 @@
   // in the Progress journal after it's put away.
   import { liveDailyLogs, liveWeights, liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';
-  import { lastMonth, monthLetter } from '$lib/journal';
+  import { lastMonth, monthLetter } from '$lib/moments';
   import type { MilestoneSetting } from '$lib/body';
   import { dwt, wt, wtNum, wtShortU } from '$lib/units';
 

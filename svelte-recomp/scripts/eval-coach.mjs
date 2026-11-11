@@ -17,7 +17,7 @@
 // first try; meal plans 2/6, every miss a day's sum. Since the app fits a
 // day's portions to its aim (src/lib/nutrition/mealPlan.ts checkPlan), 6/6.
 import { readFileSync } from 'node:fs';
-import { buildFacts, checkReply } from '../src/lib/brain.ts';
+import { buildFacts, checkReply } from '../src/lib/coach/brain.ts';
 import { checkPlan, planFoods } from '../src/lib/nutrition/mealPlan.ts';
 import { checkTrainPlan } from '../src/lib/training/trainPlan.ts';
 

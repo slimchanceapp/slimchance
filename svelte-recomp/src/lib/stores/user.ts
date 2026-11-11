@@ -89,7 +89,7 @@ export async function deleteAccount(): Promise<void> {
     try { msg ??= (await (error as any)?.context?.json())?.error; } catch { /* no body */ }
     throw new Error(msg || 'Could not delete the account. Nothing was lost; try again.');
   }
-  const { scheduleNativeAlarms, scheduleNudges, disarmMoments } = await import('$lib/nativeAlarms');
+  const { scheduleNativeAlarms, scheduleNudges, disarmMoments } = await import('$lib/moments/nativeAlarms');
   await Promise.allSettled([scheduleNativeAlarms([]), scheduleNudges([]), disarmMoments()]);
   const { default: db } = await import('$lib/db/dexie');
   db.close();

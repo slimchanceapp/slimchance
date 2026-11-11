@@ -3,7 +3,7 @@
   // question at a time, answered from your own numbers and Slim Chance's
   // guides, and shown only once the app has checked it (src/lib/ask.ts).
   import { askNumbers } from '$lib/stores/brain';
-  import type { AskSource } from '$lib/ask';
+  import type { AskSource } from '$lib/coach';
 
   const EXAMPLES = ['Am I actually losing weight?', 'Was I losing faster in my first month?', 'Why did the scale go up this morning?'];
   let question = $state('');

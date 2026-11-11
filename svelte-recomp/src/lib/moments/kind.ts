@@ -4,7 +4,7 @@
 // never know which way the number went: praise for a lower morning would make
 // the next higher one a scolding. Most days it says nothing, because words
 // that come every morning stop meaning anything.
-import { shiftYmd } from './date.ts';
+import { shiftYmd } from '../date.ts';
 
 /** Two missed mornings are a busy week; three are a gap worth coming back from. */
 const GAP_DAYS = 4;

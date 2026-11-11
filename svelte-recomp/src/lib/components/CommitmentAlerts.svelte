@@ -5,10 +5,10 @@
   // ordinary days is what makes these worth reading.
   import { line } from '$lib/stores/body';
   import { liveProfile } from '$lib/stores/live';
-  import { editing, saveMilestone, saveLine } from '$lib/commitments';
+  import { editing, saveMilestone, saveLine } from '$lib/moments/commitments';
   import { todayDate } from '$lib/stores/refresh';
   import { changeWord, dwtNum, wt, wtNum, wtShortU } from '$lib/units';
-  import { activePlan, cleanPlans, type PlanMoment } from '$lib/plans';
+  import { activePlan, cleanPlans, type PlanMoment } from '$lib/moments';
 
   let { moment }: { moment: Omit<PlanMoment, 'overLine'> } = $props();
 

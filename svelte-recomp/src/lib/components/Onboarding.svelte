@@ -21,8 +21,8 @@
   import { calcTdee, projectGoalWithTdee, projectionSummary } from '$lib/nutrition';
   import { notify } from '$lib/stores/notices';
   import { supabase } from '$lib/db/client';
-  import { CUES, cleanPlans, type PlanCue } from '$lib/plans';
-  import { saveWhy, savePlans, saveLine } from '$lib/commitments';
+  import { CUES, cleanPlans, type PlanCue } from '$lib/moments';
+  import { saveWhy, savePlans, saveLine } from '$lib/moments/commitments';
   import { LINE_MARGIN_KG } from '$lib/body';
   import { saveMoments } from '$lib/stores/moments';
   import { isIOSApp, isNativeApp } from '$lib/platform';

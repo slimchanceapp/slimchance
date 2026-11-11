@@ -10,8 +10,8 @@
   import { upsertRecord } from '$lib/stores/sync';
   import { liveFoodLogs, liveDailyLogs, liveBiometrics, liveProfile } from '$lib/stores/live';
   import { reviewInputs } from '$lib/stores/review';
-  import { editing } from '$lib/commitments';
-  import { cleanPlans, planToReview } from '$lib/plans';
+  import { editing } from '$lib/moments/commitments';
+  import { cleanPlans, planToReview } from '$lib/moments';
   import { body } from '$lib/stores/body';
   import { todayDate } from '$lib/stores/refresh';
   import { haptic } from '$lib/haptics';

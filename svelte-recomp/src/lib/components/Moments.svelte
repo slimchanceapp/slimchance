@@ -5,10 +5,10 @@
   // on Android, Moments.swift on the iPhone.
   import { onMount } from 'svelte';
   import { briefings, holds, momentSetting, forecast, refreshForecast, saveMoments, type MomentSetting } from '$lib/stores/moments';
-  import { momentsStatus, momentsSupport, showMomentNow, type MomentsState } from '$lib/nativeAlarms';
+  import { momentsStatus, momentsSupport, showMomentNow, type MomentsState } from '$lib/moments/nativeAlarms';
   import { isAndroidApp, isIOSApp, isNativeApp } from '$lib/platform';
-  import { holdAfter } from '$lib/hold';
-  import { locationRefused } from '$lib/weather';
+  import { holdAfter } from '$lib/moments';
+  import { locationRefused } from '$lib/moments/weather';
   import { todayDate } from '$lib/stores/refresh';
   import { updateState } from '$lib/stores/nativeUpdate';
 

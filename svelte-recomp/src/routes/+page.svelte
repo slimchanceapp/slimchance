@@ -24,12 +24,12 @@
   import { coachPlan } from '$lib/stores/coachPlan';
   import { todaysMeals, mealAsFoods, type PlanMeal } from '$lib/nutrition';
   import { saveFoods } from '$lib/nutrition/foodLog';
-  import { kindWord } from '$lib/kind';
-  import { cheerFor } from '$lib/cheer';
+  import { kindWord } from '$lib/moments';
+  import { cheerFor } from '$lib/moments';
   import { CUT_FLOOR } from '$lib/nutrition';
-  import { lessonFor } from '$lib/lessons';
-  import { editing } from '$lib/commitments';
-  import { sportOf } from '$lib/plans';
+  import { lessonFor } from '$lib/moments';
+  import { editing } from '$lib/moments/commitments';
+  import { sportOf } from '$lib/moments';
   import CommitmentAlerts from '$lib/components/CommitmentAlerts.svelte';
   import MilestoneMoment from '$lib/components/MilestoneMoment.svelte';
   import GoalMoment from '$lib/components/GoalMoment.svelte';

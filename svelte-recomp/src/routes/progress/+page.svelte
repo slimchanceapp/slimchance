@@ -6,8 +6,8 @@
   // had nowhere to be read together. See $lib/recomp.ts for the reasoning.
   import { liveWeights, liveWorkoutLogs, liveTracks, liveFoodLogs, liveGoal, liveActivitySessions } from '$lib/stores/live';
   import { body, stall, fitness, line, todayPulse, beforeAfter } from '$lib/stores/body';
-  import { editing } from '$lib/commitments';
-  import { cleanPlans } from '$lib/plans';
+  import { editing } from '$lib/moments/commitments';
+  import { cleanPlans } from '$lib/moments';
   import { upsertRecord } from '$lib/stores/sync';
   import { userId } from '$lib/stores/user';
   import Commitments from '$lib/components/Commitments.svelte';

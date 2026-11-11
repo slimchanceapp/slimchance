@@ -3,7 +3,7 @@
 // here, through the same paths the app's own screens use (saveWeighIn with its
 // typo guard, saveFoods, the Back Rebuild rating), and only then lets go of it.
 import { get, writable } from 'svelte/store';
-import { momentsAck, momentsPending, type MomentInput } from '$lib/nativeAlarms';
+import { momentsAck, momentsPending, type MomentInput } from '$lib/moments/nativeAlarms';
 import { NeedsConfirm, saveWeighIn } from '$lib/body/weighIn';
 import { saveFoods } from '$lib/nutrition/foodLog';
 import { notYetLogged } from '$lib/nutrition';

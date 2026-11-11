@@ -46,7 +46,7 @@ Reply with JSON only: {"answer": "...", "sources": ["passage id"]}`;
 export async function runAgent(i: {
   question: string; today: string; facts: unknown; passages: Retrieved[];
   chat: Chat; callTool: CallTool; maxTurns?: number;
-  /** Why the app refused the last answer (src/lib/ask.ts checkAnswer). */
+  /** Why the app refused the last answer (src/lib/coach/ask.ts checkAnswer). */
   problem?: string;
   /** Their first weigh-in on record: without it "my first month" has no dates. */
   firstWeighIn?: string | null;

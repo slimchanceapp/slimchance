@@ -1,7 +1,7 @@
 // "Ask about your numbers", end to end on the same agent loop the edge
 // function runs (supabase/functions/ask/agent.ts): retrieval from our guides,
 // Gemma calling the slim_chance tool (here the MCP tool's own code, locally),
-// and the app's check on every answer (src/lib/ask.ts checkAnswer). Each
+// and the app's check on every answer (src/lib/coach/ask.ts checkAnswer). Each
 // question says what a good answer needs: the tool, a passage, or neither.
 // Cloudflare's free allowance; capped by EVAL_MAX_CALLS.
 //   set -a; . ~/.config/recompos/cloudflare-ai.env; set +a; node scripts/eval-ask.mjs
@@ -9,8 +9,8 @@ import { readFileSync } from 'node:fs';
 import { runAgent, weighInsFor } from '../../supabase/functions/ask/agent.ts';
 import { nearest } from '../../supabase/functions/_shared/knowledge.ts';
 import { slimChance } from '../src/lib/mcp.ts';
-import { buildFacts } from '../src/lib/brain.ts';
-import { checkAnswer } from '../src/lib/ask.ts';
+import { buildFacts } from '../src/lib/coach/brain.ts';
+import { checkAnswer } from '../src/lib/coach/ask.ts';
 
 const KEY = process.env.CLOUDFLARE_AI_TOKEN, ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID;
 if (!KEY || !ACCOUNT) { console.error('CLOUDFLARE_AI_TOKEN and CLOUDFLARE_ACCOUNT_ID missing'); process.exit(1); }

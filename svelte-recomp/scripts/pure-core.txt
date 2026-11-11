@@ -4,9 +4,9 @@
 # pure. Add a module when it joins the core; removing one needs a reason in
 # the commit, as with baseline.txt (2026-11-10, book chapter 5).
 nutrition/adaptiveTdee.ts
-brain.ts
-briefing.ts
-cheer.ts
+coach/brain.ts
+moments/briefing.ts
+moments/cheer.ts
 config.ts
 cycle.ts
 date.ts
@@ -16,13 +16,13 @@ metrics/fit.ts
 health/fitness.ts
 nutrition/food.ts
 nutrition/foodCoach.ts
-hold.ts
+moments/hold.ts
 body/importWeights.ts
-journal.ts
+moments/journal.ts
 index.ts
 body/insights.ts
-kind.ts
-lessons.ts
+moments/kind.ts
+moments/lessons.ts
 training/liftStalls.ts
 body/line.ts
 mcp.ts
@@ -32,7 +32,7 @@ training/muscleVolume.ts
 training/nextWeight.ts
 nutrition/nutritionPatterns.ts
 paging.ts
-plans.ts
+moments/plans.ts
 training/plates.ts
 profile.ts
 body/pulse.ts
@@ -43,7 +43,7 @@ body/scale.ts
 body/scaleUp.ts
 sinceStart.ts
 health/signals.ts
-situational.ts
+moments/situational.ts
 health/sleepPerformance.ts
 body/slimTrack.ts
 training/strength.ts
@@ -55,7 +55,7 @@ weekCheckIn.ts
 weeklyReview.ts
 weeklyShare.ts
 training/trainPlan.ts
-ask.ts
+coach/ask.ts
 body/index.ts
 nutrition/index.ts
 training/index.ts
@@ -71,3 +71,5 @@ health/scaleWeights.ts
 health/permissions.ts
 health/watches.ts
 metrics/index.ts
+moments/index.ts
+coach/index.ts

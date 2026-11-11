@@ -106,12 +106,13 @@ emails the owner (GitHub's own notice).
     one.
   - A function asks only for what it uses.
 - **Areas behind doors (DDD, decision 0006).** An area moves into its own
-  folder once a check guards its border. Body (`src/lib/body`), Nutrition
-  (`src/lib/nutrition`), Training (`src/lib/training`), Health signals
-  (`src/lib/health`) and Metrics (`src/lib/metrics`) so far: the rest of the app reads each only through its
+  folder once a check guards its border. All seven have moved: Body,
+  Nutrition, Training, Health signals, Metrics, Moments and Coach, each in
+  `src/lib/<area>`: the rest of the app reads each only through its
   `index.ts` and reaches the outside only through its named shell doors
   (`weighIn.ts`; `foodLog.ts`, `foodSources.ts`; `logActivity.ts`;
-  `healthConnect.ts`, `writeBack.ts`, `watches.ts`; `events.ts`). The data
+  `healthConnect.ts`, `writeBack.ts`, `watches.ts`; `events.ts`;
+  `commitments.ts`, `nativeAlarms.ts`, `momentActions.ts`, `weather.ts`). The data
   layer (`db/`, `stores/`) is the platform every area writes through, not an
   area. Body and Training use
   nothing but themselves and the shared kernel (`units`, `date`); Nutrition

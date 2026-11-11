@@ -513,8 +513,8 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Nutrition (`src/lib/nutrition`) | Food, the week's budget, the learned burn, meal plans | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` `foodCoach` `quickAdd`, read through `index.ts` | `foodLog`, `foodSources`, the food edge functions |
 | Training (`src/lib/training`) | Sessions, lifts, plates, the exercise library, watch workouts, the trained day | `strength` `liftStalls` `plates` `trainPlan` `nextWeight` `muscleVolume` `trainingHeatmap` `exercise`, read through `index.ts` | the Train screen, `logActivity` |
 | Health signals (`src/lib/health`) | Sleep, resting heart rate, HRV, steps, the morning read | `signals` `readiness` `fitness` `sleepPerformance` `sleep` `dedupe`, read through `index.ts` | `healthConnect`, `writeBack`, `watches`; Apple Health |
-| Coach | The AI's words, checked | `brain` `ask` | `stores/brain`, the coach and ask edge functions |
-| Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
+| Coach (`src/lib/coach`) | The AI's words, checked | `brain` `ask`, read through `index.ts` | `stores/brain`, the coach and ask edge functions |
+| Moments (`src/lib/moments`) | Briefing, evening hold, kind words, the journal and the month's letter, plans for hard moments | `briefing` `hold` `cheer` `kind` `lessons` `journal` `plans` `situational`, read through `index.ts` | `commitments`, `nativeAlarms`, `momentActions`, `weather`; `stores/moments`, the Android receiver |
 | Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
 | Identity and data (the platform) | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live`: every area reads and writes through it, so it stays the shared shell, not an area |
 | Metrics (`src/lib/metrics`) | Are we helping? | `fit`, read through `index.ts` | `events`, the Numbers page, `owner_metrics` |
@@ -676,6 +676,25 @@ adapter by its folder. It now judges each file by what it imports, and five
 of them turned out pure.
 
 The JavaScript built from it is byte-for-byte the same as before the move.
+
+### The last two: Moments and Coach
+
+Moments and Coach moved together, because each reads the other: the AI
+coach writes the evening hold, and the moments ask the coach for its words.
+In code that is one direction only: Coach builds on Moments' door, and a
+probe that had Moments reach into Coach (which would make a loop) failed, as
+it should. Moments builds on Body and Nutrition; a weigh-in or a breakfast
+saved from a notification goes through Body's and Nutrition's own save doors.
+
+Before the move, the Back Rebuild program left with everything that only
+read it: the session overlay, the morning back rating and its plan, the
+badminton rule, and the hero's "new training holds water" window. Today's
+first screen got 15 KB lighter, because the program's exercise list had been
+part of it. The move itself changed the built JavaScript by one byte.
+
+That finished decision 0006's map: seven areas, each in its own folder
+behind its doors, with one rule (`areaBorder`) guarding all of them. The
+data layer (`db/`, `stores/`) stays the platform they all write through.
 
 ### What the moves turned up
 
@@ -1049,7 +1068,7 @@ and the tool are passed in, so the test can't drift from the real thing.
 
 ### The check: the AI proposes, the app decides
 
-Nothing reaches you until `src/lib/ask.ts` has read it:
+Nothing reaches you until `src/lib/coach/ask.ts` has read it:
 
 - **Every measurement is grounded:** each number must be in your facts or a
   tool result (within 1%). Small whole counts (days, mornings) are free; a
@@ -1111,7 +1130,7 @@ afterwards): 3 to 6 seconds per answer.
   purpose (privacy), and it means the eval's questions are written by hand.
 
 **Try it.** `node scripts/eval-retrieval.mjs` and read the scores beside each
-passage. Then in `src/lib/ask.ts`, delete the `if you` line and run
+passage. Then in `src/lib/coach/ask.ts`, delete the `if you` line and run
 `node scripts/eval-ask.mjs`: watch the oil question get refused for quoting
 our own guide.
 

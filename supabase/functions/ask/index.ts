@@ -1,10 +1,10 @@
 // ask — "Ask about your numbers" (book chapter 8). One question, answered by
 // the agent in agent.ts from three things: the person's facts (built by the app,
-// src/lib/brain.ts buildFacts), the passages of our guides nearest the question
+// src/lib/coach/brain.ts buildFacts), the passages of our guides nearest the question
 // by meaning (knowledge.ts), and the slim_chance tool, which this function
 // calls on the app's own MCP server with the person's real weigh-ins. Nothing
 // here computes a number about the person, and nothing is stored. The app
-// checks the answer before a word of it is shown (src/lib/ask.ts checkAnswer).
+// checks the answer before a word of it is shown (src/lib/coach/ask.ts checkAnswer).
 //
 // Gemma only, through providersFor: a question about someone's own numbers is
 // as personal as the coach's facts.

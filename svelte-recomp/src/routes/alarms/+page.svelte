@@ -4,7 +4,7 @@
   import { liveAlarms } from '$lib/stores/live';
   import Modal from '$lib/components/Modal.svelte';
   import { swipeActions } from '$lib/actions/swipe';
-  import { scheduleNativeAlarms, type AlarmRow } from '$lib/nativeAlarms';
+  import { scheduleNativeAlarms, type AlarmRow } from '$lib/moments/nativeAlarms';
   import db from '$lib/db/dexie';
   import Moments from '$lib/components/Moments.svelte';
 

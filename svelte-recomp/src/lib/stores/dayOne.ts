@@ -4,7 +4,7 @@
 import { derived, type Readable } from 'svelte/store';
 import { liveProfile, liveWeights, liveFoodLogs, liveWorkoutLogs, liveSchedule } from './live';
 import { dayOnePlan, type DayOnePlan } from '$lib/dayOne';
-import { cleanPlans } from '$lib/plans';
+import { cleanPlans } from '$lib/moments';
 import { body } from './body';
 
 const _profile = liveProfile();

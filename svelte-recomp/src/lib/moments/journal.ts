@@ -4,7 +4,7 @@
 // the month letter, so it must not drag the whole weekly review in with it.
 // Pure; checked in selfcheck.js.
 
-import { weightVerdict, type WeighIn } from './body/index.ts';
+import { weightVerdict, type WeighIn } from '../body/index.ts';
 
 const DAY_MS = 86400000;
 

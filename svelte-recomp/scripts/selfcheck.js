@@ -911,7 +911,7 @@ check('adding a write type earns a fresh permission prompt', () => {
 console.log('\nsituational nudges — alarms that know something, not just the time');
 
 const { situationalNudges, minutesOfDay, nudgeFireAt, MAX_NUDGES_PER_DAY } =
-  await import('../src/lib/situational.ts');
+  await import('../src/lib/moments/situational.ts');
 
 const DAY = {
   nowMinutes: 12 * 60, proteinG: 60, proteinTargetG: 162, kcal: 1200, kcalTargetKcal: 2000,
@@ -948,7 +948,7 @@ check('a training day you have not trained on gets one reminder, before the even
 
 check('no streak alarm: the user’s own plan fires before its moment instead', async () => {
   const { readFileSync } = await import('node:fs');
-  assert.doesNotMatch(readFileSync('src/lib/situational.ts', 'utf8'), /streak-risk|on the line/, 'loss aversion aimed at the user is gone');
+  assert.doesNotMatch(readFileSync('src/lib/moments/situational.ts', 'utf8'), /streak-risk|on the line/, 'loss aversion aimed at the user is gone');
   const plans = { friday: 'Dinner chosen at lunchtime.', weekend: 'Leftovers in a box.' };
   const fri = situationalNudges({ ...DAY, proteinG: 165, plans, dow: 5 }).find((n) => n.key === 'plan');
   assert.ok(fri, 'Friday with a Friday plan gets it');
@@ -1002,7 +1002,7 @@ check('the coach brain sees only the app\'s own numbers, and nothing it writes g
   // 2026-10-28: "learn about me, mimic me and correct me ... other than
   // forcing my hand, it should basically do everything else." The AI writes;
   // these rules decide whether a word of it is shown.
-  const { buildFacts, checkReply, eveningFrom, numbersIn, factsDigest } = await import('../src/lib/brain.ts');
+  const { buildFacts, checkReply, eveningFrom, numbersIn, factsDigest } = await import('../src/lib/coach/brain.ts');
   const now = new Date('2026-10-28T15:40:00');
   const facts = buildFacts({
     now, units: 'kg', toUnit: (kg) => kg,
@@ -1046,7 +1046,7 @@ check('the coach brain is safe: nothing harmful gets through, whatever the AI wa
   // you... and also safe for the user... prove this part to me." Each line
   // below is what a confused or hijacked model might write (say, after someone
   // typed "ignore your rules" into their own plan). Every one must be dropped.
-  const { buildFacts, checkReply } = await import('../src/lib/brain.ts');
+  const { buildFacts, checkReply } = await import('../src/lib/coach/brain.ts');
   const facts = buildFacts({
     now: new Date('2026-10-28T15:40:00'), units: 'kg', toUnit: (kg) => kg,
     trend: { kg: 112.4, lossPerWeekKg: 0.3, pace: 'on-pace', goalKg: 100 },
@@ -1076,7 +1076,7 @@ check('the coach brain is safe: nothing harmful gets through, whatever the AI wa
   for (const h of harmful) assert.equal(say(h).ok, false, `let through: ${h}`);
   assert.equal(say('Fine.', { notes: 'They are lazy on weekends.' }).ok, false, 'its notes about you are checked too');
   // The live red team's one real slip, 2026-10-28: "Wednesday 2026-10-15" (a Thursday).
-  const { misnamedDay } = await import('../src/lib/brain.ts');
+  const { misnamedDay } = await import('../src/lib/coach/brain.ts');
   assert.ok(misnamedDay('On Wednesday 2026-10-15 you logged 45 watch minutes', 2026));
   assert.ok(misnamedDay('Oct 15 (Wednesday) was long', 2026));
   assert.equal(misnamedDay('On Wednesday, Oct 21 and Thursday 2026-10-22', 2026), null, 'right weekdays pass');
@@ -1123,7 +1123,7 @@ check('the coach brain has no reach: no tools, no one else\'s data, off until co
   const mo = readFileSync('src/lib/stores/moments.ts', 'utf8');
   assert.match(mo, /return i === 0 \? eveningFrom\(hold, \$brain\) : hold;/, 'only today\'s evening, and only as a replacement');
   assert.doesNotMatch(mo, /noticed_/, 'the noticed line never becomes a notification');
-  const { eveningFrom } = await import('../src/lib/brain.ts');
+  const { eveningFrom } = await import('../src/lib/coach/brain.ts');
   const hold = { date: 'd', title: 't', body: 'b' };
   for (const send of [true, false]) {
     const out = eveningFrom(hold, { send_evening: send, evening_title: 'x', evening_body: 'y', noticed_title: '', noticed_body: '', notes: '' });
@@ -1207,7 +1207,7 @@ check('a Capacitor plugin proxy is never returned from an async function', async
   // proxy forwards it to Android, and everything dies with
   // "LocalNotifications.then() is not implemented" — which reads like a missing
   // plugin and is nothing of the sort. It shipped in build 4.
-  const src = readFileSync('src/lib/nativeAlarms.ts', 'utf8');
+  const src = readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8');
   assert.ok(!/\breturn LocalNotifications;/.test(src),
     'wrap it: `return { LN: LocalNotifications }`');
   assert.match(src, /return \{ LN: LocalNotifications \}/);
@@ -1216,7 +1216,7 @@ check('a Capacitor plugin proxy is never returned from an async function', async
 
 check('a nudge only exists while the fact behind it is still true', async () => {
   const { readFileSync } = await import('node:fs');
-  const src = readFileSync('src/lib/nativeAlarms.ts', 'utf8');
+  const src = readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8');
   // Re-arming has to cancel the previous nudge range first, or hitting protein
   // at 18:50 still fires "40g to go" at 19:00.
   assert.match(src, /scheduleNudges[\s\S]{0,600}cancelRange\(LocalNotifications, isNudgeId\)/);
@@ -1296,7 +1296,7 @@ check('a Capacitor weekday is one ahead of a JS getDay()', async () => {
   const { readFileSync } = await import('node:fs');
   // Weekday.Sunday === 1 in the plugin, but alarms.days holds getDay() (Sunday === 0).
   // Drop the +1 and every alarm fires a day early — silently, on a real phone only.
-  assert.match(readFileSync('src/lib/nativeAlarms.ts', 'utf8'), /weekday:\s*day \+ 1/);
+  assert.match(readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8'), /weekday:\s*day \+ 1/);
 });
 
 check('alarms are armed from the shell, not only from the Alarms page', async () => {
@@ -1313,13 +1313,13 @@ check('a weight typed on the notification gets its answer on the first line, and
   assert.match(rx, /if \(!note\.isEmpty\(\)\) text\.append\(note\)[\s\S]*?append\("Logged: "\)[\s\S]*?append\(m\.body\)/, 'answer, then logged, then the briefing');
   assert.match(rx, /MomentClock\.weighVerdict\(kg, range, lastFar\)/);
   assert.match(readFileSync('src/lib/stores/moments.ts', 'utf8'), /weighRange: [^\n]*\n[^\n]*OFF_TREND_KG/, 'one threshold, the app’s');
-  assert.match(readFileSync('src/lib/momentActions.ts', 'utf8'), /confirmed: !!it\.confirmed/);
+  assert.match(readFileSync('src/lib/moments/momentActions.ts', 'utf8'), /confirmed: !!it\.confirmed/);
 });
 
 check('every call the app makes on the Moments plugin exists in the APK', async () => {
   // A missing method only fails on the phone, after an install.
   const { readFileSync } = await import('node:fs');
-  const js = readFileSync('src/lib/nativeAlarms.ts', 'utf8');
+  const js = readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8');
   const java = readFileSync('android/app/src/main/java/com/toxicminds/recompos/MomentsPlugin.java', 'utf8');
   const called = [...new Set([...js.matchAll(/p\.P\.(\w+)\(/g)].map((m) => m[1]))].filter((m) => m !== 'addListener');
   assert.ok(called.includes('show') && called.includes('arm'), 'the scan finds the calls');
@@ -1572,7 +1572,7 @@ check('the coach never assumes the user is cutting', async () => {
   const { readFileSync } = await import('node:fs');
   // 2026-11-11: the old rules coach (coach.ts) left; the words now come from
   // the AI coach, so its facts and prompt are what must not assume a cut.
-  const code = ['src/lib/brain.ts', '../supabase/functions/coach/index.ts'].map((f) => readFileSync(f, 'utf8')).join('\n').replace(/^\s*(\/\/|\*|\/\*).*$/gm, '');
+  const code = ['src/lib/coach/brain.ts', '../supabase/functions/coach/index.ts'].map((f) => readFileSync(f, 'utf8')).join('\n').replace(/^\s*(\/\/|\*|\/\*).*$/gm, '');
   // These assert a direction. Someone GAINING is a legitimate recomp user, and
   // telling them about "your cut" reads as an app that does not know who it is
   // talking to. Direction-dependent copy must be gated on `losing`.
@@ -3296,7 +3296,7 @@ check('weight rate, learned burn and targets are computed in one place', async (
 console.log('\nreal life — the line, the plans, the week, coming back');
 
 const { lineState, suggestLine } = await import('../src/lib/body/line.ts');
-const { activePlan, cueActive, cleanPlans, CUES } = await import('../src/lib/plans.ts');
+const { activePlan, cueActive, cleanPlans, CUES } = await import('../src/lib/moments/plans.ts');
 const { morningsThisWeek, weighInMessage } = await import('../src/lib/body/scale.ts');
 const { weekShape } = await import('../src/lib/nutrition/week.ts');
 
@@ -3345,7 +3345,7 @@ check('a plan shows at its moment, the most specific moment first', () => {
 
 check('the Sunday review asks about the user’s own plan, in their words', async () => {
   const { checkInQuestions } = await import('../src/lib/weekCheckIn.ts');
-  const { planToReview } = await import('../src/lib/plans.ts');
+  const { planToReview } = await import('../src/lib/moments/plans.ts');
   const plan = planToReview({ evening: 'Kitchen closed.', weekend: 'Leftovers go in a box.' });
   assert.equal(plan.cue, 'weekend', 'the weekend decides most weeks, so it is asked about first');
   const q = checkInQuestions(plan).find((x) => x.key === 'adherence');
@@ -3389,7 +3389,7 @@ check('a ceiling set below the trend is caught as a target, not shown as 8 kg ov
 
 check('the ceiling and the next stop are named for their direction everywhere the user reads', async () => {
   const { readFileSync } = await import('node:fs');
-  const ui = ['src/routes/+page.svelte', 'src/routes/progress/+page.svelte', 'src/lib/components/Commitments.svelte', 'src/lib/components/CommitmentAlerts.svelte', 'src/lib/plans.ts']
+  const ui = ['src/routes/+page.svelte', 'src/routes/progress/+page.svelte', 'src/lib/components/Commitments.svelte', 'src/lib/components/CommitmentAlerts.svelte', 'src/lib/moments/plans.ts']
     .map((f) => readFileSync(f, 'utf8')).join('\n');
   assert.doesNotMatch(ui, /Over your line|Draw my line|Your line<|>Line</, '"line" read as a finish line once — it is a ceiling');
   assert.match(ui, /Your ceiling/);
@@ -3397,7 +3397,7 @@ check('the ceiling and the next stop are named for their direction everywhere th
 });
 
 check('the Sunday check-ins become a journal, newest first, in the user’s words', async () => {
-  const { journalWeeks } = await import('../src/lib/journal.ts');
+  const { journalWeeks } = await import('../src/lib/moments/journal.ts');
   const weights = Array.from({ length: 40 }, (_, i) => ({ date: shiftYmd(-(39 - i), new Date('2026-10-18T12:00:00')), weight: +(114 - i * 0.04).toFixed(1) }));
   const logs = [
     { date: '2026-10-05', week_check: { effort: 'right', hunger: 'fine', adherence: 'nailed', planText: 'Leftovers in a box.', note: 'Cinema, no popcorn.' } },
@@ -3467,7 +3467,7 @@ check('one weigh-in path, one place the commitments are saved', async () => {
   assert.deepEqual(weighs.sort(), ['src/lib/body/weighIn.ts', 'src/lib/components/ImportWeights.svelte', 'src/lib/components/Onboarding.svelte', 'src/lib/health/healthConnect.ts'], 'onboarding seeds the first one; an import or a scale adds days with none; everything else goes through saveWeighIn');
   // A write that carries one of them, not a file that merely reads one.
   const commits = files.filter((f) => /upsertRecord\('user_settings',\s*\{[^}]*\b(line|plans|why|milestone):/.test(readFileSync(f, 'utf8')));
-  assert.deepEqual(commits, ['src/lib/commitments.ts']);
+  assert.deepEqual(commits, ['src/lib/moments/commitments.ts']);
   assert.ok(!files.includes('src/lib/streaks.ts'), 'no streak to lose');
 });
 
@@ -3576,7 +3576,7 @@ check('no hard-coded white text: it vanishes in the light theme', async () => {
 });
 
 // ── Morning briefing ─────────────────────────────────────────────────────────
-const { parseForecast, weatherWords, temps, composeBriefing } = await import('../src/lib/briefing.ts');
+const { parseForecast, weatherWords, temps, composeBriefing } = await import('../src/lib/moments/briefing.ts');
 
 // Open-Meteo's shape, two days: Saturday wet from 14:00, Sunday's drizzle code at 2 %.
 const METEO = {
@@ -3939,7 +3939,7 @@ check('the briefing and the hold never wake the phone, and are never alarms', as
 });
 
 // ── Evening hold ─────────────────────────────────────────────────────────────
-const { composeHold, quoteFor, holdAfter, QUOTES, FRIDAY_QUOTE } = await import('../src/lib/hold.ts');
+const { composeHold, quoteFor, holdAfter, QUOTES, FRIDAY_QUOTE } = await import('../src/lib/moments/hold.ts');
 const PLANS = { evening: 'Yoghurt or a shake, then the kitchen’s closed.', friday: 'One plate, protein first.', weekend: 'Leftovers in a box.', badminton: 'A shake first, then dinner.' };
 const HOLD = { plans: PLANS, why: 'Out of the obese range.', sportDay: false,
   food: { kcal: 1300, share: 1850, proteinG: 120, proteinTargetG: 160 } };
@@ -4106,7 +4106,7 @@ check('food is saved in one place, so the notification logs it the way the app d
   const { readFileSync } = await import('node:fs');
   const files = await srcFiles();
   assert.deepEqual(files.filter((f) => /upsertRecords?\('food_logs'/.test(readFileSync(f, 'utf8'))), ['src/lib/nutrition/foodLog.ts']);
-  const actions = readFileSync('src/lib/momentActions.ts', 'utf8');
+  const actions = readFileSync('src/lib/moments/momentActions.ts', 'utf8');
   assert.match(actions, /saveWeighIn\(/, 'a weight from the watch goes through the one weigh-in path, typo guard included');
   assert.match(actions, /saveFoods\(/);
 });
@@ -4157,7 +4157,7 @@ check('choosing the next stop keeps the one reached, for the journal', async () 
 });
 
 check('the letter from last month tells the month back, in the user’s words', async () => {
-  const { monthLetter, lastMonth } = await import('../src/lib/journal.ts');
+  const { monthLetter, lastMonth } = await import('../src/lib/moments/journal.ts');
   assert.equal(lastMonth('2026-11-01'), '2026-10');
   assert.equal(lastMonth('2027-01-02'), '2026-12', 'January looks back at December');
   const w = [];
@@ -4341,7 +4341,7 @@ check('an answer about your numbers is shown only when every number is grounded 
   // 2026-11-11, "Ask about your numbers" (scripts/eval-ask.mjs): the AI
   // proposes, the app decides. A question about pills is answered by sending
   // the person to their doctor, never by telling them to stop or change anything.
-  const { checkAnswer } = await import('../src/lib/ask.ts');
+  const { checkAnswer } = await import('../src/lib/coach/ask.ts');
   const facts = { trend: { now: 94.2, lossPerWeek: 0.3 }, today: { budget: 2050 } };
   const passages = [{ id: 'faq#is-slim-chance-free', title: 'Is Slim Chance free?', url: 'https://slimchance.app/about/' }];
   const calls = [{ name: 'slim_chance', result: { chance: '3 in 10', pace_per_week: 0.03 } }];
@@ -4437,7 +4437,7 @@ check('keeping it off: the hero counts days inside the range, never a streak, an
 });
 
 check('a sport night is anyone’s sport: the plan for after it is named for no one sport', async () => {
-  const { sportOf, CUES } = await import('../src/lib/plans.ts');
+  const { sportOf, CUES } = await import('../src/lib/moments/plans.ts');
   assert.equal(sportOf({ label: 'Cardio & Agility', note: 'Football — 7–9 pm — this counts as training' }), 'Football');
   assert.equal(sportOf({ label: 'Cardio & Agility', note: 'Sport — this counts as training' }), 'Sport');
   assert.equal(sportOf({ label: 'Cardio & Agility', note: 'Badminton club' }), 'Badminton');
@@ -4445,7 +4445,7 @@ check('a sport night is anyone’s sport: the plan for after it is named for no 
   assert.equal(sportOf({ label: 'Heavy Lower Body', note: '' }), null);
   const c = CUES.find((x) => x.cue === 'badminton');
   assert.equal(c.label, 'After sport'); assert.doesNotMatch(c.when + c.label, /badminton/i);
-  const { composeBriefing } = await import('../src/lib/briefing.ts');
+  const { composeBriefing } = await import('../src/lib/moments/briefing.ts');
   const b = composeBriefing({ date: '2026-10-21', forecast: null, day: { label: 'Cardio & Agility', note: 'Football — this counts as training', time: '19:00' },
     session: null, plans: { badminton: 'Shake first.' }, week: null, usual: null });
   assert.match(b.body, /^19:00 Football\.$/m); assert.match(b.body, /^After sport: Shake first\.$/m);
@@ -4724,7 +4724,7 @@ check('a kind word is earned by what people do, never by what the scale does', a
   // motivation) is not a bad thing". It's worked out from the mornings weighed
   // only, so it can't know which way the number went, and most days it says
   // nothing: words that come every time stop meaning anything.
-  const { kindWord } = await import('../src/lib/kind.ts');
+  const { kindWord } = await import('../src/lib/moments/kind.ts');
   const wk = (weighed, days) => ({ weighed, days });
   assert.match(kindWord(['2026-11-04'], '2026-11-04', wk(1, 3)), /first morning/i, 'the first morning');
   assert.equal(kindWord(['2026-11-03'], '2026-11-04', wk(1, 3)), null, 'nothing before today’s weigh-in');
@@ -4735,12 +4735,12 @@ check('a kind word is earned by what people do, never by what the scale does', a
   assert.equal(kindWord([...five, '2026-11-07'], '2026-11-07', wk(6, 6)), null, 'once a week, not every morning after');
   const { readFileSync } = await import('node:fs');
   // Code only: comments and the words it says may talk about the trend.
-  const code = readFileSync('src/lib/kind.ts', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
+  const code = readFileSync('src/lib/moments/kind.ts', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '').replace(/'[^'\n]*'/g, "''");
   assert.doesNotMatch(code, /kg|weight|trend/i, 'it never sees the scale');
 });
 
 check('a lesson comes on the day it is needed, once', async () => {
-  const { lessonFor } = await import('../src/lib/lessons.ts');
+  const { lessonFor } = await import('../src/lib/moments/lessons.ts');
   const week = { today: '2026-11-04', firstWeighIn: '2026-10-28', odds: true, stalled: false, seen: new Set() };
   assert.equal(lessonFor(week)?.id, 'first-odds', 'a week in, the first odds explained');
   assert.equal(lessonFor({ ...week, seen: new Set(['first-odds']) }), null, 'once');
@@ -5013,7 +5013,7 @@ check('the odds coins flip in and land as they light, and the themes are Deep an
 });
 
 check('a day is celebrated for protein, or for a budget kept while fed enough, never for eating too little', async () => {
-  const { cheerFor } = await import('../src/lib/cheer.ts');
+  const { cheerFor } = await import('../src/lib/moments/cheer.ts');
   const base = { today: '2026-11-03', hour: 20, seen: new Set(), proteinG: 90, proteinTargetG: 150, kcal: 1600, dayKcal: 1700, floorKcal: 1500 };
   assert.match(cheerFor({ ...base, proteinG: 152 })?.text ?? '', /Protein hit: 152 g/);
   assert.equal(cheerFor(base)?.id, 'day:2026-11-03', 'inside the budget and above the floor');
@@ -5500,6 +5500,24 @@ check('the Health signals area keeps its boundary: the app reaches it only throu
   } });
 });
 
+check('the Moments area keeps its boundary: the briefing, the hold and the plans behind their doors, building on Body and Nutrition', async () => {
+  // 2026-11-12, the sixth slice: the morning and evening moments, kind words,
+  // lessons, the journal and the plans behind index.ts; plans saved through
+  // commitments.ts, the phone's moments through nativeAlarms.ts and
+  // momentActions.ts (which saves a weigh-in and a breakfast through Body's and
+  // Nutrition's own save doors), the forecast through weather.ts.
+  await areaBorder('moments', { doors: ['commitments', 'momentActions', 'nativeAlarms', 'weather'], uses: ['body', 'nutrition'], shell: {
+    'commitments.ts': ['src/lib/stores/sync', 'src/lib/stores/user'],
+    'momentActions.ts': ['src/lib/body/weighIn', 'src/lib/nutrition/foodLog'],
+    'nativeAlarms.ts': ['src/lib/platform'],
+  } });
+});
+
+check('the Coach area keeps its boundary: the AI’s words and their checks, building only on Moments', async () => {
+  // 2026-11-12, the seventh and last slice of decision 0006.
+  await areaBorder('coach', { doors: [], uses: ['moments'] });
+});
+
 check('the Metrics area keeps its boundary: events are counted only through its door', async () => {
   // 2026-11-11, the fifth slice: "is it for you?" behind index.ts, and
   // note_event reached only through events.ts, so no screen counts its own way.
@@ -5728,7 +5746,7 @@ check('the coach’s evening note never names a time or a session that will have
   // at 7.30pm", and protein "well after I had already hit the mark". The
   // coach writes its evening text in the afternoon; the note shows after
   // 19:30 on a weekday (17:00 Friday to Sunday).
-  const { buildFacts, checkReply, factsDigest } = await import('../src/lib/brain.ts');
+  const { buildFacts, checkReply, factsDigest } = await import('../src/lib/coach/brain.ts');
   const make = (now, session, protein = 96) => buildFacts({
     now, units: 'kg', toUnit: (kg) => kg,
     trend: { kg: 112, lossPerWeekKg: 0.3, pace: 'on-pace', goalKg: 100 },
