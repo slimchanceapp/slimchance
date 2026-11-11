@@ -14,6 +14,7 @@ into the page.
 4. [Evals: how we found out our chance was overconfident](#chapter-4-evals-how-we-found-out-our-chance-was-overconfident): measuring an AI and our own maths against a known truth.
 5. [Domain-driven design: areas that can't break each other](#chapter-5-domain-driven-design-areas-that-cant-break-each-other): the app's own language, its map, and the pure core a check now guards.
 6. [The AI layer: engines, evidence, and an expensive lesson](#chapter-6-the-ai-layer-engines-evidence-and-an-expensive-lesson): the barcode chain, the day the AI went dark, and the two engines that replaced one.
+7. [Learning from the best: MacroFactor, Oura, Duolingo](#chapter-7-learning-from-the-best-macrofactor-oura-duolingo): reading the leaders' own methods, two faults they showed us, and the tests that proved the fixes.
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -704,6 +705,128 @@ to see each label's truth beside Gemma's answer.
 
 ---
 
+## Chapter 7. Learning from the best: MacroFactor, Oura, Duolingo
+
+Learning from the best is not copying their screens. It is reading how they
+say their method works, finding the same idea in our own code, writing down
+where we differ and whether on purpose, and then changing only what a test
+on many simulated people shows is better. This chapter did that three times.
+Two of the three found a real fault in Slim Chance.
+
+### MacroFactor: a budget learned from your own scale
+
+MacroFactor is the reference for our core idea. Its own help pages say the
+expenditure estimate is "a deterministic calculation based on your calorie
+intake and change in trend weight", the same identity as
+`src/lib/adaptiveTdee.ts` (chapter 1). Side by side:
+
+| | MacroFactor | Slim Chance |
+|---|---|---|
+| The identity | logged intake + trend weight change | the same |
+| A day not logged | skipped; updates pause below 4 logged days a week | skipped |
+| Food a log always leaves out | absorbed: "your targets account for your usual logging habits" | absorbed: the target is in the log's own units |
+| Weekly change | smoothed; a stall of a week or two is treated as water | smoothed (α 0.35), at most one 300 kcal step |
+| After a big day | warns against eating less the next day | spreads it over the week, never under the floor |
+| A half-logged day | "one of the only things that can have a significant negative impact"; detected and left out | **counted as a full day if over 800 kcal** |
+
+The last row was a fault. A forgotten dinner (a 1,000 kcal day beside usual
+2,000 kcal days) passed our fixed 800 kcal cut and pulled the learned burn
+down, the unsafe way: it ends in "eat even less".
+
+**The test.** `scripts/eval-partial.mjs` makes 6,000 people with a known true
+burn: a real day-to-day spread in what they eat, a weekend lift, a log that
+always misses a share, days not logged at all, half-logged days, and a scale
+whose water lingers. Each rule's learned budget is compared with what a
+perfect log in the same units would have taught:
+
+| Rule for which days count | Bias | Typical error | Budgets >200 kcal too low |
+|---|---|---|---|
+| Fixed 800 kcal (before) | −24 | 133 kcal | 14.1% |
+| 55% of the person's usual day (now) | +6 | 130 kcal | 9.9% |
+| 60% of the usual day | +21 | 131 kcal | 8.3% |
+| Judged by the person's own spread (MAD) | about −12 | 134 kcal | about 12.5% |
+| A perfect detector | +1 | 118 kcal | 8.5% |
+
+The surprise came from running each rule at one spread at a time. For steady
+eaters 60% looked best; for very variable eaters it threw away real light
+days and set budgets 119 kcal too high. A rule judged by each person's own
+spread never backfired but barely helped, because the half-logged days
+inflate the spread they're judged by. Across a mixed population, the cut at
+55% of the person's usual day was the one that came close to perfect. It
+errs high for the most variable eaters (slower loss), never low. The owner's
+own budget didn't move: none of his days falls under the cut.
+
+### Oura: readiness against your own normal
+
+Oura's readiness score is built from contributors (resting heart rate, HRV
+balance, sleep, previous-day activity, body temperature). The "balance" ones
+compare a 14-day average with a two-month one, and the app takes about two
+weeks to learn a person's normal before it judges. Sports science's
+HRV-guided training works the same way: HRV swings 10 to 20% from one morning
+to the next with nothing wrong, so a morning is judged against the person's
+own normal range, never their average alone.
+
+Our readiness, behind Today's Body row and the coach's training plan, scored
+HRV as today divided by a 14-day average and sleep against a fixed 8 hours,
+then needed a score under 40 to say "easy day".
+
+**The test.** `scripts/eval-readiness.mjs` makes 3,000 people with their own
+HRV, resting heart rate, sleep and spreads, and now and then a strained spell
+of 2 to 4 days (HRV lower, resting rate higher, sleep shorter):
+
+| | "Easy day" on ordinary mornings | Strained mornings caught as easy | Caught as at least moderate |
+|---|---|---|---|
+| Before | 0.0% | 0.0% | 0.1% |
+| Own normal range (now) | 1.0% | 55% | 87% |
+
+The old score was blind: it said "ready" on almost every morning, strained or
+not. Now HRV is judged on a log scale against the person's own spread,
+resting heart rate in beats, sleep against their usual night, and nothing is
+judged until 7 mornings make a normal. Honest limit: the strained spells are
+our model of illness and overreaching. Real proof needs real mornings with
+known sick days.
+
+### Duolingo: the first week
+
+Duolingo is the reference for coming back. What its published talks and
+second-hand write-ups agree on: the shortest path to a first win; a small act
+of commitment during setup (choosing a daily goal kept people even when the
+choice was never used); reminders at the person's own time; progress you can
+see; a widget on the home screen. Its streaks, points and leagues are the
+part we leave on purpose (no game layer: kind words for what people do,
+never for the scale).
+
+We already have the calm versions: morning two explains the scale's jump
+from the person's own data; setup asks the time of the morning weigh-in,
+which is the commitment; the reminder comes at that time; Progress shows the
+way to the goal as a path. The new idea worth building is an Android
+home-screen widget: today's odds and a weigh-in tap. It's a native change, so
+it waits for a build.
+
+### The method, in six steps
+
+1. Read the leader's own documentation, not reviews of it.
+2. Find the same idea in our code.
+3. Write down where we differ, and whether that's on purpose.
+4. Build a test with a known truth over thousands of simulated people.
+5. Change only what wins across the whole range, not just at one setting.
+6. Keep the test in the repo, so the claim can be rechecked by anyone.
+
+**Try it.** `node scripts/eval-partial.mjs`, then
+`SPREAD=0.35 node scripts/eval-partial.mjs`: watch the 60% rule go from best
+to worst. Then `node scripts/eval-readiness.mjs`, and in
+`src/lib/readiness.ts` loosen the `h <= -1.5` threshold in `readyFromNormal`
+to see false alarms climb.
+
+Sources: MacroFactor help centre on
+[how expenditure is calculated](https://help.macrofactorapp.com/dashboard/expenditure),
+[how often to log food](https://help.macrofactorapp.com/en/articles/110-how-frequently-do-i-need-to-log-my-nutrition-for-the-expenditure-algorithm-and-weekly-coaching-updates),
+[partial logging](https://help.macrofactorapp.com/en/articles/241-what-is-partial-logging) and
+[weekly adjustments](https://help.macrofactorapp.com/en/articles/222-how-does-macrofactor-make-adjustments-for-a-weight-gain-or-weight-loss-goal);
+Oura on [the readiness score](https://support.ouraring.com/hc/en-us/articles/360025589793);
+Duolingo retention write-ups ([Lazyweb](https://lazyweb.com/research/duolingo-retention-experiments),
+second-hand, so treated as hints rather than facts).
+
 ## Glossary
 
 - **Design token:** a named value (a colour, a size) that every screen uses
@@ -761,3 +884,12 @@ to see each label's truth beside Gemma's answer.
   fails.
 - **Serverless:** someone else keeps the machines running and you pay (or
   not) per request, so nothing of yours has to stay warm.
+- **Half-logged day (partial logging):** a day where only part of what was
+  eaten was logged. It teaches a learned budget a burn that's too low.
+- **Median absolute deviation (MAD):** a measure of spread that a few odd
+  values can't drag much: the middle of how far each value sits from the middle.
+- **Normal range:** where a person's own mornings usually land; a morning
+  outside it is a signal, one inside it is noise.
+- **False alarm and catch rate:** how often a warning fires when nothing is
+  wrong, and how often it fires when something is. A useful warning has few of
+  the first and many of the second.
