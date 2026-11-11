@@ -295,6 +295,7 @@ search ignores diacritics but does not stem nonsense
 seeded sessions name no weekday, sport or venue
 session dates use the LOCAL day
 session load scales with sets and effort
+settings come in six named groups, and the morning briefing is one tap from them
 setup help degrades gracefully for an unknown or missing brand
 sharing adds no table, no policy and no cross-account read
 shiftYmd crosses month boundaries correctly

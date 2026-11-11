@@ -5195,6 +5195,20 @@ check('account deletion has its own address, for Google Play', async () => {
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /<span>Delete my account<\/span>/, 'named as the menu names it');
 });
 
+check('settings come in six named groups, and the morning briefing is one tap from them', async () => {
+  // 2026-11-11 (the simplify plan of 10-31: 13 rows in one list): Reminders,
+  // Display, Extras, Your data, About, Account. The same morning a briefing
+  // went missing and its switch was only behind the bell.
+  const { readFileSync } = await import('node:fs');
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  const menu = layout.slice(layout.indexOf('<Modal open={menuOpen}'), layout.indexOf('</Modal>', layout.indexOf('<Modal open={menuOpen}')));
+  const groups = [...menu.matchAll(/<div class="menu-sec">([^<]+)<\/div>/g)].map((m) => m[1]);
+  assert.deepEqual(groups, ['Reminders', 'Display', 'Extras', 'Your data', 'About', 'Account']);
+  assert.match(menu, /<div class="menu-sec">Reminders<\/div>\s*<a class="menu-item" href="\{base\}\/alarms"/);
+  for (const row of ['Theme', 'Text size', 'Weight in', 'Haptics', 'AI coach', 'Period-aware weight', 'GLP-1 companion', 'Import weigh-ins', 'Export my data', 'Export as spreadsheet', 'Privacy', 'Source code', 'Delete my account'])
+    assert.ok(menu.includes(`>${row}<`), `${row} is still there`);
+});
+
 check('a trial that leaves setup is deleted, so test runs never count as people', async () => {
   // 2026-11-10: each nightly phone proof left two trials behind (48 "sign-ups"
   // in 14 days, not one a person), because setup offered only Sign out and a

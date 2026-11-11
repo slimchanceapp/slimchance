@@ -611,6 +611,14 @@
         <span>Save my account</span><span class="menu-val">Keep it if you lose this device</span>
       </button>
     {/if}
+    <div class="menu-sec">Reminders</div>
+    <a class="menu-item" href="{base}/alarms" onclick={() => (menuOpen = false)}>
+      <span>Notifications</span><span class="menu-val">Morning briefing, evening note</span>
+    </a>
+    <div class="menu-sec">Display</div>
+    <button class="menu-item" onclick={toggleTheme}>
+      <span>Theme</span><span class="menu-val">☀️ / 🌙</span>
+    </button>
     <div class="menu-row">
       <span class="menu-lbl">Text size</span>
       <div class="menu-sizes">
@@ -628,9 +636,10 @@
       </div>
     </div>
     {#if unitsErr}<div class="menu-note">{unitsErr}</div>{/if}
-    <button class="menu-item" onclick={toggleCycle}>
-      <span>Period-aware weight</span><span class="menu-val">{cycleOn ? 'On' : 'Off'}</span>
+    <button class="menu-item" onclick={toggleHaptics}>
+      <span>Haptics</span><span class="menu-val">{haptics ? 'On 📳' : 'Off'}</span>
     </button>
+    <div class="menu-sec">Extras</div>
     <button class="menu-item" onclick={toggleCoach}>
       <span>AI coach</span><span class="menu-val">{$coachOn ? 'On' : 'Off'}</span>
     </button>
@@ -643,16 +652,14 @@
         Lets an AI write tonight's message, or stay quiet, and notice one pattern a day. Once a day it sends Google's Gemini (or Gemma on Cloudflare, which keeps nothing) a two-week summary: weights, calories and protein per day, training, your plans and usual foods. No photos and no name. Off unless you turn it on.
       {/if}
     </div>
+    <button class="menu-item" onclick={toggleCycle}>
+      <span>Period-aware weight</span><span class="menu-val">{cycleOn ? 'On' : 'Off'}</span>
+    </button>
+    {#if cycleOn}<div class="menu-note">Mark the first day of each period on Today. After three cycles Slim Chance learns how much your weight moves around a period and explains those mornings. Off by default; turning it off keeps the dates you marked.</div>{/if}
     <a class="menu-item" href="{base}/meds" onclick={() => (menuOpen = false)}>
       <span>GLP-1 companion</span>
     </a>
-    {#if cycleOn}<div class="menu-note">Mark the first day of each period on Today. After three cycles Slim Chance learns how much your weight moves around a period and explains those mornings. Off by default; turning it off keeps the dates you marked.</div>{/if}
-    <button class="menu-item" onclick={toggleTheme}>
-      <span>Theme</span><span class="menu-val">☀️ / 🌙</span>
-    </button>
-    <button class="menu-item" onclick={toggleHaptics}>
-      <span>Haptics</span><span class="menu-val">{haptics ? 'On 📳' : 'Off'}</span>
-    </button>
+    <div class="menu-sec">Your data</div>
     <button class="menu-item" onclick={() => { menuOpen = false; importOpen.set(true); }}>
       <span>Import weigh-ins</span><span class="menu-val">From another app</span>
     </button>
@@ -667,12 +674,14 @@
       <span class="menu-val">{exporting === 'csv' ? '…' : 'CSV'}</span>
     </button>
     {#if exportMsg}<div class="menu-note">{exportMsg}</div>{/if}
+    <div class="menu-sec">About</div>
     <a class="menu-item" href="/privacy.html">
       <span>Privacy</span><span class="menu-val">What's kept, and where</span>
     </a>
     <a class="menu-item" href="https://github.com/slimchanceapp/slimchance" target="_blank" rel="noopener noreferrer">
       <span>Source code</span><span class="menu-val">AGPL-3.0 ↗</span>
     </a>
+    <div class="menu-sec">Account</div>
     {#if !$isTrial}
       <button class="menu-item danger" onclick={signOut}>
         <span>Sign out</span><span class="menu-val">⎋</span>
@@ -785,6 +794,7 @@
   .menu-item:disabled{opacity:.55}
   /* Says what actually left the app and where it went — an export you can't
      confirm is an export you don't trust. */
+  .menu-sec{font-size:0.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 2px}
   .menu-note{font-size:0.6875rem;line-height:1.45;color:var(--muted);padding:8px 0 2px}
 #pages{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px calc(var(--nav-h) + 28px + var(--sb));overscroll-behavior-y:contain}
   /* Pull-to-refresh indicator: a zero-height strip above the scroll area that
