@@ -29,7 +29,7 @@ li{margin:6px 0}
 <main>
 <a class="home" href="/">← Slim Chance</a>
 <h1>Privacy</h1>
-<p class="updated">Last updated 10 November 2026</p>
+<p class="updated">Last updated 11 November 2026</p>
 
 <p class="short"><strong>The short version.</strong> Slim Chance keeps your data to run the app
 for you, in the EU. It leaves only when you use a feature that needs it: an AI estimate, a
@@ -98,7 +98,12 @@ week's calorie numbers, your protein target, the coach's notes and a table of fo
 calories: the app's own staples and the foods you log most. The app works out every number in
 the plan itself and refuses one that goes under its floor. When you ask it to arrange your training
 week, it gets the names of your own sessions, the days you trained this week and a single word for
-how ready your body is today; the app refuses any plan with an exercise you don't already do. The coach's notes are kept in your account and shown
+how ready your body is today; the app refuses any plan with an exercise you don't already do.
+When you ask it a question under Progress, the question goes with the same summary and your
+morning weights (at most the last 400) to Gemma on Cloudflare only. The app's own tool works out
+how your trend is going from those weights, the answer may point to one of Slim Chance's guides,
+and the app checks every number in it before showing it. Neither the question nor the answer is
+kept. The coach's notes are kept in your account and shown
 in Settings, where Forget clears them; turning the coach off stops it.</li>
 <li><strong>Body fat from a photo:</strong> the photo goes only to Google's Gemini or to Gemma on
 Cloudflare, never to the free gateways. Under Google's terms for the EU, the UK and Switzerland, Google doesn't use it to improve its products; Cloudflare keeps nothing and never trains on it.</li>

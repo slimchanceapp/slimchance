@@ -1400,8 +1400,8 @@ check('every function that spends AI or search quota checks for a signed-in user
   const { readFileSync, readdirSync } = await import('node:fs');
   const dir = '../supabase/functions';
   const spenders = readdirSync(dir).filter((f) => !f.startsWith('_'))
-    // Spends quota: asks a model, or searches Open Food Facts.
-    .filter((f) => /\bask\(|openfoodfacts/.test(readFileSync(`${dir}/${f}/index.ts`, 'utf8')));
+    // Spends quota: asks a model (or embeds with one), or searches Open Food Facts.
+    .filter((f) => /\b(?:ask|gemmaTurn|embed)\(|openfoodfacts/.test(readFileSync(`${dir}/${f}/index.ts`, 'utf8')));
   assert.ok(spenders.length >= 4, `found ${spenders}`);
   for (const f of spenders) {
     const src = readFileSync(`${dir}/${f}/index.ts`, 'utf8');
@@ -4718,6 +4718,26 @@ check('a day with nothing planned says so, not its weekday twice', async () => {
   const { readFileSync } = await import('node:fs');
   const src = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
   assert.match(src, /byDow\.get\(dow\) \|\| \{ day_of_week: dow, label: 'Nothing planned', session_key: null, note: '' \}/);
+});
+
+check('an answer about your numbers is shown only when every number is grounded and medicine goes to the doctor', async () => {
+  // 2026-11-11, "Ask about your numbers" (scripts/eval-ask.mjs): the AI
+  // proposes, the app decides. A question about pills is answered by sending
+  // the person to their doctor, never by telling them to stop or change anything.
+  const { checkAnswer } = await import('../src/lib/ask.ts');
+  const facts = { trend: { now: 94.2, lossPerWeek: 0.3 }, today: { budget: 2050 } };
+  const passages = [{ id: 'faq#is-slim-chance-free', title: 'Is Slim Chance free?', url: 'https://slimchance.app/about/' }];
+  const calls = [{ name: 'slim_chance', result: { chance: '3 in 10', pace_per_week: 0.03 } }];
+  const ok = checkAnswer({ answer: 'Your trend is down 0.3 kg a week; the chance it is really going your way is 3 in 10.', sources: ['faq#is-slim-chance-free', 'made-up'], calls, passages }, facts);
+  assert.equal(ok.ok, true, ok.why);
+  assert.deepEqual(ok.sources.map((x) => x.id), ['faq#is-slim-chance-free'], 'only a passage retrieved for this question is cited');
+  assert.match(checkAnswer({ answer: 'You are down 2.7 kg since August.', sources: [], calls, passages }, facts).why, /2\.7 isn't in its facts or tools/);
+  assert.equal(checkAnswer({ answer: 'Please talk to your doctor before any change to your medication.', sources: [], calls: [], passages }, facts).ok, true, 'a referral is the right answer');
+  assert.equal(checkAnswer({ answer: 'If you suddenly start logging the oil, the learned number adjusts within a couple of weeks.', sources: [], calls: [], passages }, facts).ok, true, 'our own guide, said back, is not a request to log');
+  for (const bad of ['You can stop your blood pressure pills now.', 'It is safe to reduce your medication dose.', 'Your medication is probably why the scale is up.', 'Try logging the oil too.', 'If you want sharper numbers, start logging the oil.'])
+    assert.equal(checkAnswer({ answer: bad, sources: [], calls: [], passages }, facts).ok, false, bad);
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('../supabase/functions/ask/agent.ts', 'utf8'), /Your last answer was refused by the app because/, 'a refused answer is asked once more, with the reason');
 });
 
 check('your usual meals are one tap each, found the honest way, and never logged twice', async () => {

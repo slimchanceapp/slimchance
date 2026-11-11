@@ -250,6 +250,35 @@ const gemma: Provider | null = CF_TOKEN && CF_ACCOUNT
     () => [GEMMA_MODEL], { max_tokens: 1500, chat_template_kwargs: { enable_thinking: false } }, { Authorization: `Bearer ${CF_TOKEN}` })
   : null;
 export const GEMMA_ON: boolean = !!gemma;
+
+/** Cloudflare Workers AI, once: 429s and 5xxs are retried twice, then thrown. */
+async function workersAi(path: string, body: unknown): Promise<any> {
+  for (let attempt = 0; ; attempt++) {
+    const r = await fetch(`https://api.cloudflare.com/client/v4/accounts/${CF_ACCOUNT}/ai/${path}`, {
+      method: 'POST', signal: AbortSignal.timeout(25_000),
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${CF_TOKEN}` },
+      body: JSON.stringify(body),
+    });
+    if (r.ok) return r.json();
+    if (attempt >= 2 || (r.status !== 429 && r.status < 500)) throw new Error(`workers ai ${r.status}`);
+    await new Promise((s) => setTimeout(s, 1500 * (attempt + 1)));
+  }
+}
+
+/** One turn of a conversation that may call tools (the agent in ask/), on
+ *  Gemma: either text or the tool calls it wants answered first. */
+export async function gemmaTurn(messages: unknown[], tools?: unknown[]): Promise<{ content?: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }> {
+  const o = await workersAi('v1/chat/completions', { model: GEMMA_MODEL, temperature: 0.3, max_tokens: 700, chat_template_kwargs: { enable_thinking: false }, messages, tools });
+  return o.choices?.[0]?.message ?? {};
+}
+
+/** Each text as a list of numbers by its meaning, by `model` (the one
+ *  knowledge.json was built with, so the two can be compared). */
+export async function embed(texts: string[], model: string): Promise<number[][]> {
+  const o = await workersAi(`run/${model}`, { text: texts });
+  if (!Array.isArray(o.result?.data)) throw new Error('no embedding');
+  return o.result.data;
+}
 /** The engines this server can use, for the health digest. */
 export const ENGINES: string[] = [GEMINI_KEY ? 'gemini' : '', gemma ? 'gemma' : ''].filter(Boolean);
 

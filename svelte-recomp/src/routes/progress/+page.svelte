@@ -28,6 +28,8 @@
   import WeekJournal from '$lib/components/WeekJournal.svelte';
   import WeightLine from '$lib/components/WeightLine.svelte';
   import DetailRow from '$lib/components/DetailRow.svelte';
+  import AskNumbers from '$lib/components/AskNumbers.svelte';
+  import { coachOn } from '$lib/stores/brain';
   import SlimTrack from '$lib/components/SlimTrack.svelte';
   import { onMount, tick } from 'svelte';
   import { afterNavigate } from '$app/navigation';
@@ -425,6 +427,11 @@
       {/if}
       {#if wv.state === 'not-enough'}{@render foot()}{/if}
     </div>
+  </DetailRow>
+{/if}
+{#if $coachOn}
+  <DetailRow title="Ask about your numbers" hint="A question about your weight, food or training, answered from your own data">
+    <AskNumbers />
   </DetailRow>
 {/if}
 <DetailRow title="Is it working?" hint="Your first two weeks against your last two">

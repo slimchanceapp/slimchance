@@ -114,6 +114,7 @@ activity multiplier is applied
 adding a write type earns a fresh permission prompt
 age is derived from birth year, so it never goes stale
 alarms are armed from the shell, not only from the Alarms page
+an answer about your numbers is shown only when every number is grounded and medicine goes to the doctor
 an empty feed folds to nothing rather than throwing
 an empty log by the afternoon is no nudge: a fast and a gap look the same to a clock
 an empty week is honest and never throws

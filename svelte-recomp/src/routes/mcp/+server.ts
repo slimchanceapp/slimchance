@@ -23,7 +23,8 @@ export const POST: RequestHandler = async ({ request }) => {
   const r = msg === null
     ? { status: 400, body: { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } } }
     : handleMcp(msg, { protocolVersion: request.headers.get('mcp-protocol-version') });
-  if (r.status === 200) await count(msg as { method?: string; params?: { name?: string } });
+  // The app's own agent (supabase/functions/ask) isn't someone using the server.
+  if (r.status === 200 && request.headers.get('x-slimchance-from') !== 'ask') await count(msg as { method?: string; params?: { name?: string } });
   return r.body == null
     ? new Response(null, { status: r.status, headers: CORS })
     : new Response(JSON.stringify(r.body), { status: r.status, headers: { ...CORS, 'Content-Type': 'application/json' } });

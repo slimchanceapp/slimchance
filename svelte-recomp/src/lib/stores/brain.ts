@@ -13,6 +13,7 @@ import { liveActivitySessions, liveFoodLogs, liveProfile, liveSchedule, liveSess
 import { upsertRecord } from './sync';
 import { PRIVACY_VERSION, userId } from './user';
 import { buildFacts, checkReply, factsDigest, type BrainReply } from '$lib/brain';
+import { checkAnswer, type AskChecked } from '$lib/ask';
 import { trainedDates } from '$lib/health/exercise';
 import { cleanPlans } from '$lib/plans';
 import { frequentFoods } from '$lib/quickAdd';
@@ -48,8 +49,8 @@ export const brainNote: Readable<string | null> = derived(saved, ($s) => $s?.not
 
 let running = false;
 
-export async function runBrainIfDue(now = new Date()): Promise<void> {
-  if (running || !get(coachOn) || now.getHours() * 60 + now.getMinutes() < AFTER) return;
+/** The person's facts as the AI sees them: the coach's and the asker's. */
+function currentFacts(now: Date, recentEvenings: string[]) {
   const b = get(body);
   const profile = get(liveProfile()) as any;
   const activity = (get(liveActivitySessions()) as any[]) ?? [];
@@ -57,8 +58,7 @@ export async function runBrainIfDue(now = new Date()): Promise<void> {
   const watchMinutes = new Map<string, number>();
   for (const a of activity) if (a.date) watchMinutes.set(a.date, (watchMinutes.get(a.date) ?? 0) + (+a.duration_min || 0));
   const day = ((get(liveSchedule()) as any[]) ?? []).find((s) => s.day_of_week === now.getDay());
-  const s0 = get(saved);
-  const facts = buildFacts({
+  return buildFacts({
     now, units: weightUnit(), toUnit: (kg) => toUnit(kg),
     trend: { kg: b.weight?.trendKg ?? b.currentKg, lossPerWeekKg: b.weight?.rateKgPerWeek ?? null, pace: b.pace, goalKg: b.goalKg },
     intake: b.intake as any,
@@ -71,9 +71,15 @@ export async function runBrainIfDue(now = new Date()): Promise<void> {
     plans: cleanPlans(profile?.plans) as any,
     why: profile?.why ?? null,
     usualFoods: frequentFoods(food, 8).map((f) => f.name),
-    recentEvenings: s0?.history ?? [],
+    recentEvenings,
     notes: coachOf(profile).notes ?? null,
   });
+}
+
+export async function runBrainIfDue(now = new Date()): Promise<void> {
+  if (running || !get(coachOn) || now.getHours() * 60 + now.getMinutes() < AFTER) return;
+  const s0 = get(saved);
+  const facts = currentFacts(now, s0?.history ?? []);
   const digest = factsDigest(facts);
   const same = s0?.date === facts.now.date;
   if (same && s0!.digest !== digest && (s0!.tries >= MAX_TRIES || Date.now() - s0!.at < GAP_MS)) {
@@ -125,4 +131,34 @@ export async function forgetCoach(): Promise<void> {
   await saveCoach({ notes: null, notes_at: null });
   try { localStorage.removeItem(KEY); } catch { /* nothing kept */ }
   saved.set(null);
+}
+
+/** "Ask about your numbers" (supabase/functions/ask): one question, one
+ *  checked answer. An answer the app refuses is asked for once more, with the
+ *  reason; a second refusal shows nothing of it. */
+export async function askNumbers(question: string, now = new Date()): Promise<AskChecked> {
+  const facts = currentFacts(now, []);
+  const b = get(body);
+  const unit = weightUnit() === 'kg' ? 'kg' : 'lb'; // stone is sent as pounds, as toUnit gives it
+  const req = {
+    question, today: facts.now.date, facts, unit,
+    weights: ((get(liveWeights()) as any[]) ?? []).filter((w) => w.date && +w.weight > 0)
+      .map((w) => ({ date: String(w.date), weight: +toUnit(+w.weight).toFixed(2) }))
+      .sort((x, y) => x.date.localeCompare(y.date)).slice(-400),
+    goal: b.target?.direction === 'gain' ? 'gain' : b.target?.direction === 'maintain' || b.keepSince ? 'hold' : 'lose',
+    goal_weight: b.goalKg != null ? +toUnit(b.goalKg).toFixed(1) : null,
+  };
+  let problem: string | undefined;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data, error } = await supabase.functions.invoke('ask', { body: { ...req, problem }, timeout: 50_000 });
+    if (error || !data?.answer) {
+      const said = await (error as any)?.context?.json?.().catch(() => null);
+      return { ok: false, why: said?.error ?? data?.error ?? 'Couldn’t reach the coach. Try again in a moment.' };
+    }
+    const checked = checkAnswer(data, facts);
+    if (checked.ok) return checked;
+    console.warn('[ask] refused:', checked.why);
+    problem = checked.why;
+  }
+  return { ok: false, why: 'No answer the app could stand behind this time. Try asking another way.' };
 }
