@@ -4705,6 +4705,19 @@ check('a night the watch split in two is one night, and a nap stays a nap', asyn
   assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /const nights = sleepNights\(sleeps,/, 'the sync counts nights, not sessions');
 });
 
+check('an error report says which build it came from', async () => {
+  // 2026-11-11: every client_errors row had app_version null, so no error could
+  // be tied to a deploy. errorLog read a global nothing ever set; the build's
+  // name is SvelteKit's version, which ship sets to the commit.
+  const { readFileSync } = await import('node:fs');
+  const log = readFileSync('src/lib/errorLog.ts', 'utf8');
+  assert.match(log, /import \{ version \} from '\$app\/environment';/);
+  assert.match(log, /p_app_version: version,/);
+  assert.doesNotMatch(log, /__APP_VERSION__/, 'nothing defines that global');
+  assert.match(readFileSync('svelte.config.js', 'utf8'), /process\.env\.APP_VERSION \? \{ version: \{ name: process\.env\.APP_VERSION \} \}/);
+  assert.match(readFileSync('scripts/ship.sh', 'utf8'), /--build-env APP_VERSION="\$SHA"/);
+});
+
 check('a night broken by a long wake, or written in overlapping pieces, keeps all its sleep', async () => {
   // 2026-11-11: 9 and 11 Nov read 4.1 and 5.0 hours for full nights the owner
   // slept in pieces ("not short sleeps, just discontinuous"). A wake past the

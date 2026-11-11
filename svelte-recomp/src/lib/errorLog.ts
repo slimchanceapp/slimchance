@@ -20,6 +20,8 @@
  */
 import { supabase } from '$lib/db/client';
 import { platform } from '$lib/platform';
+// The deployed commit (ship passes APP_VERSION, svelte.config.js names the build with it).
+import { version } from '$app/environment';
 
 /** Errors sent to the server this session. Bounds the blast radius of a loop. */
 const MAX_PER_SESSION = 25;
@@ -90,7 +92,7 @@ export function recordError(
         p_kind: opts.kind ?? 'error',
         p_route: opts.route ?? route,
         p_platform: platform(),
-        p_app_version: (globalThis as any).__APP_VERSION__ ?? null,
+        p_app_version: version,
       })
       .then(({ error }) => {
         // Deliberately console-only. Reporting a failure-to-report through the

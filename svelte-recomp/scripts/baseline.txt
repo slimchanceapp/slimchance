@@ -111,6 +111,7 @@ alarms are armed from the shell, not only from the Alarms page
 an answer about your numbers is shown only when every number is grounded and medicine goes to the doctor
 an empty log by the afternoon is no nudge: a fast and a gap look the same to a clock
 an empty week is honest and never throws
+an error report says which build it came from
 an exported file can actually be handed to another app
 an iPhone home-screen app fills the screen: the status bar’s strip is measured and given back, never assumed
 an incomplete profile returns null rather than inventing a height
