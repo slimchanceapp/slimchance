@@ -1,9 +1,7 @@
 "I was starving" means opposite things at different rates of loss
 "brutal" on short sleep is called a recovery problem, not weakness
 "easy" earns more work, and knows if you barely trained
-6+ on five of seven mornings stops offering to wait: see a physio
 BMR falls with age and rises with mass
-Back Rebuild looks after the neck as well as the lower back
 CI fails loudly rather than shipping an unsignable APK
 Epley e1RM levels different rep ranges
 Food and Train answer their own question: no goal notes, no parked or load-balance cards
@@ -72,14 +70,13 @@ a nudge only exists while the fact behind it is still true
 a nudge whose time has passed today is not scheduled for the past
 a one-off AI photo estimate never becomes a staple chip
 a page is called what its tab is called
+a person’s sessions are saved in one place, and a first week is seeded only into an empty one
 a phone's first sync reads a month back, so day one has a heart answer
 a photo races the Gemini models, so one stuck model costs a stagger, not the whole wait
 a plan shows at its moment, the most specific moment first
 a planned meal is logged in one tap, at its planned grams, and ticks itself off
 a profile is only complete when TDEE can actually be computed
 a profile with zero logs still produces real targets and a real date
-a program session can never be saved over the user’s own plan
-a program starts on the coming Monday and counts weeks from it
 a reading far off the trend asks once before it bends five weeks of numbers
 a repeated AI estimate is a staple; a one-off still is not
 a session built in the Quick Builder is logged like any other
@@ -145,7 +142,6 @@ deleting an account takes everything, and only the caller’s
 delivery tells the truth about where the file actually went
 different activities at the same time are not merged
 drop-off is counted in our own database, by a fixed list, and only the owner reads it
-during Back Rebuild nothing judges the light loads
 each goes out at the first unlock inside its window (MomentClock.java)
 each person’s first link tag is counted with the setup numbers, by tag, never by person
 entries logged together become one re-loggable meal
@@ -157,7 +153,6 @@ every function that runs with the owner’s rights pins its search path, and the
 every function that spends AI or search quota checks for a signed-in user under the daily cap first
 every haptic pattern is a valid vibrate argument
 every notification wears the Slim Chance mark: the coin, in the app’s yellow
-every program exercise but the walks comes with a video
 every quick-log activity is a real Health Connect exercise type
 every synced table names its conflict key in one map
 every table the app syncs or exports is created by a migration, so the repo can rebuild its backend
@@ -181,7 +176,6 @@ goalDirection reads both ways and tolerates missing data
 going past today’s share costs the week, it never calls the day lost
 granular non-overlapping calorie buckets still sum
 guessWatchOrigin finds the OEM watch app, not the phone
-gym days get A, B, C in week order; sport days are left alone
 gym-only templates produce no sport days
 high-eccentric lifts need longer recovery than isolation work
 history folds legacy and clean names into one food, with per-100 g from grams
@@ -310,7 +304,6 @@ the Stoic lines rotate by date, never at random, and each is sourced
 the Sunday check-ins become a journal, newest first, in the user’s words
 the Sunday review asks about the user’s own plan, in their words
 the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area
-the app never says "Badminton 18:15" in a fortnight the plan says no games
 the boot screen and the tab loader spin the same coin, still for anyone who asked for less motion
 the briefing and the hold never wake the phone, and are never alarms
 the briefing names the session, a new week, the week’s last day, and Friday’s plan over badminton’s
@@ -352,12 +345,10 @@ the manifest declares exactly the write permissions the code uses
 the manifest declares notifications and exact alarms
 the morning briefing comes at the first unlock after its time, whatever the hour
 the morning notification takes a weight on the number pad
-the morning rating decides progress, hold, or back off
 the native build number matches the gradle versionCode
 the odds are the verdict’s own interval, read against a loss that counts
 the odds coins flip in and land as they light, and the themes are Deep and Daylight, following the phone
 the offline estimate understands a Slovak breakfast
-the old heavy session is not shown in the days before the start
 the privacy page names every outside service the code talks to
 the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import
 the same match written twice collapses to one
@@ -373,7 +364,6 @@ the theme switch turns light on at once, not after a restart
 the training reminder comes at the session's own time, and not once you have trained
 the update dot never says "up to date" while the phone app is behind
 the user's own sport name and time are used, never a hardcoded club
-the user’s own plan comes back, untouched, after week 6
 the usual breakfast is never logged twice
 the usual breakfast is the one eaten most mornings, at its latest portion
 the watch cries wolf no more than about one time in twenty: a flat signal is rarely called rising or falling
@@ -408,7 +398,6 @@ weight GAIN implies maintenance below intake
 weight insight never throws on degenerate input
 weight rate, learned burn and targets are computed in one place
 when the AI’s prepaid credit runs out, photos say paused (no retry), the digest raises the alarm, and evals can’t use the app’s key
-while a program runs, Train names the day after the program’s session
 with the briefing on, the morning weigh-in and the weekend-plan pings fold into it
 with the hold on, the evening’s pings fold into it
 ymd pads month and day

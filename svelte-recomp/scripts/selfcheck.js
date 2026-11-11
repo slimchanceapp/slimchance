@@ -505,11 +505,6 @@ check('the hero reads the trend, the distance to the next stop, and a pace that 
   const gentle = pulse({ weight: { ...wv(93.1, 0.07, 0.34), state: 'too-noisy', n: 60, weighInsNeeded: 30 }, pace: 'too-early', firstKg: 113.5, goalKg: 76, next, planKgPerWeek: 0.27 });
   assert.equal(gentle.story, 'Holding around 93 kg. A 0.3 kg-a-week loss takes a few more weeks of mornings to show through the day-to-day swings.');
   assert.equal(gentle.tone, 'na', 'too close to call is not amber');
-  // Training restarts: the scale can rise with water just as the work starts.
-  const restart = { firstKg: 101, goalKg: 76, next, restartedOn: '2026-10-19' };
-  assert.match(pulse({ ...restart, weight: wv(92.4, -0.4), pace: 'gaining' }).story,
-    /^Up 0\.4 kg a week right now\. New training can hold extra water for a week or two: judge the trend from 2 Nov\.$/);
-  assert.doesNotMatch(pulse({ ...restart, weight: wv(88.5, 0.5), pace: 'on-pace' }).story, /water/, 'going down anyway: nothing to explain');
   // The odds, as coins of ten: the same interval as the verdict, read as the
   // chance of a loss that counts (over 0.15 kg a week). Sure either way is
   // "almost certainly" or "under 1 in 10", the middle is "too close to call".
@@ -3114,94 +3109,17 @@ check('food has exactly one way in', async () => {
   assert.doesNotMatch(today, /daily_logs',\s*\{[^}]*kcal/, 'Today must not write a bare kcal number');
 });
 
-// --- Back Rebuild: a program that paces itself and gives the plan back -----
+// --- A person's own sessions -------------------------------------------------
 
-console.log('\nback rebuild — overlay, pacing, and handing the plan back');
-
-const prog = await import('../src/lib/program.ts');
-const rebuild = await import('../src/lib/data/backRebuild.ts');
-const SCHED = [
-  { day_of_week: 0, label: 'Rest', session_key: null, note: '' },
-  { day_of_week: 1, label: 'Lower', session_key: 'lower', note: '' },
-  { day_of_week: 3, label: 'Badminton', session_key: null, note: '' },
-  { day_of_week: 4, label: 'Upper', session_key: 'upper', note: '' },
-  { day_of_week: 6, label: 'Full', session_key: 'fullbody', note: '' },
-];
-const OWN = new Map([['lower', { key: 'lower', name: 'Heavy Lower Body', exercises: [] }]]);
-const START = { id: 'back-rebuild', start: '2026-10-19' };
-
-check('a program starts on the coming Monday and counts weeks from it', () => {
-  assert.equal(prog.nextMonday('2026-10-17'), '2026-10-19', 'Saturday -> Monday');
-  assert.equal(prog.nextMonday('2026-10-19'), '2026-10-19', 'Monday stays Monday');
-  assert.equal(prog.programWeek(START, '2026-10-18'), 0);
-  assert.equal(prog.programWeek(START, '2026-10-19'), 1);
-  assert.equal(prog.programWeek(START, '2026-11-02'), 3);
-  assert.equal(prog.programWeek(START, '2026-12-30'), rebuild.WEEKS + 1);
-});
-
-check('gym days get A, B, C in week order; sport days are left alone', () => {
-  const m = prog.overlaySessions(OWN, SCHED, START, '2026-10-20');
-  assert.match(m.get('lower').name, /^Rebuild A/);
-  assert.match(m.get('upper').name, /^Rebuild B/);
-  assert.match(m.get('fullbody').name, /^Rebuild C/);
-  assert.equal(m.get('lower').key, 'lower', 'keys stay, so the schedule and completions keep working');
-  assert.equal(m.get('lower').program.week, 1);
-});
-
-check('the old heavy session is not shown in the days before the start', () => {
-  assert.match(prog.overlaySessions(OWN, SCHED, START, '2026-10-17').get('lower').name, /^Rebuild A/);
-});
-
-check('the user’s own plan comes back, untouched, after week 6', () => {
-  const m = prog.overlaySessions(OWN, SCHED, START, '2026-11-30');
-  assert.equal(m.get('lower').name, 'Heavy Lower Body');
-  assert.equal(OWN.get('lower').name, 'Heavy Lower Body', 'the overlay never mutates the base map');
-  assert.equal(prog.overlaySessions(OWN, SCHED, null, '2026-10-20'), OWN, 'no program, no overlay');
-});
-
-check('the morning rating decides progress, hold, or back off', () => {
-  assert.equal(prog.painAdvice([], '2026-10-20').tone, 'na');
-  assert.equal(prog.painAdvice([{ date: '2026-10-20', back_pain: 2 }], '2026-10-20').tone, 'good');
-  assert.equal(prog.painAdvice([{ date: '2026-10-19', back_pain: 1 }, { date: '2026-10-20', back_pain: 3 }], '2026-10-20').tone, 'warn', 'rising to 3 = too much, too soon');
-  assert.equal(prog.painAdvice([{ date: '2026-10-20', back_pain: 5 }], '2026-10-20').tone, 'warn');
-  assert.equal(prog.painAdvice([{ date: '2026-10-20', back_pain: 7 }], '2026-10-20').tone, 'bad');
-  assert.equal(prog.painAdvice([{ date: '2026-10-19', back_pain: 2 }], '2026-10-20').ratedToday, false);
-});
-
-check('every program exercise but the walks comes with a video', () => {
-  const all = [...rebuild.DAILY, ...rebuild.PHASES.flatMap((p) => p.sessions.flatMap((s) => s.exercises))];
-  const missing = all.filter((e) => !/walk/i.test(e.name) && !/^[A-Za-z0-9_-]{11}$/.test(e.vid ?? ''));
-  assert.deepEqual(missing.map((e) => e.name), []);
-  assert.ok(rebuild.PHASES.every((p) => p.sessions.length === 3));
-});
-
-check('6+ on five of seven mornings stops offering to wait: see a physio', () => {
-  const days = ['2026-10-14', '2026-10-15', '2026-10-16', '2026-10-17', '2026-10-18'];
-  const bad = prog.painAdvice(days.map((date) => ({ date, back_pain: 7 })), '2026-10-18');
-  assert.equal(bad.physio, true);
-  assert.match(bad.title, /physio/);
-  const once = prog.painAdvice([{ date: '2026-10-18', back_pain: 7 }], '2026-10-18');
-  assert.equal(once.tone, 'bad');
-  assert.equal(once.physio, false, 'one bad morning is "back off", not "see someone"');
-});
-
-check('a program session can never be saved over the user’s own plan', async () => {
+check('a person’s sessions are saved in one place, and a first week is seeded only into an empty one', async () => {
   const { readFileSync } = await import('node:fs');
   const page = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
-  assert.match(page, /if \(!sess \|\| !uid \|\| sess\.program\) return;/);
+  assert.match(page, /if \(!sess \|\| !uid\) return;/);
   assert.equal((page.match(/upsertRecords?\('workout_sessions_custom'/g) ?? []).length, 1, 'the one guarded save');
   // The only other writer seeds a first week, and never over one.
   const chooser = readFileSync('src/lib/components/WeekChooser.svelte', 'utf8');
   assert.equal((chooser.match(/upsertRecords?\('workout_sessions_custom'/g) ?? []).length, 1);
   assert.match(chooser, /if \(await db\.table\('workout_schedule'\)\.where\('user_id'\)\.equals\(uid\)\.count\(\)\) return;/);
-});
-
-check('while a program runs, Train names the day after the program’s session', async () => {
-  const { readFileSync } = await import('node:fs');
-  const page = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
-  assert.match(page, /return s\?\.program \? s\.name : day\.label;/);
-  assert.match(page, /if \(w\.session_key\) return dayLabel\(w\);/, 'the hero’s “Next:” line');
-  assert.match(page, /\{dayLabel\(day\)\}/, 'the day cards');
 });
 
 // --- One body engine: trend, pace, learned burn, target --------------------
@@ -3414,12 +3332,11 @@ check('the line is judged on the trend, and a low that doesn’t hold a week can
 });
 
 check('a plan shows at its moment, the most specific moment first', () => {
-  const plans = { weekend: 'Leftovers in a box.', friday: 'Dinner decided early.', evening: 'Kitchen closed.', back: 'Walk, no lifting.' };
-  const m = { hour: 18, dow: 5, sportDay: false, backPain: null, overLine: false };
+  const plans = { weekend: 'Leftovers in a box.', friday: 'Dinner decided early.', evening: 'Kitchen closed.' };
+  const m = { hour: 18, dow: 5, sportDay: false, overLine: false };
   assert.equal(activePlan(plans, m)?.cue, 'friday');
   assert.equal(activePlan(plans, { ...m, dow: 6, hour: 11 })?.cue, 'weekend');
   assert.equal(activePlan(plans, { ...m, dow: 2, hour: 21 })?.cue, 'evening');
-  assert.equal(activePlan(plans, { ...m, backPain: 7 })?.cue, 'back', 'a bad back beats Friday');
   assert.equal(activePlan(plans, { ...m, dow: 2, hour: 12 }), null, 'Tuesday lunchtime: nothing to say');
   assert.equal(cueActive('badminton', { ...m, sportDay: true, hour: 16 }), false, 'before the session it isn’t “home from badminton” yet');
   assert.deepEqual(cleanPlans({ weekend: '  x  ', bogus: 'y', friday: '', line: 5 }), { weekend: 'x' });
@@ -3699,7 +3616,7 @@ check('the weather in words: the daytime odds outrank the day’s code', () => {
 
 const SAT_IN = {
   date: '2026-10-17', forecast: parseForecast(METEO)[0], day: { label: 'Rest', note: '', time: null }, session: null,
-  rateBack: true, plans: { weekend: 'Leftovers in a box for tomorrow.', friday: 'One plate.' },
+  plans: { weekend: 'Leftovers in a box for tomorrow.', friday: 'One plate.' },
   week: { share: 1850, budget: 13300, before: 9600, daysLeft: 2 },
 };
 
@@ -3708,8 +3625,8 @@ check('the briefing: weather in the title, the first job first, then the day, th
   assert.equal(b.title, 'Sat · 8–15° · rain from 14:00', 'the watch shows the title: the weather');
   assert.ok(b.title.length <= 40, 'short enough for a watch');
   assert.deepEqual(b.body.split('\n'), [
-    'Scale first, then rate your back.',
-    'Rest day: a walk and the daily back basics.',
+    'Scale first, before food or drink.',
+    'Rest day.',
     'Food: 1,850 today, 3,700 for the 2 days left.',
     'Weekend: Leftovers in a box for tomorrow.',
   ]);
@@ -3724,7 +3641,7 @@ check('the briefing names the session, a new week, the week’s last day, and Fr
   assert.match(mon.body, /^New week: 1,900 a day\.$/m);
   assert.ok(!/Weekend|Friday/.test(mon.body), 'a Monday carries no weekend plan');
 
-  const sun = composeBriefing({ ...SAT_IN, date: '2026-10-18', rateBack: false, week: { share: 2100, budget: 13300, before: 11200, daysLeft: 1 } });
+  const sun = composeBriefing({ ...SAT_IN, date: '2026-10-18', week: { share: 2100, budget: 13300, before: 11200, daysLeft: 1 } });
   assert.match(sun.body, /^Scale first, before food or drink\.$/m);
   assert.match(sun.body, /^Rest day\.$/m);
   assert.match(sun.body, /the week's last day/);
@@ -4203,29 +4120,6 @@ check('Today stays calm: one card for the day, no cards that said a little each'
   assert.match(today, /class="card td"/, 'the day in one card');
 });
 
-check('during Back Rebuild nothing judges the light loads', async () => {
-  const { programActive, programEnd } = await import('../src/lib/program.ts');
-  const p = { id: 'back-rebuild', start: '2026-10-19' };
-  assert.equal(programActive(p, '2026-10-11'), false, 'over a week out: business as usual');
-  assert.equal(programActive(p, '2026-10-17'), true, 'the week before: its sessions are already shown');
-  assert.equal(programActive(p, '2026-11-29'), true, 'the last day');
-  assert.equal(programActive(p, '2026-11-30'), false, 'over: the analytics come back');
-  assert.equal(programEnd(p), '2026-11-29');
-  assert.equal(programActive(null, '2026-10-20'), false);
-});
-
-check('Back Rebuild looks after the neck as well as the lower back', async () => {
-  const rb = await import('../src/lib/data/backRebuild.ts');
-  const all = [...rb.DAILY, ...rb.PHASES.flatMap((p) => p.sessions.flatMap((s) => s.exercises))];
-  assert.ok(rb.DAILY.some((e) => e.name === 'Chin Tuck'), 'deep neck flexors every day');
-  assert.ok(rb.PHASES.every((p) => p.sessions.some((s) => s.exercises.some((e) => /Prone Y Raise|Face Pull/.test(e.name)))), 'upper back in every phase');
-  assert.ok(!all.some((e) => /\(heavy\)/i.test(e.name)), 'nothing loaded "heavy" through the shoulders and neck by name');
-  for (const e of all.filter((x) => /Carry/.test(x.name))) assert.match(e.tip, /shoulders|shrug/i, `${e.name}: carried with the shoulders down`);
-  for (const e of all.filter((x) => /Deadlift/.test(x.name) && /Trap-Bar/.test(x.name))) assert.match(e.tip, /eyes|look up/i, `${e.name}: eyes level or down`);
-  for (const e of all.filter((x) => /Pulldown/.test(x.name))) assert.match(e.tip, /never behind the neck/);
-  assert.ok(rb.RED_FLAGS.some((f) => /arm or hand/.test(f)) && rb.RED_FLAGS.some((f) => /Clumsy hands/.test(f)), 'the neck’s red flags, not only the low back’s');
-});
-
 // ── The next-stop moment ─────────────────────────────────────────────────────
 check('a next stop is reached when the trend stays there three days, not on one lucky morning', async () => {
   const { heldUnder, milestoneState } = await import('../src/lib/body/milestone.ts');
@@ -4292,25 +4186,6 @@ check('the letter from last month tells the month back, in the user’s words', 
 check('the briefing on the 1st points at the letter', () => {
   assert.match(composeBriefing({ ...SAT_IN, date: '2026-11-01', letter: 'October' }).body, /^October, looking back, is on Today\.$/m);
   assert.ok(!composeBriefing(SAT_IN).body.includes('looking back'));
-});
-
-check('the app never says "Badminton 18:15" in a fortnight the plan says no games', async () => {
-  const { badmintonRule } = await import('../src/lib/program.ts');
-  const p = { id: 'back-rebuild', start: '2026-10-19' };
-  assert.equal(badmintonRule(p, '2026-10-21').play, false, 'weeks 1–2: no games');
-  assert.match(badmintonRule(p, '2026-10-21').text, /no games/);
-  assert.equal(badmintonRule(p, '2026-11-04').play, true, 'week 3: light rallies');
-  assert.match(badmintonRule(p, '2026-11-04').text, /no smashes/);
-  assert.equal(badmintonRule(p, '2026-12-02'), null, 'after the program: the user’s own week');
-  assert.equal(badmintonRule(null, '2026-10-21'), null);
-  const wed = { ...SAT_IN, date: '2026-10-21', rateBack: true, day: { label: 'Cardio & Agility', note: 'Badminton club', time: '18:15' },
-    plans: { badminton: 'A shake first.', evening: 'Kitchen closed.' } };
-  const off = composeBriefing({ ...wed, badmintonRule: badmintonRule(p, '2026-10-21') });
-  assert.match(off.body, /^Badminton: no games yet\. Footwork drills or a walk, 30 min\.$/m, 'no time: there is no session to be at');
-  assert.ok(!/A shake first/.test(off.body), 'no "after badminton" plan on a night without badminton');
-  const on = composeBriefing({ ...wed, date: '2026-11-04', badmintonRule: badmintonRule(p, '2026-11-04') });
-  assert.match(on.body, /^18:15 Badminton: light rallies, 45 min at most, no smashes\. Warm up 10 min\.$/m);
-  assert.match(composeBriefing(wed).body, /^18:15 Badminton\.$/m, 'no program: as before');
 });
 
 // --- Units: kg, pounds and stone, everywhere a body weight is read or typed ---
@@ -4572,7 +4447,7 @@ check('a sport night is anyone’s sport: the plan for after it is named for no 
   assert.equal(c.label, 'After sport'); assert.doesNotMatch(c.when + c.label, /badminton/i);
   const { composeBriefing } = await import('../src/lib/briefing.ts');
   const b = composeBriefing({ date: '2026-10-21', forecast: null, day: { label: 'Cardio & Agility', note: 'Football — this counts as training', time: '19:00' },
-    session: null, rateBack: false, plans: { badminton: 'Shake first.' }, week: null, usual: null });
+    session: null, plans: { badminton: 'Shake first.' }, week: null, usual: null });
   assert.match(b.body, /^19:00 Football\.$/m); assert.match(b.body, /^After sport: Shake first\.$/m);
 });
 

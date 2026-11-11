@@ -25,10 +25,6 @@ export interface PulseInput {
   /** The loss a week the plan is built for (stores/body target), when it is
    *  one: names what a too-noisy trend can't show yet. */
   planKgPerWeek?: number | null;
-  /** The day training restarted (a program's first day), while it's under two
-   *  weeks ago: new training holds water, and the scale can rise as the work
-   *  starts. null otherwise. */
-  restartedOn?: string | null;
   /** Keeping it off (user_settings.keep_since): the range and how the trend
    *  has kept to it. null while losing toward the goal. */
   keep?: KeepInput | null;
@@ -145,14 +141,6 @@ export function pulse(i: PulseInput): Pulse {
         : i.pace === 'slower' ? `Down ${r} a week, slower than the plan.${eta}`
         : `Down ${r} a week.${eta}`;
     }
-  }
-
-  // Two weeks after a restart, the water has settled; until then a flat or
-  // rising trend is the work starting, not the plan failing.
-  if (i.restartedOn && (tone === 'warn' || tone === 'na')) {
-    const d = new Date(`${i.restartedOn}T12:00:00`);
-    d.setDate(d.getDate() + 14);
-    story += ` New training can hold extra water for a week or two: judge the trend from ${d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' })}.`;
   }
 
   const lost = i.firstKg != null && kg != null ? i.firstKg - kg : null;

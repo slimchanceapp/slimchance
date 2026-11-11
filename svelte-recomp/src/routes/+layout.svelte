@@ -35,7 +35,6 @@
   import { saveMomentInputs, confirmWeight, answerWeight, nativeKg, type MomentContext } from '$lib/momentActions';
   import { onMomentsInput } from '$lib/nativeAlarms';
   import { offTrend } from '$lib/body';
-  import { badmintonRule } from '$lib/program';
   import { sportOf } from '$lib/plans';
   import { coachOn, coachNotes, brainNote, runBrainIfDue, setCoach, forgetCoach } from '$lib/stores/brain';
   import { untrack } from 'svelte';
@@ -382,8 +381,7 @@
       watchTrains: (($_nudgeActivity as any[]) || []).some((a) => a.source === 'watch' && a.date >= shiftYmd(-28)),
       plans: ($_profile as any)?.plans ?? null,
       dow,
-      sportDay: !!sportOf(scheduledToday)
-        && !(sportOf(scheduledToday) === 'Badminton' && badmintonRule(($_profile as any)?.program, today)?.play === false),
+      sportDay: !!sportOf(scheduledToday),
       daysSinceWeighIn,
       briefing: briefingOn,
       hold: holdOn,

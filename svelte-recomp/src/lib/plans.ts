@@ -13,7 +13,7 @@
 
 // 'badminton' is the plan for after any sport: the id stays because plans are
 // stored under it (it began as badminton).
-export type PlanCue = 'line' | 'back' | 'badminton' | 'friday' | 'weekend' | 'evening';
+export type PlanCue = 'line' | 'badminton' | 'friday' | 'weekend' | 'evening';
 
 export type Plans = Partial<Record<PlanCue, string>>;
 
@@ -31,7 +31,6 @@ export interface CueInfo {
  *  general, and the line beats everything. */
 export const CUES: CueInfo[] = [
   { cue: 'line', when: 'When my trend goes over my ceiling', label: 'Over your ceiling', suggestion: 'Two weeks: the weekend at my weekday number, and the scale every morning.' },
-  { cue: 'back', when: 'When my back says 6 or more', label: 'Back day', suggestion: 'A 30-minute walk instead of the gym. No lifting today.' },
   { cue: 'badminton', when: 'When I get home from my sport', label: 'After sport', suggestion: 'A shake first, then dinner — never dinner starving.' },
   { cue: 'friday', when: 'When it’s Friday evening', label: 'Friday evening', suggestion: 'Dinner decided before I leave work: one plate, protein first.' },
   { cue: 'weekend', when: 'On the weekend', label: 'Weekend', suggestion: 'Leftovers go in a box for tomorrow, not in me.' },
@@ -45,8 +44,6 @@ export interface PlanMoment {
   dow: number;
   /** Today is a sport day (the schedule says so, or the watch saw one). */
   sportDay: boolean;
-  /** This morning's back rating, if any. */
-  backPain: number | null;
   /** The trend is over the ceiling. */
   overLine: boolean;
 }
@@ -67,7 +64,6 @@ export function sportOf(day: { label?: string | null; note?: string | null } | n
 export function cueActive(cue: PlanCue, m: PlanMoment): boolean {
   switch (cue) {
     case 'line': return m.overLine;
-    case 'back': return m.backPain != null && m.backPain >= 6;
     case 'badminton': return m.sportDay && m.hour >= 17;
     case 'friday': return m.dow === 5 && m.hour >= 15;
     case 'weekend': return m.dow === 6 || m.dow === 0;
@@ -98,7 +94,7 @@ export function cleanPlans(input: unknown): Plans {
 /** The plan a weekly review asks about: the one for the moments that decide
  *  most weeks, first. */
 export function planToReview(plans: Plans): (CueInfo & { then: string }) | null {
-  for (const cue of ['weekend', 'friday', 'badminton', 'evening', 'back'] as PlanCue[]) {
+  for (const cue of ['weekend', 'friday', 'badminton', 'evening'] as PlanCue[]) {
     const then = plans[cue]?.trim();
     if (then) return { ...CUES.find((c) => c.cue === cue)!, then };
   }

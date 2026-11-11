@@ -6,7 +6,6 @@ import { get, writable } from 'svelte/store';
 import { momentsAck, momentsPending, type MomentInput } from '$lib/nativeAlarms';
 import { NeedsConfirm, saveWeighIn } from '$lib/body/weighIn';
 import { saveFoods } from '$lib/nutrition/foodLog';
-import { upsertRecord } from '$lib/stores/sync';
 import { notYetLogged } from '$lib/nutrition';
 import { parseWt } from '$lib/units';
 
@@ -44,8 +43,6 @@ export async function saveMomentInputs(ctx: MomentContext): Promise<void> {
           if (get(confirmWeight)?.id === it.id) continue; // already asking
           // Sent twice from the notification when far from the trend: answered.
           await saveWeighIn(ctx.uid, nativeKg(it), { ...weighCtx(ctx), today: it.date, confirmed: !!it.confirmed });
-        } else if (it.type === 'back') {
-          await upsertRecord('daily_logs', { user_id: ctx.uid, date: it.date, back_pain: it.value });
         } else if (it.type === 'meal') {
           // Anything already logged that day (in the app, or by a second
           // press) isn't logged again.

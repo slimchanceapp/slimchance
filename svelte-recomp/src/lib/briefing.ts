@@ -75,10 +75,8 @@ export interface BriefingInput {
   forecast: DayForecast | null;
   /** That weekday's row of the training schedule. */
   day: { label?: string | null; note?: string | null; time?: string | null } | null;
-  /** The gym session on it (a program's, while one runs). */
+  /** The gym session on it. */
   session: { name: string } | null;
-  /** A program that paces itself on the morning back rating is running. */
-  rateBack: boolean;
   plans: Plans | null;
   /** The day's share of the week's food (body.week / body.tomorrow). */
   week: { share: number; budget: number; before: number; daysLeft: number } | null;
@@ -87,8 +85,6 @@ export interface BriefingInput {
   usual?: { names: string[]; kcal: number } | null;
   /** On the 1st: the month whose letter is waiting on Today. */
   letter?: string | null;
-  /** A program's rule for badminton days (program.badmintonRule). */
-  badmintonRule?: { text: string; play: boolean } | null;
 }
 
 export interface Briefing { date: string; title: string; body: string }
@@ -102,9 +98,7 @@ export function composeBriefing(i: BriefingInput): Briefing {
   const hay = `${i.day?.label ?? ''} ${i.day?.note ?? ''}`;
   const time = i.day?.time ? i.day.time.slice(0, 5) : '';
   const sport = sportOf(i.day);
-  // A badminton night the program says isn't one yet: no time, no plan for after.
-  const rule = sport === 'Badminton' ? i.badmintonRule ?? null : null;
-  const playing = !!sport && rule?.play !== false;
+  const playing = !!sport;
 
   const what = i.session ? i.session.name
     : sport ? sport
@@ -112,12 +106,8 @@ export function composeBriefing(i: BriefingInput): Briefing {
     : 'Rest day';
   const rest = !i.session && what === 'Rest day';
 
-  const lines = [i.rateBack ? 'Scale first, then rate your back.' : 'Scale first, before food or drink.'];
-  lines.push(rest
-    ? (i.rateBack ? 'Rest day: a walk and the daily back basics.' : 'Rest day.')
-    : rule
-      ? `${playing && time ? `${time} ` : ''}Badminton: ${rule.text}`
-      : `${time ? `${time} ` : ''}${what}.`);
+  const lines = ['Scale first, before food or drink.'];
+  lines.push(rest ? 'Rest day.' : `${time ? `${time} ` : ''}${what}.`);
 
   const w = i.week;
   if (w && w.share > 0) {

@@ -3,7 +3,6 @@ import { liveQuery } from 'dexie';
 import db from '$lib/db/dexie';
 import { userId } from './user';
 import { nowTick } from './refresh';
-import { overlaySessions } from '$lib/program';
 import { todayYmd } from '$lib/date';
 import { useUnits } from './units';
 
@@ -170,23 +169,10 @@ export function liveSchedule() {
   return { subscribe: scheduleResults.subscribe };
 }
 
-// The sessions every screen trains from: the user's own, with an active
-// program's sessions laid over their gym days (see $lib/program). One place, so
-// Today, Train, the nudges and recovery can never disagree about what today's
-// session is — and the user's own plan returns untouched when the program ends.
-const overlaidSessions = derived(
-  [sessionResults, scheduleResults, profileResult, nowTick],
-  ([sessions, schedule, profile]) => overlaySessions(sessions, schedule, profile?.program, todayYmd()),
-);
-
-/** The user's own sessions, before any program is laid over them: what
- *  overlaySessions needs to work out another day's session (the briefing). */
-export function liveOwnSessions() {
-  return { subscribe: sessionResults.subscribe };
-}
-
+// The sessions every screen trains from: the user's own. One place, so Today,
+// Train, the nudges and recovery never disagree about today's session.
 export function liveWorkoutSessions() {
-  return { subscribe: overlaidSessions.subscribe };
+  return { subscribe: sessionResults.subscribe };
 }
 
 // All workout_logs rows for the current user (every date/exercise). Kept as

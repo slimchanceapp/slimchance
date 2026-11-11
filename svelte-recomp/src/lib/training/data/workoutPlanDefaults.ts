@@ -23,8 +23,6 @@ export interface PlanExercise {
 export interface PlanSession {
   key: string; name: string; duration: string; focus: string;
   exercises: PlanExercise[];
-  /** Set when a program (see $lib/program) is standing in for the user's own session. */
-  program?: { name: string; week: number; weekInPhase: number };
 }
 
 export interface PlanDay {

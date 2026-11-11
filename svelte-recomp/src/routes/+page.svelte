@@ -40,7 +40,6 @@
   import FitAsk from '$lib/components/FitAsk.svelte';
   import { primaryActivity, trainedDates } from '$lib/training';
   import WeekCheckIn from '$lib/components/WeekCheckIn.svelte';
-  import { badmintonRule } from '$lib/program';
   import { nowTick, todayDate } from '$lib/stores/refresh';
   import WeightInput from '$lib/components/WeightInput.svelte';
   import { wtNum, unitWord } from '$lib/units';
@@ -254,10 +253,7 @@
   });
 
   // The moment the plans are matched against (see $lib/plans).
-  // While a program says no games, a badminton night isn't one: no "after
-  // badminton" plan, and the Today card says what the plan says instead.
-  const bRule = $derived(badmintonRule(($_profile as any)?.program, today));
-  const sportDay = $derived((!!sportOf(todaySchedule) && !(sportOf(todaySchedule) === 'Badminton' && bRule?.play === false)) || watchToday?.kind === 'sport');
+  const sportDay = $derived(!!sportOf(todaySchedule) || watchToday?.kind === 'sport');
 
   // The first week: one next step at a time, until the trend arrives (the
   // scale's own step is the card at the top).
@@ -387,7 +383,7 @@
     </div>
   {/if}
   <!-- The ceiling, when the trend is over it, and the plan whose moment it is. -->
-  <CommitmentAlerts moment={{ hour: nowHour, dow: dayIdx, sportDay, backPain: todayLog?.back_pain ?? null }} />
+  <CommitmentAlerts moment={{ hour: nowHour, dow: dayIdx, sportDay }} />
   <!-- The AI coach's one pattern for today, when it's on and found one. -->
   <CoachNoticed />
   {#if step && plan}
@@ -438,7 +434,7 @@
   <div class="td-row" use:cardNav={`${base}/workouts`}>
     <span class="td-k">{dayInfo.kind === 'gym' ? 'Gym' : dayInfo.kind === 'active' ? dayInfo.label : $_schedule.length ? 'Rest' : 'Move'}</span>
     <span class="td-v">
-      {#if todaySession}{todaySession.name}{:else if dayInfo.label === 'Badminton' && bRule}{bRule.text[0].toUpperCase() + bRule.text.slice(1)}{:else if dayInfo.kind === 'active'}{todaySchedule?.time ? `at ${todaySchedule.time}` : 'today'}{:else}A walk counts{/if}{#if trainedToday}{' '}<span class="td-done">✓ done</span>{/if}
+      {#if todaySession}{todaySession.name}{:else if dayInfo.kind === 'active'}{todaySchedule?.time ? `at ${todaySchedule.time}` : 'today'}{:else}A walk counts{/if}{#if trainedToday}{' '}<span class="td-done">✓ done</span>{/if}
     </span>
     <span class="td-go" aria-hidden="true">›</span>
   </div>

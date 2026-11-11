@@ -26,7 +26,6 @@ import { weekBudget, weekShape, type WeekBudget, type WeekShape } from '$lib/nut
 import { LINE_MARGIN_KG, lineState, type LineState } from '$lib/body';
 import { heldUnder, milestoneState, type MilestoneState } from '$lib/body';
 import { pulse, type KeepInput, type Pulse } from '$lib/body';
-import { programWeek } from '$lib/program';
 import { explainUp, type UpExplained } from '$lib/body';
 import { sinceStart, type SinceStart } from '$lib/sinceStart';
 import { cycleInfo, cycleNote } from '$lib/cycle';
@@ -275,8 +274,6 @@ export const trendSeries: Readable<Array<{ date: string; kg: number; trendKg: nu
 /** The Today hero and the page's glow, read off the same trend (src/lib/pulse.ts).
  *  While keeping it off, with the days the trend stayed under the ceiling. */
 export const todayPulse: Readable<Pulse> = derived([body, liveProfile(), line, liveWeights()], ([$b, $p, $line, $weights]) => {
-  const program = ($p as any)?.program ?? null;
-  const week = programWeek(program, $b.today);
   let keep: KeepInput | null = null;
   if ($b.keepSince && $b.goalKg != null) {
     const weights = (($weights as any[]) ?? []).map((w) => ({ date: w.date, weight: +w.weight }));
@@ -296,7 +293,6 @@ export const todayPulse: Readable<Pulse> = derived([body, liveProfile(), line, l
   return pulse({
     weight: $b.weight, pace: $b.pace, firstKg: $b.firstKg, goalKg: $b.goalKg, next: $b.next,
     planKgPerWeek: $b.target.direction === 'lose' ? $b.target.planKgPerWeek : null,
-    restartedOn: week === 1 || week === 2 ? program.start : null,
     keep,
   });
 });

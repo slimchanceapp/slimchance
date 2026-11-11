@@ -35,7 +35,6 @@ paging.ts
 plans.ts
 training/plates.ts
 profile.ts
-program.ts
 body/pulse.ts
 nutrition/quickAdd.ts
 health/readiness.ts

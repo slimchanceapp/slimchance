@@ -8,7 +8,6 @@
   import { userId } from '$lib/stores/user';
   import { upsertRecord, syncStatus } from '$lib/stores/sync';
   import { liveSchedule, liveWorkoutSessions, liveWorkoutLogs, liveSessionCompletions, liveGoalReason, liveActivitySessions, liveProfile } from '$lib/stores/live';
-  import { programActive, programEnd } from '$lib/program';
   import type { WorkoutSet } from '$lib/db/dexie';
   import db from '$lib/db/dexie';
   import MiniChart from '$lib/components/MiniChart.svelte';
@@ -36,14 +35,6 @@
 
   let sessionKey = $state<string | null>(null);
 
-  // While a rehab program runs, the analytics that measure you against your old
-  // heavy training (volume, load balance, muscle recovery, PRs, "neglected")
-  // are parked: light loads are the plan, and "volume down 40%" would read as
-  // failing at exactly what you're meant to be doing. One tap still shows them.
-  const _gymProfile = liveProfile();
-  const gymProgram = $derived(($_gymProfile as any)?.program ?? null);
-  const inProgram = $derived(programActive(gymProgram, $todayDate));
-  const analytics = $derived(!inProgram);
   let builderMode = $state(false);
   let selectedGroup = $state<string | null>(null);
   // UPCOMING = what to do next. HISTORY = what actually happened.
@@ -169,8 +160,7 @@
   // program is standing in for. The schedule row itself keeps its own label
   // (the day editor reads and saves that), so nothing here is ever persisted.
   function dayLabel(day: { label: string; session_key?: string | null }): string {
-    const s = day.session_key ? sessions.get(day.session_key) : undefined;
-    return s?.program ? s.name : day.label;
+    return day.label;
   }
 
   function closeModal() { sessionKey = null; }
@@ -211,7 +201,7 @@
    *  their plan, so it is never saved. One function instead of four copies. */
   async function saveSession(key: string | null, change: (s: PlanSession) => Partial<PlanSession>, what: string) {
     const sess = key ? sessions.get(key) : undefined;
-    if (!sess || !uid || sess.program) return;
+    if (!sess || !uid) return;
     try {
       await upsertRecord('workout_sessions_custom', {
         user_id: uid, ...sess, ...change(sess), updated_at: new Date().toISOString(),
@@ -1106,13 +1096,9 @@
         {:else}
           <div style="font-size:1.125rem;font-weight:700;color:var(--text)">{sess.name}</div>
         {/if}
-        {#if sess.program}
-          <span class="prog-tag">{sess.program.name} · wk {sess.program.week}</span>
-        {:else}
           <span style="cursor:pointer;color:var(--amber);font-size:0.8125rem;margin-left:8px" onclick={() => editingSession = !editingSession} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); editingSession = !editingSession; } }}>
             {editingSession ? 'Done ✓' : 'Edit ✎'}
           </span>
-        {/if}
       </div>
       <div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">{sess.duration}</div>
       {#if todayVolume > 0}
@@ -1138,14 +1124,14 @@
                 <div style="font-size:0.6875rem;color:var(--muted);margin-bottom:6px">{ex.muscle}</div>
               {/if}
               <div class="ex-sets-row">
-                <div class="ex-set-box" class:now={sess.program?.weekInPhase === 1}>
-                  <div class="label">{sess.program ? `Wk ${sess.program.week - sess.program.weekInPhase + 1}` : 'W1'}</div>
+                <div class="ex-set-box">
+                  <div class="label">W1</div>
                   {#if editingSession}
                     <input value={ex.w1} onchange={(e) => saveExerciseField(sessionKey, i, 'w1', (e.target as HTMLInputElement).value)} class="value-input">
                   {:else}<div class="value">{ex.w1}</div>{/if}
                 </div>
-                <div class="ex-set-box" class:now={sess.program?.weekInPhase === 2}>
-                  <div class="label">{sess.program ? `Wk ${sess.program.week - sess.program.weekInPhase + 2}` : 'W2'}</div>
+                <div class="ex-set-box">
+                  <div class="label">W2</div>
                   {#if editingSession}
                     <input value={ex.w2} onchange={(e) => saveExerciseField(sessionKey, i, 'w2', (e.target as HTMLInputElement).value)} class="value-input">
                   {:else}<div class="value">{ex.w2}</div>{/if}
@@ -1234,7 +1220,6 @@
 </div>
 
 
-{#if analytics}
 <!-- Train answers "what this week"; how it is going waits in one closed row
      (2026-11-11, the backlog's last Train cut). Closed, none of it is drawn. -->
 <DetailRow title="How your training is going" hint="Muscle recovery, what hit each muscle, and the patterns in your history">
@@ -1345,7 +1330,6 @@
 {/if}
   <WorkoutInsights />
 </DetailRow>
-{/if}
 {/if}
 
 <style>
@@ -1463,7 +1447,4 @@
   .ins-item{font-size:0.7188rem;color:var(--text);line-height:1.45;background:var(--bg3);border:1px solid var(--border);border-radius:9px;padding:8px 10px}
   .ins-item.good{border-color:rgba(46,204,113,.3);background:rgba(46,204,113,.08)}
   .ins-item.warn{border-color:rgba(255,209,102,.3);background:rgba(255,209,102,.08)}
-  .prog-tag{flex-shrink:0;margin-left:8px;font-size:0.6875rem;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border:1px solid var(--border2);border-radius:4px;padding:2px 6px}
-  .ex-set-box.now{border-color:var(--text)}
-  .ex-set-box.now .label{color:var(--text)}
 </style>

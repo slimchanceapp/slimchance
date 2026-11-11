@@ -307,7 +307,6 @@ export async function momentsStatus(): Promise<MomentsState | null> {
 
 export type MomentInput =
   | { id: string; date: string; at: string; type: 'weight'; kg: number; confirmed?: boolean }
-  | { id: string; date: string; at: string; type: 'back'; value: number }
   | { id: string; date: string; at: string; type: 'meal'; items: Array<{ name: string; kcal: number; protein_g: number; carbs_g: number; fat_g: number; grams?: number | null }> };
 
 export async function momentsPending(): Promise<MomentInput[]> {

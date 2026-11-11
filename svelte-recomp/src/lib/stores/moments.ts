@@ -6,13 +6,11 @@
 // The Alarms card shows them, so what arrives is never a surprise.
 import { derived, get, writable, type Readable } from 'svelte/store';
 import { body } from './body';
-import { liveDailyLogs, liveFoodLogs, liveOwnSessions, liveProfile, liveSchedule, liveWeights } from './live';
+import { liveDailyLogs, liveFoodLogs, liveProfile, liveSchedule, liveWeights, liveWorkoutSessions } from './live';
 import { upsertRecord } from './sync';
 import { userId } from './user';
 import { composeBriefing, type Briefing, type DayForecast } from '$lib/briefing';
 import { composeHold, holdAfter, HOLD_UNTIL } from '$lib/hold';
-import { badmintonRule, overlaySessions, programWeek } from '$lib/program';
-import { WEEKS } from '$lib/data/backRebuild';
 import { cleanPlans, sportOf } from '$lib/plans';
 import { usualBreakfast, type QuickFood } from '$lib/nutrition';
 import { shiftYmd } from '$lib/date';
@@ -41,8 +39,9 @@ export async function refreshForecast(ask = false): Promise<void> {
   if (f && JSON.stringify(f) !== JSON.stringify(get(forecast))) forecast.set(f);
 }
 
-/** What the morning briefing's buttons do: weigh in, rate the back while a
- *  program runs, log the usual breakfast when there is one. */
+/** What the morning briefing's buttons do: weigh in, and log the usual
+ *  breakfast when there is one. `back` stays false for builds that still read
+ *  it: the back rating left with the rehab program (decision 0009). */
 export interface MomentActions {
   weigh: boolean; back: boolean; meal: { label: string; kcal: number; items: QuickFood[] } | null;
   /** The weights the app saves without asking (trend ± OFF_TREND_KG); the
@@ -55,17 +54,14 @@ export interface MomentActions {
 
 /** The morning briefing written for today and tomorrow, with its buttons. */
 export const briefings: Readable<Array<Briefing & { actions: MomentActions }>> = derived(
-  [body, liveSchedule(), liveOwnSessions(), liveProfile(), forecast, liveFoodLogs(), liveDailyLogs(), liveWeights()],
+  [body, liveSchedule(), liveWorkoutSessions(), liveProfile(), forecast, liveFoodLogs(), liveDailyLogs(), liveWeights()],
   ([$body, $schedule, $sessions, $profile, $forecast, $food, $daily, $weights]) => {
     const sched = ($schedule as any[]) ?? [];
-    const program = ($profile as any)?.program;
     const plans = cleanPlans(($profile as any)?.plans);
     return [$body.today, shiftYmd(1, new Date(`${$body.today}T12:00:00`))].map((date, i) => {
       const day = sched.find((s) => s.day_of_week === new Date(`${date}T12:00:00`).getDay()) ?? null;
-      // That day's session, program and all: what Today will show then.
-      const session = day?.session_key ? overlaySessions($sessions, sched, program, date).get(day.session_key) ?? null : null;
-      const week = programWeek(program, date);
-      const rateBack = week >= 1 && week <= WEEKS;
+      // That day's session: what Today will show then.
+      const session = day?.session_key ? ($sessions as Map<string, { name: string }>).get(day.session_key) ?? null : null;
       const usual = usualBreakfast($food as any[], date);
       // The 1st: point at the letter from the month just gone, if it has one.
       const letter = date.endsWith('-01')
@@ -74,14 +70,13 @@ export const briefings: Readable<Array<Briefing & { actions: MomentActions }>> =
       return {
         ...composeBriefing({
           date, forecast: $forecast?.find((f) => f.date === date) ?? null,
-          day, session, rateBack, plans,
+          day, session, plans,
           week: i === 0 ? $body.week : $body.tomorrow,
           usual: usual ? { names: usual.items.map((x) => x.name), kcal: usual.kcal } : null,
           letter,
-          badmintonRule: badmintonRule(program, date),
         }),
         actions: {
-          weigh: true, back: rateBack, meal: usual ? { label: 'Usual breakfast', kcal: usual.kcal, items: usual.items } : null,
+          weigh: true, back: false, meal: usual ? { label: 'Usual breakfast', kcal: usual.kcal, items: usual.items } : null,
           // In the person's own unit: the phone compares what they type with it.
           weighRange: $body.currentKg != null
             ? [Math.round(toUnit($body.currentKg - OFF_TREND_KG) * 10) / 10, Math.round(toUnit($body.currentKg + OFF_TREND_KG) * 10) / 10] as [number, number] : null,
@@ -105,8 +100,7 @@ export const holds: Readable<Array<Briefing | null>> = derived(
       const day = sched.find((s) => s.day_of_week === new Date(`${date}T12:00:00`).getDay());
       const hold = composeHold({
         date, plans, why: ($profile as any)?.why ?? null,
-        // A night the program says no games isn't a sport night.
-        sportDay: !!sportOf(day) && !(sportOf(day) === 'Badminton' && badmintonRule(($profile as any)?.program, date)?.play === false),
+        sportDay: !!sportOf(day),
         food: i === 0 ? {
           kcal: $body.intake.get(date)?.kcal ?? 0, share: $body.week?.share ?? null,
           proteinG: $body.intake.get(date)?.protein ?? 0, proteinTargetG: $body.proteinTargetG,
