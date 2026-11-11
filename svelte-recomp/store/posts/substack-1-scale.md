@@ -48,7 +48,7 @@ units, so the gap cancels out. A rough, consistent log is enough. It never
 asks you to log more.
 
 It's free, with no ads and no trackers, and it's open source. It runs in any
-browser (on iPhone, add it to your home screen) and on Android.
+browser, iPhone included, and on Android.
 
 [Try it at slimchance.app](https://slimchance.app/?from=substack)
 

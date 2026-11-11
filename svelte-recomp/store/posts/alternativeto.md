@@ -5,7 +5,7 @@ minutes; their editors review it before it shows.
 
 - **Name:** Slim Chance
 - **Website:** https://slimchance.app/?from=alternativeto
-- **Platforms:** Web (works on iPhone from the home screen), Android (testing)
+- **Platforms:** Web (works on iPhone in Safari), Android (testing)
 - **License:** Free, open source (AGPL-3.0)
 - **Source:** https://github.com/slimchanceapp/slimchance
 - **Alternative to:** Happy Scale, MyFitnessPal, Lose It!, Libra
