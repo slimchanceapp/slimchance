@@ -5,7 +5,7 @@
   import { liveWeights, liveGoal, liveLog, liveGoalReason, liveTracks, liveProfile } from '$lib/stores/live';
   import { ageFrom } from '$lib/profile';
   import { projectGoal, projectGoalWithTdee, ACTIVITY_LABELS, type ActivityLevel } from '$lib/nutrition';
-  import { waterTargetLitres } from '$lib/coach';
+  import { waterTargetLitres } from '$lib/nutrition';
   import { body } from '$lib/stores/body';
   import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import MiniChart from '$lib/components/MiniChart.svelte';

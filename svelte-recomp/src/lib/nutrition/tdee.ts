@@ -259,3 +259,26 @@ function floorIfCut(target: number, direction: GoalDirection, gender?: 'male' | 
   if (direction !== 'lose') return target;
   return Math.max(target, CUT_FLOOR[gender ?? 'male']);
 }
+
+// From coach.ts on 2026-11-11, when the rest of it (the old daily-focus rules)
+// turned out to have no screen left: the two targets still in use.
+/**
+ * Extract the TDEE-backed daily intake target the user committed to, which the
+ * "Set as my goal" flow embeds into user_settings.goal_reason as
+ * "...target intake ~2100 kcal/day...". Returns null when no such goal exists.
+ */
+export function parseCalorieTarget(goalReason: string | null | undefined): number | null {
+  if (!goalReason) return null;
+  const m = goalReason.match(/target intake\s*~?\s*([0-9]{3,5})\s*kcal/i);
+  if (!m) return null;
+  const v = parseInt(m[1], 10);
+  return v > 0 ? v : null;
+}
+
+/** Suggested daily water target in LITRES — ~30 ml/kg of fluid, sane bounds. */
+export function waterTargetLitres(weightKg: number | null): number {
+  if (!weightKg || weightKg <= 0) return 3;
+  const l = (weightKg * 30) / 1000; // 30 ml/kg
+  const clamped = Math.max(2.5, Math.min(4, l));
+  return Math.round(clamped / 0.25) * 0.25; // nearest 250 ml
+}

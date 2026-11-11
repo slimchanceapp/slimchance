@@ -7,7 +7,6 @@ nutrition/adaptiveTdee.ts
 brain.ts
 briefing.ts
 cheer.ts
-coach.ts
 config.ts
 cycle.ts
 date.ts

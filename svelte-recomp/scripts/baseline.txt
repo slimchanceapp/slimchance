@@ -22,7 +22,6 @@ Samsung is recognised — the gap that broke the old regex
 Slim Chance offers no medical features: no medication log and no rehab program (Google Play)
 Today shows one next thing at a time, and today’s plan
 Today stays calm: one card for the day, no cards that said a little each
-Today’s Focus is one voice, and silent on a good day
 Train turns orange only after a planned day passes without training, never on a Monday morning
 a Capacitor plugin proxy is never returned from an async function
 a Capacitor weekday is one ahead of a JS getDay()
@@ -87,7 +86,6 @@ a session built in the Quick Builder is logged like any other
 a smart scale’s weigh-ins come in one a day, never our own, never asked of an old app
 a sport night is anyone’s sport: the plan for after it is named for no one sport
 a stall with falling steps names moving less, from the same steps trend as the watch tool, and yes/no watch claims share one careful rule
-a stalled trend leads the coach, and the log it contradicts is not praised
 a steady gain reads as progress when the goal is to gain
 a surplus is fine when the goal is to GAIN
 a table pull pages past the server’s 1000-row cap
@@ -113,7 +111,6 @@ adding a write type earns a fresh permission prompt
 age is derived from birth year, so it never goes stale
 alarms are armed from the shell, not only from the Alarms page
 an answer about your numbers is shown only when every number is grounded and medicine goes to the doctor
-an empty feed folds to nothing rather than throwing
 an empty log by the afternoon is no nudge: a fast and a gap look the same to a clock
 an empty week is honest and never throws
 an exported file can actually be handed to another app
@@ -122,7 +119,6 @@ an incomplete profile returns null rather than inventing a height
 an over-fast cut is flagged as a lever
 an unknown template id falls back rather than producing a broken week
 an unlogged workout still counts, and sport always counts
-an unmapped coach id is still shown, never silently dropped
 an upstream error never carries a Gemini key back to the app, old format or new
 any AI assistant can ask Slim Chance for the trend and the chance over MCP, and nothing is stored
 badminton loads the muscles it actually works
@@ -153,7 +149,6 @@ drop-off is counted in our own database, by a fixed list, and only the owner rea
 during Back Rebuild nothing judges the light loads
 each goes out at the first unlock inside its window (MomentClock.java)
 each person’s first link tag is counted with the setup numbers, by tag, never by person
-each topic leads with its most severe item and counts the rest
 entries logged together become one re-loggable meal
 equipment is inferred from the exercise name
 every brand has usable setup steps and a Health Connect mention
@@ -175,7 +170,6 @@ falling lifts read as muscle at risk
 falls back to the fullest source when there is no preference
 filenames sort by date and say what they are
 flat weight with rising strength is recomp
-focus folds into at most three topics, weight becomes the headline
 food has exactly one way in
 food is saved in one place, so the notification logs it the way the app does
 free models’ replies parse even with reasoning and fences around the JSON
@@ -243,7 +237,6 @@ no screen tells a gaining user to cut
 no separator opens an {#if}: Svelte drops the space before it
 no signing key or key password is in this repo
 no streak alarm: the user’s own plan fires before its moment instead
-no weight item means the worst topic supplies the headline
 nobody can raise their own AI allowance, so no one account can switch AI off for everyone
 noise larger than the signal is refused, not guessed at
 nonsense heights do not count as complete
@@ -337,7 +330,6 @@ the coach brain has no reach: no tools, no one else's data, off until consent, c
 the coach brain is safe: nothing harmful gets through, whatever the AI was told or tricked into
 the coach brain sees only the app's own numbers, and nothing it writes goes out unchecked
 the coach never assumes the user is cutting
-the coach never judges protein by the clock: the log can’t say when food was eaten
 the coach plans the next days inside the floor, and the app does every sum
 the coach’s evening note never names a time or a session that will have passed when it shows
 the coach’s plan is kept, and its meals are ticked as they are logged
@@ -421,7 +413,6 @@ when the AI’s prepaid credit runs out, photos say paused (no retry), the diges
 while a program runs, Train names the day after the program’s session
 with the briefing on, the morning weigh-in and the weekend-plan pings fold into it
 with the hold on, the evening’s pings fold into it
-worst topic sorts first regardless of reading order
 ymd pads month and day
 ymd uses LOCAL date, not UTC
 your usual meals are one tap each, found the honest way, and never logged twice

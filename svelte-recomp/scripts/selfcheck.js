@@ -54,7 +54,6 @@ function check(name, fn) {
 const { pickOriginByDay, percentile } = await import('../src/lib/health/dedupe.ts');
 const { preferredSource: guessWatchOrigin } = await import('../src/lib/health/watches.ts');
 const { ymd, todayYmd, mondayOf, shiftYmd } = await import('../src/lib/date.ts');
-const { foldDailyFocus, todaysFocus } = await import('../src/lib/coach.ts');
 const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
 const { proteinByTrainingDay } = await import('../src/lib/nutrition/nutritionPatterns.ts');
 const { watchAgreement, recoveryCost } = await import('../src/lib/health/signals.ts');
@@ -67,7 +66,7 @@ const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/
 const { readyFromNormal } = await import('../src/lib/health/readiness.ts');
 const { recoveryState, exerciseModifier } = await import('../src/lib/training/recovery.ts');
 const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/training/strength.ts');
-const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/coach.ts');
+const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/nutrition/tdee.ts');
 const { inferEquipment, nextGymWeight, roundToGymWeight } = await import('../src/lib/training/nextWeight.ts');
 const { evaluateFood } = await import('../src/lib/nutrition/foodCoach.ts');
 const { PATTERNS, toneHaptic } = await import('../src/lib/haptics.ts');
@@ -75,60 +74,6 @@ const { PATTERNS, toneHaptic } = await import('../src/lib/haptics.ts');
 // --- Today's Focus folds into three topics --------------------------------
 
 const fi = (id, severity = 'info') => ({ id, severity, icon: '*', title: id, msg: id });
-
-check('focus folds into at most three topics, weight becomes the headline', () => {
-  const { headline, groups } = foldDailyFocus([
-    fi('weight-up', 'warn'), fi('cal-over', 'bad'), fi('protein-low', 'warn'),
-    fi('water-low'), fi('sleep-low', 'bad'), fi('steps-good', 'good'),
-    fi('workout-today'), fi('strength-hold', 'good'), fi('move-snack'),
-  ]);
-  assert.equal(headline.id, 'weight-up', 'weight is the outcome, not a topic');
-  assert.ok(groups.length <= 3, `expected <=3 topics, got ${groups.length}`);
-  assert.deepEqual(groups.map((g) => g.key).sort(), ['fuel', 'recover', 'train']);
-});
-
-check('Today’s Focus is one voice, and silent on a good day', () => {
-  const pick = (...items) => todaysFocus(items)?.id ?? null;
-  assert.equal(pick(fi('weight-up', 'warn'), fi('protein-low', 'warn')), 'protein-low', 'the weight is the Pulse’s to say, not a second voice');
-  assert.equal(pick(fi('protein-low', 'warn'), fi('sleep-low', 'bad')), 'sleep-low', 'worst first');
-  assert.equal(pick(fi('steps-good', 'good'), fi('water-low'), fi('protein-hit', 'good')), null, 'nothing pressing: nothing said');
-  assert.equal(pick(fi('weight-plateau', 'warn')), null);
-});
-
-check('each topic leads with its most severe item and counts the rest', () => {
-  const { groups } = foldDailyFocus([
-    fi('cal-over', 'bad'), fi('protein-low', 'warn'), fi('water-low', 'info'),
-  ]);
-  assert.equal(groups.length, 1);
-  assert.equal(groups[0].lead.id, 'cal-over', 'worst-first survives the fold');
-  assert.equal(groups[0].more, 2, 'the two it stands in for are counted');
-});
-
-check('worst topic sorts first regardless of reading order', () => {
-  const { groups } = foldDailyFocus([
-    fi('cal-ontrack', 'good'), fi('sleep-low', 'bad'),
-  ]);
-  assert.equal(groups[0].key, 'recover', 'a bad Recover outranks a good Fuel');
-});
-
-check('an unmapped coach id is still shown, never silently dropped', () => {
-  const { groups } = foldDailyFocus([fi('brand-new-section', 'bad')]);
-  const all = groups.flatMap((g) => [g.lead.id]);
-  assert.ok(all.includes('brand-new-section'),
-    'a new coach section must not vanish just because it has no topic yet');
-});
-
-check('no weight item means the worst topic supplies the headline', () => {
-  const { headline, groups } = foldDailyFocus([fi('sleep-low', 'bad'), fi('cal-over', 'bad')]);
-  assert.equal(headline, null, 'headline is weight-only by design');
-  assert.ok(groups.length > 0, 'the card must never render headless');
-});
-
-check('an empty feed folds to nothing rather than throwing', () => {
-  const { headline, groups } = foldDailyFocus([]);
-  assert.equal(headline, null);
-  assert.deepEqual(groups, []);
-});
 
 // --- Hand-logged sessions -------------------------------------------------
 
@@ -1595,7 +1540,7 @@ check('an unlogged workout still counts, and sport always counts', () => {
 check('every video id is a well-formed YouTube id', async () => {
   const { readFileSync } = await import('node:fs');
   const bad = [];
-  for (const f of ['src/lib/training/data/workouts.ts', 'src/lib/training/data/workoutPlanDefaults.ts', 'src/lib/coach.ts']) {
+  for (const f of ['src/lib/training/data/workouts.ts', 'src/lib/training/data/workoutPlanDefaults.ts']) {
     const src = readFileSync(f, 'utf8');
     for (const m of src.matchAll(/["']?\b(?:vid|v)["']?\s*:\s*['"]([^'"]*)['"]/g)) {
       if (!/^[A-Za-z0-9_-]{11}$/.test(m[1])) bad.push(`${f}  "${m[1]}"`);
@@ -1630,7 +1575,9 @@ check('seeded sessions name no weekday, sport or venue', async () => {
 
 check('the coach never assumes the user is cutting', async () => {
   const { readFileSync } = await import('node:fs');
-  const code = readFileSync('src/lib/coach.ts', 'utf8').replace(/^\s*(\/\/|\*|\/\*).*$/gm, '');
+  // 2026-11-11: the old rules coach (coach.ts) left; the words now come from
+  // the AI coach, so its facts and prompt are what must not assume a cut.
+  const code = ['src/lib/brain.ts', '../supabase/functions/coach/index.ts'].map((f) => readFileSync(f, 'utf8')).join('\n').replace(/^\s*(\/\/|\*|\/\*).*$/gm, '');
   // These assert a direction. Someone GAINING is a legitimate recomp user, and
   // telling them about "your cut" reads as an app that does not know who it is
   // talking to. Direction-dependent copy must be gated on `losing`.
@@ -3103,23 +3050,6 @@ check('the Food hero praises protein when it’s hit and never colours a day sti
   assert.match(page, /const fuelTone: 'good' \| 'na' = \$derived\(proteinTargetG && proteinPct >= 100 \? 'good' : 'na'\);/);
 });
 
-check('the coach never judges protein by the clock: the log can’t say when food was eaten', async () => {
-  const { buildDailyFocus } = await import('../src/lib/coach.ts');
-  const input = {
-    goalKg: 76, currentWeight: 93, rateKgPerWeek: 0.5, pace: 'on-pace', planKgPerWeek: 0.5, weeksToGoal: 30,
-    weighInsNeeded: null, stall: null, totalLostKg: null, calorieTarget: 2400, todayKcal: 0, weekKcalSoFar: 9000,
-    daysElapsedThisWeek: 4, proteinTarget: 137, todayProtein: 0, sleepHours: 7.5, sleepQuality: null, stepsToday: 8000,
-    stepsWeekAvg: 9000, waterToday: 2, waterTarget: 3, dayKind: 'rest', activityLabel: 'Rest', workoutDoneToday: false,
-    strengthTrend: null, watchActivityToday: null,
-  };
-  // Fasting until 15:00, or eaten at 15:00 and logged at 20:00: either way an
-  // empty log at 16:00 is not "behind".
-  for (const hour of [14, 16, 19]) {
-    assert.ok(!buildDailyFocus({ ...input, hour }).some((f) => /^protein-(none|low)$/.test(f.id)), `${hour}:00`);
-  }
-  assert.ok(buildDailyFocus({ ...input, hour: 21, todayProtein: 130 }).some((f) => f.id === 'protein-hit'), 'the good news still comes');
-});
-
 check('training heatmap: grid geometry and counts are right', () => {
   const dates = ['2026-08-24', '2026-08-26', '2026-08-26', '2026-08-28']; // 3 distinct days, 4 sessions
   const r = trainingHeatmap(dates, { windowWeeks: 4, asOf: '2026-08-28' });
@@ -3478,23 +3408,6 @@ check('the stall diagnosis points at the week, never at logging more', () => {
   assert.equal(diagnoseStall({ pace: 'on-pace', intake, floorKcal: 2350, today: '2026-10-17', trainingDays, shape }), null);
   const flat = new Map([...intake].map(([k]) => [k, { kcal: 2000, items: 5 }]));
   assert.deepEqual(diagnoseStall({ pace: 'stalled', intake: flat, floorKcal: 2350, today: '2026-10-17' }).clues, [], 'an even week and no training data: nothing to point at');
-});
-
-check('a stalled trend leads the coach, and the log it contradicts is not praised', async () => {
-  const { buildDailyFocus } = await import('../src/lib/coach.ts');
-  const stall = { avgKcal: 1890, loggedDays: 27, floorKcal: 2350, missingAtLeastKcal: 460, clues: [] };
-  const input = {
-    goalKg: 82, currentWeight: 101.1, rateKgPerWeek: 0.04, pace: 'stalled', planKgPerWeek: 0.59, weeksToGoal: null,
-    weighInsNeeded: null, stall, totalLostKg: null, calorieTarget: 2420, todayKcal: 1500, weekKcalSoFar: 2100 * 6,
-    daysElapsedThisWeek: 6, proteinTarget: 148, todayProtein: 120, sleepHours: 7.5, sleepQuality: null, stepsToday: 8000,
-    stepsWeekAvg: 9000, waterToday: 2, waterTarget: 3.3, dayKind: 'rest', activityLabel: 'Rest', workoutDoneToday: false,
-    strengthTrend: null, watchActivityToday: null, hour: 9,
-  };
-  const ids = buildDailyFocus(input).map((f) => f.id);
-  assert.ok(ids.includes('weight-plateau'));
-  assert.ok(!ids.includes('cal-ontrack'), 'no "stay boring" while the scale says the log is short');
-  assert.ok(buildDailyFocus({ ...input, pace: 'on-pace', stall: null, rateKgPerWeek: 0.6 }).some((f) => f.id === 'cal-ontrack'));
-  assert.ok(!buildDailyFocus(input).some((f) => /tdee-adapt/.test(f.id)), 'the learned-burn nag is gone');
 });
 
 check('weight rate, learned burn and targets are computed in one place', async () => {
@@ -4344,17 +4257,6 @@ check('during Back Rebuild nothing judges the light loads', async () => {
   assert.equal(programActive(p, '2026-11-30'), false, 'over: the analytics come back');
   assert.equal(programEnd(p), '2026-11-29');
   assert.equal(programActive(null, '2026-10-20'), false);
-  const { buildDailyFocus } = await import('../src/lib/coach.ts');
-  const base = {
-    goalKg: 92, currentWeight: 110, rateKgPerWeek: 0.4, pace: 'on-pace', planKgPerWeek: 0.5, weeksToGoal: 40, weighInsNeeded: null,
-    stall: null, totalLostKg: 3, calorieTarget: 2000, todayKcal: 1200, weekKcalSoFar: 6000, daysElapsedThisWeek: 3, proteinTarget: 160,
-    todayProtein: 120, sleepHours: 7.5, sleepQuality: null, stepsToday: 9000, stepsWeekAvg: 9000, waterToday: 2, waterTarget: 3,
-    dayKind: 'gym', activityLabel: 'Rebuild A', workoutDoneToday: true, watchActivityToday: null, hour: 12,
-    strengthTrend: { direction: 'down', avgPct: -30, liftsUp: 0, liftsDown: 3, comparableLifts: 3, topMover: null, windowDays: 21 },
-  };
-  assert.ok(buildDailyFocus(base).some((f) => f.id === 'strength-down'), 'outside a program the slide is worth saying');
-  assert.ok(!buildDailyFocus({ ...base, inProgram: true }).some((f) => f.id.startsWith('strength-')),
-    'in rehab, "keep the load heavy" is the wrong advice for a hurt back');
 });
 
 check('Back Rebuild looks after the neck as well as the lower back', async () => {
@@ -4688,7 +4590,6 @@ check('a normal swing is told with the band it was judged by, measured from the 
 
 check('keeping it off: the hero counts days inside the range, never a streak, and points at the plan when over', async () => {
   const { pulse } = await import('../src/lib/body/pulse.ts');
-  const { buildDailyFocus } = await import('../src/lib/coach.ts');
   const w = { trendKg: 74.4, latestKg: 74.6, state: 'answerable', rateKgPerWeek: 0.02, halfWidthKgPerWeek: 0.12, loKgPerWeek: -0.1, hiKgPerWeek: 0.14, n: 40, weighInsNeeded: null };
   const keep = { goalKg: 74, ceilingKg: 75, inside: 41, days: 45, since: '2026-08-20' };
   let p = pulse({ weight: w, pace: 'too-early', firstKg: 96, goalKg: 74, next: null, keep });
@@ -4703,15 +4604,6 @@ check('keeping it off: the hero counts days inside the range, never a streak, an
   p = pulse({ weight: { ...w, rateKgPerWeek: -0.3, loKgPerWeek: -0.45, hiKgPerWeek: -0.15 }, pace: 'gaining', firstKg: 96, goalKg: 74, next: null, keep: { ...keep, inside: 45 } });
   assert.match(p.story, /^Inside your range on every one of the last 45 days\. The trend is creeping up 0\.3 kg a week/);
   assert.equal(p.odds.text, 'Under 1 in 10 it’s holding right now.', 'creeping up: the odds say so plainly');
-  // The coach asks "still inside?", never "losing fast enough?".
-  const base = { goalKg: 74, currentWeight: 74.4, rateKgPerWeek: 0, pace: 'too-early', planKgPerWeek: null, weeksToGoal: null,
-    weighInsNeeded: null, stall: null, totalLostKg: 21.6, calorieTarget: 2050, todayKcal: 0, weekKcalSoFar: 9000, daysElapsedThisWeek: 4,
-    proteinTarget: 133, todayProtein: 0, sleepHours: 7.5, sleepQuality: null, stepsToday: 8000, stepsWeekAvg: 9000, waterToday: 2,
-    waterTarget: 3, dayKind: 'rest', activityLabel: 'Rest', workoutDoneToday: false, strengthTrend: null, watchActivityToday: null, hour: 9 };
-  const ids = (x) => buildDailyFocus(x).filter((f) => f.id.startsWith('weight-')).map((f) => f.id);
-  assert.deepEqual(ids({ ...base, keeping: true }), ['weight-keep']);
-  assert.deepEqual(ids({ ...base, keeping: true, pace: 'gaining', rateKgPerWeek: -0.3 }), ['weight-keep-drift']);
-  assert.doesNotMatch(buildDailyFocus({ ...base, currentWeight: 73.9 }).find((f) => f.id === 'weight-goal').msg, /recomp/i);
 });
 
 check('a sport night is anyone’s sport: the plan for after it is named for no one sport', async () => {

@@ -18,3 +18,4 @@ export { nutritionPatterns, proteinByTrainingDay } from './nutritionPatterns.ts'
 export { evaluateFood } from './foodCoach.ts';
 export { frequentFoods, groupIntoMeals, notYetLogged, proteinFillers, repeatDay, usualBreakfast, usualMeals } from './quickAdd.ts';
 export type { QuickFood } from './quickAdd.ts';
+export { parseCalorieTarget, waterTargetLitres } from './tdee.ts';

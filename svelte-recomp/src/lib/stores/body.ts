@@ -19,7 +19,7 @@ import { weightVerdict, paceVsPlan, diagnoseStall, type WeightVerdict, type Pace
 import { weeklyMaintenance, type AdaptiveTdee } from '$lib/nutrition';
 import { resolveCalorieTarget, burnFloor, calcTdee, type LiveTargetResult, type ActivityLevel } from '$lib/nutrition';
 import { proteinTargetG, ageFrom } from '$lib/profile';
-import { parseCalorieTarget } from '$lib/coach';
+import { parseCalorieTarget } from '$lib/nutrition';
 import { mondayOf, shiftYmd } from '$lib/date';
 import { signalTrend } from '$lib/health';
 import { weekBudget, weekShape, type WeekBudget, type WeekShape } from '$lib/nutrition';

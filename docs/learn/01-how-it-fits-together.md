@@ -513,7 +513,7 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Nutrition (`src/lib/nutrition`) | Food, the week's budget, the learned burn, meal plans | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` `foodCoach` `quickAdd`, read through `index.ts` | `foodLog`, `foodSources`, the food edge functions |
 | Training (`src/lib/training`) | Sessions, lifts, plates, the exercise library, watch workouts, the trained day | `strength` `liftStalls` `plates` `trainPlan` `nextWeight` `muscleVolume` `trainingHeatmap` `exercise`, read through `index.ts` | the Train screen, `logActivity` |
 | Health signals (`src/lib/health`) | Sleep, resting heart rate, HRV, steps, the morning read | `signals` `readiness` `fitness` `sleepPerformance` `sleep` `dedupe`, read through `index.ts` | `healthConnect`, `writeBack`, `watches`; Apple Health |
-| Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
+| Coach | The AI's words, checked | `brain` `ask` | `stores/brain`, the coach and ask edge functions |
 | Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
 | Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
 | Identity and data | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live` |
@@ -557,7 +557,7 @@ side effects belong.
 
 The 53 are listed in `svelte-recomp/scripts/pure-core.txt`, and a check fails
 when any of them stops being pure, naming the import that did it. Put the old
-`units.ts` back and it fails at once: "coach.ts left the pure core: units.ts
+`units.ts` back and it fails at once: "body/pulse.ts left the pure core: units.ts
 uses localStorage". Like the regression baseline, the list may grow, and
 taking a module off needs a reason in the commit.
 
@@ -676,6 +676,18 @@ adapter by its folder. It now judges each file by what it imports, and five
 of them turned out pure.
 
 The JavaScript built from it is byte-for-byte the same as before the move.
+
+### What the moves turned up
+
+Moving code makes you ask who uses it, and five times the answer was nobody:
+an evening checklist, a per-signal diagnostic, a training-load ratio whose
+card had been cut, the old readiness score, and most of `coach.ts`, about 600
+lines of the old rules-based "daily focus" that the AI coach and the moments
+had replaced. Only two of its functions were still used (the calorie target
+read from the goal, and the water target); they went to Nutrition, and the
+file went, with the tests that guarded nothing but itself. The downloads
+didn't shrink, because the bundler already left unused code out: what dead
+code costs is reading time, every time someone opens the file.
 
 ### Can the repo rebuild its own database?
 
