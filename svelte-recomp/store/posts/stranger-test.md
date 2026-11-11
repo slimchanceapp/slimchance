@@ -9,7 +9,8 @@ lowercase word works: `?from=<word>`.
 
 Post from a "Slim Chance" account (made with hello@slimchance.app), so nothing
 ties to you. The testers' group link assumes the address
-`slimchance-testers@googlegroups.com`; change it if Google gave another.
+`slimchance-testers@googlegroups.com`. The closed test was published on 11 Nov 2026: a
+tester joins the group first, then opts in on the web link, then installs from Play.
 
 ---
 
@@ -33,7 +34,7 @@ know what to eat, its coach plans your next days from foods you already eat;
 the app checks every number before you see it.
 
 Free, no ads, no trackers, open source. It runs in any browser, iPhone
-included. The Android app is in testing: join the testers at https://groups.google.com/g/slimchance-testers
+included. The Android app is in testing on Google Play: join the testers' group at https://groups.google.com/g/slimchance-testers, then opt in at https://play.google.com/apps/testing/app.slimchance
 
 I'd love honest feedback, especially if it doesn't work for you.
 
@@ -59,7 +60,7 @@ odds you're really losing as ten coins, and a weekly calorie budget learned
 from your own scale.
 
 Free, no ads, no trackers, open source. Android (Health Connect) and web; the
-Android app is in testing: https://groups.google.com/g/slimchance-testers
+Android app is in testing on Google Play: join https://groups.google.com/g/slimchance-testers, then opt in at https://play.google.com/apps/testing/app.slimchance
 Honest feedback very welcome.
 
 https://slimchance.app/about/?from=post-watch
