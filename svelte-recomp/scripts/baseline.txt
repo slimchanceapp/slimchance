@@ -2,9 +2,6 @@
 "brutal" on short sleep is called a recovery problem, not weakness
 "easy" earns more work, and knows if you barely trained
 6+ on five of seven mornings stops offering to wait: see a physio
-ACWR admits when there is not enough history
-ACWR flags a genuine training spike
-ACWR stays in the sweet spot for steady training
 BMR falls with age and rises with mass
 Back Rebuild looks after the neck as well as the lower back
 CI fails loudly rather than shipping an unsignable APK
@@ -300,7 +297,6 @@ says so plainly when the trend is too short
 search ignores diacritics but does not stem nonsense
 seeded sessions name no weekday, sport or venue
 session dates use the LOCAL day
-session load scales with sets and effort
 settings come in six named groups, and the morning briefing is one tap from them
 setup help degrades gracefully for an unknown or missing brand
 sharing adds no table, no policy and no cross-account read

@@ -18,3 +18,5 @@ export type { StrengthLog, StrengthSet, StrengthTrend } from './strength.ts';
 export { checkTrainPlan, sessionsLeft, trainingTone } from './trainPlan.ts';
 export type { CheckedTrainPlan, TrainDay } from './trainPlan.ts';
 export { trainingHeatmap } from './trainingHeatmap.ts';
+export { MUSCLE_RECOVERY_HOURS, exerciseModifier, recoveryState } from './recovery.ts';
+export type { RecoveryStatus } from './recovery.ts';

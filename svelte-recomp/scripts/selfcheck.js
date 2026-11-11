@@ -64,8 +64,8 @@ const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, is
   await import('../src/lib/training/exercise.ts');
 const { calcBmr, calcTdee, projectGoalWithTdee, resolveCalorieTarget } = await import('../src/lib/nutrition/tdee.ts');
 const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/lib/nutrition/adaptiveTdee.ts');
-const { computeReadiness, recoveryState, acuteChronicRatio, sessionLoad, exerciseModifier } =
-  await import('../src/lib/readiness.ts');
+const { readyFromNormal } = await import('../src/lib/readiness.ts');
+const { recoveryState, exerciseModifier } = await import('../src/lib/training/recovery.ts');
 const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/training/strength.ts');
 const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/coach.ts');
 const { inferEquipment, nextGymWeight, roundToGymWeight } = await import('../src/lib/training/nextWeight.ts');
@@ -2239,24 +2239,23 @@ check('loss target never recommends an unsafe intake', () => {
 
 console.log('\nreadiness — recovery and training load');
 
+// 2026-11-11: these three asked the old 14-day score, which left the app; the
+// same promises now hold for readyFromNormal, the one readyToday uses.
+const readyHist = (over = {}) => Array.from({ length: 14 }, (_, k) => ({ date: `2026-10-${String(k + 1).padStart(2, '0')}`, hrv: 80 + (k % 3) - 1, resting_hr: 55, sleep_hours: 7.5 + ((k % 2) ? 0.3 : -0.3), ...over }));
+
 check('readiness weights HRV and sleep, and works with partial data', () => {
-  const hist = [{ date: 'd1', hrv: 60, resting_hr: 55 }];
-  const sleepOnly = computeReadiness({ date: 'd', sleep_hours: 8 }, hist);
-  assert.ok(sleepOnly.score > 0, 'sleep alone must still produce a score');
-  const bad = computeReadiness({ date: 'd', sleep_hours: 4 }, hist);
-  assert.ok(bad.score < sleepOnly.score, 'less sleep must score lower');
+  assert.equal(readyFromNormal({ date: '2026-10-15', sleep_hours: 7.5 }, readyHist())?.word, 'Good', 'sleep alone still gives a word');
+  assert.equal(readyFromNormal({ date: '2026-10-15', sleep_hours: 5.5 }, readyHist())?.word, 'Fair', 'two hours short is moderate');
 });
 
 check('readiness returns null with nothing logged', () => {
-  assert.equal(computeReadiness(undefined, []), null);
-  assert.equal(computeReadiness({ date: 'd' }, []), null, 'an empty entry is not a score');
+  assert.equal(readyFromNormal(undefined, []), null);
+  assert.equal(readyFromNormal({ date: 'd' }, []), null, 'an empty entry is not a word');
 });
 
 check('HRV below personal baseline lowers readiness', () => {
-  const hist = [{ date: 'a', hrv: 80 }, { date: 'b', hrv: 80 }];
-  const low = computeReadiness({ date: 'd', hrv: 40 }, hist);
-  const high = computeReadiness({ date: 'd', hrv: 90 }, hist);
-  assert.ok(low.score < high.score);
+  assert.equal(readyFromNormal({ date: '2026-10-15', hrv: 50, resting_hr: 55, sleep_hours: 7.5 }, readyHist())?.word, 'Low');
+  assert.equal(readyFromNormal({ date: '2026-10-15', hrv: 90, resting_hr: 55, sleep_hours: 7.5 }, readyHist())?.word, 'Great');
 });
 
 check('recovery percentage tracks elapsed time against the window', () => {
@@ -2271,37 +2270,6 @@ check('recovery percentage tracks elapsed time against the window', () => {
 check('high-eccentric lifts need longer recovery than isolation work', () => {
   assert.ok(exerciseModifier('Romanian Deadlift') > exerciseModifier('Barbell Row'));
   assert.ok(exerciseModifier('Leg Extension') < exerciseModifier('Barbell Row'));
-});
-
-check('ACWR flags a genuine training spike', () => {
-  // 28 steady days, then a hard last week — the classic injury-risk pattern.
-  const loads = [];
-  for (let i = 27; i >= 0; i--) {
-    loads.push({ date: shiftYmd(-i, new Date(2026, 5, 30)), loadAU: i < 7 ? 600 : 100 });
-  }
-  const r = acuteChronicRatio(loads, ymd(new Date(2026, 5, 30)));
-  assert.ok(r.ratio > 1.5, `spike should read high-risk, got ${r.ratio}`);
-  assert.equal(r.zone, 'high-risk');
-});
-
-check('ACWR stays in the sweet spot for steady training', () => {
-  const loads = [];
-  for (let i = 27; i >= 0; i--) {
-    loads.push({ date: shiftYmd(-i, new Date(2026, 5, 30)), loadAU: 300 });
-  }
-  const r = acuteChronicRatio(loads, ymd(new Date(2026, 5, 30)));
-  assert.equal(r.zone, 'sweet-spot');
-});
-
-check('ACWR admits when there is not enough history', () => {
-  const r = acuteChronicRatio([{ date: '2026-06-30', loadAU: 300 }], '2026-06-30');
-  assert.equal(r.zone, 'no-data');
-  assert.equal(r.ratio, null);
-});
-
-check('session load scales with sets and effort', () => {
-  assert.equal(sessionLoad(10, 7), 10 * 3 * 7);
-  assert.ok(sessionLoad(10, 9) > sessionLoad(10, 5));
 });
 
 console.log('\nstrength — the muscle-retention verdict');

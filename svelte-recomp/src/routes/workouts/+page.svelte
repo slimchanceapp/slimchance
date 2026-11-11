@@ -21,8 +21,8 @@
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/training';
   import { speak } from '$lib/stores/toast';
   import { haptic } from '$lib/haptics';
-  import { MUSCLE_RECOVERY_HOURS, recoveryState, exerciseModifier } from '$lib/readiness';
-  import type { RecoveryStatus } from '$lib/readiness';
+  import { MUSCLE_RECOVERY_HOURS, recoveryState, exerciseModifier } from '$lib/training';
+  import type { RecoveryStatus } from '$lib/training';
   import { sessionMuscleLoad, isSameSessionAsLogged, trainedDates as trainedOn } from '$lib/training';
   import { todayYmd, mondayOf } from '$lib/date';
   import { nowTick, todayDate } from '$lib/stores/refresh';

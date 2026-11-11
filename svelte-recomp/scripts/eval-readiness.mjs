@@ -23,7 +23,54 @@
 // over normal, or 1.5 SD with a night an hour short, now decides it. Across
 // strain effects of +3 to +7 bpm and -0.3 to -1 h of sleep it catches 22-51%,
 // with 1.1-2.0% of ordinary mornings called easy (stricter rules caught half).
-import { computeReadiness, readyFromNormal } from '../src/lib/readiness.ts';
+import { readyFromNormal } from '../src/lib/readiness.ts';
+
+// The old score, kept here only as this eval's "before" line (it left the app
+// on 2026-11-11: nothing used it once readyToday read the person's own range).
+function average(nums) {
+  if (nums.length === 0) return null;
+  return nums.reduce((s, n) => s + n, 0) / nums.length;
+}
+
+/**
+ * The old composite score: a weighted average against 8 h of sleep and the
+ * last 14 days' mean (no spread), so it barely moved on strained mornings.
+ */
+function computeReadiness(today, recentHistory, targetSleepHours = 8) {
+  if (!today) return null;
+  const factors = [];
+  const parts = [];
+
+  if (today.sleep_hours != null) {
+    const sleepScore = Math.min(100, (today.sleep_hours / targetSleepHours) * 100);
+    parts.push({ weight: 0.35, score: sleepScore });
+    factors.push(`Sleep: ${today.sleep_hours}h vs ${targetSleepHours}h target`);
+  }
+  if (today.sleep_quality != null) {
+    parts.push({ weight: 0.15, score: (today.sleep_quality / 5) * 100 });
+    factors.push(`Sleep quality: ${today.sleep_quality}/5`);
+  }
+  if (today.hrv != null) {
+    const baseline = average(recentHistory.map((r) => r.hrv).filter((v) => v != null));
+    const hrvScore = baseline ? Math.min(100, Math.max(0, (today.hrv / baseline) * 100)) : 70;
+    parts.push({ weight: 0.35, score: hrvScore });
+    factors.push(baseline ? `HRV: ${today.hrv}ms vs ${baseline.toFixed(0)}ms baseline` : `HRV: ${today.hrv}ms (no baseline yet)`);
+  }
+  if (today.resting_hr != null) {
+    const baseline = average(recentHistory.map((r) => r.resting_hr).filter((v) => v != null));
+    // Lower RHR than baseline = better recovery; higher = worse.
+    const rhrScore = baseline ? Math.min(100, Math.max(0, 100 - (today.resting_hr - baseline) * 5)) : 70;
+    parts.push({ weight: 0.15, score: rhrScore });
+    factors.push(baseline ? `Resting HR: ${today.resting_hr} vs ${baseline.toFixed(0)} baseline` : `Resting HR: ${today.resting_hr}bpm`);
+  }
+
+  if (parts.length === 0) return null;
+  const totalWeight = parts.reduce((s, p) => s + p.weight, 0);
+  const score = Math.round(parts.reduce((s, p) => s + (p.weight / totalWeight) * p.score, 0));
+  const label = score >= 80 ? 'Great' : score >= 60 ? 'Good' : score >= 40 ? 'Fair' : 'Low';
+  return { score, label, factors };
+}
+
 
 const N = Number(process.argv[2]) || 3000;
 let seed = 20261111;
