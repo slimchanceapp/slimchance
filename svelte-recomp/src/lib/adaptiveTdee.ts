@@ -39,6 +39,8 @@ export interface AdaptiveTdeeInput {
   windowDays?: number;
   /** Below this a day is treated as "not really logged" and ignored. Default 800. */
   minLoggedKcal?: number;
+  /** Days under this share of the usual logged day count as half-logged. Default PARTIAL_SHARE; 0 keeps them (evals). */
+  partialShare?: number;
   /** Reference date (ISO) the window ends at. Default: latest data point / today. */
   asOf?: string;
 }
@@ -61,6 +63,10 @@ export interface AdaptiveTdee {
   /** ± kcal/day on tdee, from the weight slope's 95% interval. null without a line. */
   uncertaintyKcal: number | null;
 }
+
+/** A logged day under this share of the person's usual day counts as half-logged. */
+export const PARTIAL_SHARE = 0.55;
+const median = (a: number[]) => { if (!a.length) return 0; const s = [...a].sort((x, y) => x - y); const m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
 
 /** ± kcal/day of learned burn below which the estimate may steer a target. */
 const HIGH_KCAL = 150;
@@ -92,7 +98,15 @@ export function adaptiveTdee(input: AdaptiveTdeeInput): AdaptiveTdee {
 
   // Only days with a plausible amount logged count — a blank or 200-kcal day is
   // missing data, not a genuine near-fast, and would drag the mean down.
-  const logged = input.intake.filter((i) => inWindow(i.date) && i.kcal >= minKcal);
+  const plausible = input.intake.filter((i) => inWindow(i.date) && i.kcal >= minKcal);
+  // A half-logged day (a forgotten dinner) passes that cut and teaches a burn
+  // too low, the unsafe way. A day under 55% of the person's own usual day is
+  // left out too: on 6,000 simulated people with their own day-to-day spread
+  // (scripts/eval-partial.mjs, chapter 7) it cut budgets >200 kcal too low from
+  // 14.1% to 9.9% with the bias near zero. Very variable eaters lose a few real
+  // light days, which errs high (slower loss), never low.
+  const usual = median(plausible.map((i) => i.kcal));
+  const logged = plausible.filter((i) => i.kcal >= (input.partialShare ?? PARTIAL_SHARE) * usual);
   const line = fitWeightLine(input.weights, endMs, windowDays);
   const slope = line?.slopePerDay ?? 0;
   const span = line?.spanDays ?? 0;

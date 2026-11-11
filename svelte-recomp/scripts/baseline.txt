@@ -51,6 +51,7 @@ a food eaten twice yesterday and once today still has one serving left
 a goal ABOVE current weight is a gain plan, not a no-op
 a goal ABOVE current weight prescribes a surplus, never a deficit
 a gym week recorded only on the watch counts as training in the weekly review
+a half-logged day (far under the person’s usual) is left out of what the budget learns
 a hand-logged badminton session depletes the same muscles as a watch one
 a held weight is stated as held, not as a zero
 a high morning is explained from the person’s own data, and only from it

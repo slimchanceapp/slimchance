@@ -2205,6 +2205,23 @@ check('unlogged days are excluded, not averaged in as near-fasts', () => {
   assert.ok(r.meanIntake >= 1900, `blank days must not drag the mean, got ${r.meanIntake}`);
 });
 
+check('a half-logged day (far under the person’s usual) is left out of what the budget learns', () => {
+  // 2026-11-11, chapter 7 (MacroFactor calls partial logging its most damaging
+  // input): a forgotten dinner twice a week, logged as a 1,000 kcal day beside
+  // usual 2,000 kcal days, passed the old fixed 800 kcal cut and taught a burn
+  // ~280 kcal too low, the unsafe way. scripts/eval-partial.mjs on 6,000
+  // simulated people: a cut at 55% of the person's own usual day took the share
+  // of budgets more than 200 kcal too low from 14.1% to 9.9%, bias near zero.
+  const { intake, weights } = series(28, 2000, 100, 0.5);
+  const partial = intake.map((d, i) => (i % 7 === 2 || i % 7 === 5 ? { ...d, kcal: 1000 } : d));
+  const r = adaptiveTdee({ intake: partial, weights, asOf: intake[27].date });
+  assert.ok(Math.abs(r.tdee - 2550) <= 15, `expected ~2550 with the half-logged days left out, got ${r.tdee}`);
+  assert.equal(r.loggedDays, 20, 'the 8 half-logged days are not counted as logged');
+  // A steady log with real light days keeps them: 1,300 is 65% of 2,000.
+  const light = intake.map((d, i) => (i % 7 === 0 ? { ...d, kcal: 1300 } : i % 7 === 3 ? { ...d, kcal: 2700 } : d));
+  assert.equal(adaptiveTdee({ intake: light, weights, asOf: intake[27].date }).loggedDays, 28);
+});
+
 check('implausible results are downgraded rather than shown', () => {
   // Losing 3 kg/week on 2000 kcal implies a ~5300 kcal burn — not credible.
   const { intake, weights } = series(28, 2000, 130, 4);
