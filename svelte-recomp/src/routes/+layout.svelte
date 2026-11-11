@@ -31,6 +31,8 @@
   import { trainedDates } from '$lib/training';
   import { shiftYmd } from '$lib/date';
   import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, setWidget, type AlarmRow } from '$lib/moments/nativeAlarms';
+  import { isAndroidApp } from '$lib/platform';
+  import { goto } from '$app/navigation';
   import { moments, momentSetting, refreshForecast, widgetLines } from '$lib/stores/moments';
   import { saveMomentInputs, confirmWeight, answerWeight, nativeKg, type MomentContext } from '$lib/moments/momentActions';
   import { onMomentsInput } from '$lib/moments/nativeAlarms';
@@ -329,6 +331,18 @@
   $effect(() => {
     if (!$user || support !== 'all' || !$_profileLoaded) return;
     setWidget($widgetLines);
+  });
+  // Its Scan and Photo open the app at the food logger (build 23+), through
+  // moments/widgetLinks, loaded only here and only on Android.
+  $effect(() => {
+    if (!$user || !isAndroidApp()) return;
+    let off = () => {};
+    let gone = false;
+    import('$lib/moments/widgetLinks')
+      .then((m) => m.followWidgetLinks((to) => { if (!gone) goto(`${base}${to}`); }))
+      .then((stop) => { if (gone) stop(); else off = stop; })
+      .catch(() => {});
+    return () => { gone = true; off(); };
   });
 
   // What was entered on the briefing's buttons (a weight, a back rating, the

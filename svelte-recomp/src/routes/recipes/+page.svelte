@@ -9,6 +9,9 @@
   import MiniChart from '$lib/components/MiniChart.svelte';
   import { swipeActions } from '$lib/actions/swipe';
   import FoodLogger from '$lib/components/FoodLogger.svelte';
+  import { page } from '$app/state';
+  import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import NutritionInsights from '$lib/components/NutritionInsights.svelte';
   import { cleanName, sourceOf, type NewFood } from '$lib/nutrition';
   import { saveFoods } from '$lib/nutrition/foodLog';
@@ -52,6 +55,20 @@
   // Re-derived on the clock tick: a page left open past midnight must file the
   // next entry under the new day, not the day it was opened.
   const todayStr = $derived($todayDate);
+
+  // The home-screen widget's Scan and Photo (build 23+, widgetRoute): the
+  // scanner opens at once, the photo waits for one tap here (a phone opens its
+  // camera only from a tap). Then the link leaves the address, so Back or a
+  // reload doesn't open it again.
+  let logger: ReturnType<typeof FoodLogger> | undefined = $state();
+  $effect(() => {
+    const add = page.url.searchParams.get('add');
+    if (!logger || (add !== 'scan' && add !== 'photo')) return;
+    if (add === 'scan') logger.startScan();
+    else logger.askPhoto();
+    // goto, not replaceState: the router's shallow-state code would join the first screen (0.4 KB).
+    goto(`${base}/recipes`, { replaceState: true, noScroll: true, keepFocus: true });
+  });
 
   // Weight, targets and the learned burn come from stores/body — the same
   // numbers Today, Progress and the weekly check-in show.
@@ -415,7 +432,7 @@
   </div>
 {/if}
 
-<FoodLogger logs={$_foodLogs as any[]} today={todayStr} onLog={logFoods}
+<FoodLogger bind:this={logger} logs={$_foodLogs as any[]} today={todayStr} onLog={logFoods}
   proteinLeft={Math.max(0, proteinTargetG - todayTotals.protein)} />
 
 <div class="card">

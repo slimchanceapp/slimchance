@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The widget's card: the app's own card colour, light or dark with the phone. -->
+<!-- The widget's card: the app's own card colour, light or dark with the phone,
+     and the phone's own widget corner (values-v31) where it has one. -->
 <shape xmlns:android="http://schemas.android.com/apk/res/android" android:shape="rectangle">
     <solid android:color="@color/widget_bg" />
-    <corners android:radius="24dp" />
+    <corners android:radius="@dimen/widget_radius" />
 </shape>

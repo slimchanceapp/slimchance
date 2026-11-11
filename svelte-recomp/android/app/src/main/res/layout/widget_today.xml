@@ -1,25 +1,17 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The home-screen widget (SlimWidget): Today's sentence on the chance and,
-     until today's weigh-in, a button for it. Light or dark with the phone. -->
+<!-- The home-screen widget at two rows and up (SlimWidget): the name, the chance
+     as ten coins, today's food, the sentence when there is room, and the
+     actions. SlimWidget hides parts by size; the defaults here are the preview. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg"
     android:orientation="vertical"
-    android:padding="16dp">
-
-    <TextView
-        android:id="@+id/widget_title"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:maxLines="3"
-        android:text="Each morning on the scale lights a coin."
-        android:textColor="@color/widget_text"
-        android:textSize="16sp" />
+    android:paddingStart="14dp"
+    android:paddingTop="12dp"
+    android:paddingEnd="10dp"
+    android:paddingBottom="6dp">
 
     <LinearLayout
         android:layout_width="match_parent"
@@ -35,28 +27,151 @@
             android:tint="@color/widget_brass" />
 
         <TextView
-            android:id="@+id/widget_status"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginStart="6dp"
             android:layout_weight="1"
             android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
             android:maxLines="1"
-            android:text="Slim Chance"
-            android:textColor="@color/widget_muted"
+            android:text="@string/app_name"
+            android:textColor="@color/widget_text"
             android:textSize="13sp" />
 
         <TextView
+            android:id="@+id/widget_done"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="4dp"
+            android:maxLines="1"
+            android:text="✓ Weighed in"
+            android:textColor="@color/widget_muted"
+            android:textSize="12sp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/widget_coins"
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        android:layout_marginTop="10dp"
+        android:adjustViewBounds="true"
+        android:contentDescription="6 of 10 coins lit"
+        android:scaleType="fitStart"
+        android:src="@drawable/coins_6" />
+
+    <TextView
+        android:id="@+id/widget_food"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="1,580 of 2,100 kcal · 62 of 160 g protein"
+        android:textColor="@color/widget_muted"
+        android:textSize="12sp" />
+
+    <TextView
+        android:id="@+id/widget_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="Your chance of slimming is a coin toss. Every morning sharpens it."
+        android:textColor="@color/widget_text"
+        android:textSize="15sp" />
+
+    <!-- A spacer: a FrameLayout, since a widget may hold only the views
+         RemoteViews allows, and a plain View isn't one. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <LinearLayout
             android:id="@+id/widget_weigh"
             android:layout_width="wrap_content"
             android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
             android:background="@drawable/widget_pill"
-            android:fontFamily="sans-serif-medium"
             android:gravity="center"
-            android:paddingStart="18dp"
-            android:paddingEnd="18dp"
-            android:text="Weigh in"
-            android:textColor="#100E26"
-            android:textSize="14sp" />
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Weigh in"
+                android:textColor="#100E26"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_scan"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:layout_marginEnd="8dp"
+            android:background="@drawable/widget_tonal"
+            android:contentDescription="Scan a barcode"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_widget_scan" />
+
+            <TextView
+                android:id="@+id/widget_scan_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Scan"
+                android:textColor="@color/widget_text"
+                android:textSize="14sp" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_photo"
+            android:layout_width="wrap_content"
+            android:layout_height="48dp"
+            android:background="@drawable/widget_tonal"
+            android:contentDescription="Photo of a meal"
+            android:gravity="center"
+            android:minWidth="48dp"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp">
+
+            <ImageView
+                android:layout_width="20dp"
+                android:layout_height="20dp"
+                android:contentDescription="@null"
+                android:src="@drawable/ic_widget_photo" />
+
+            <TextView
+                android:id="@+id/widget_photo_label"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="6dp"
+                android:fontFamily="sans-serif-medium"
+                android:maxLines="1"
+                android:text="Photo"
+                android:textColor="@color/widget_text"
+                android:textSize="14sp" />
+        </LinearLayout>
     </LinearLayout>
 </LinearLayout>

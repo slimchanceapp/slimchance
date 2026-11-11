@@ -17,7 +17,7 @@ import { shiftYmd } from '$lib/date';
 import { lastMonth, monthLetter } from '$lib/moments';
 import { forecastHere } from '$lib/moments/weather';
 import type { WidgetLines } from '$lib/moments/nativeAlarms';
-import { OFF_TREND_KG, chanceSentence, slimming } from '$lib/body';
+import { OFF_TREND_KG, chanceSentence, slimming, coinsLit } from '$lib/body';
 import { toUnit, weightUnit, type WeightUnit } from '$lib/units';
 import { eveningFrom } from '$lib/coach';
 import { brainToday } from './brain';
@@ -139,11 +139,21 @@ export async function saveMoments(s: MomentSetting): Promise<void> {
   await upsertRecord('user_settings', { user_id: uid, briefing: { on: s.on, after: s.after, hold: s.hold }, updated_at: new Date().toISOString() });
 }
 
-/** The home-screen widget (Android, build 22+): Today's sentence on the chance
- *  and whether today is weighed, never a weight (SlimWidget.java). */
-export const widgetLines: Readable<WidgetLines> = derived([todayPulse, body, liveWeights()], ([$p, $b, $w]) => ({
-  date: $b.today,
-  title: chanceSentence($p.odds, slimming($b.goalKg, $b.currentKg, $b.keepSince)),
-  weighed: (($w as any[]) ?? []).some((x) => x?.date === $b.today && x.weight != null),
-  unit: weightUnit(),
-}));
+/** The home-screen widget (Android, build 22+; SlimWidget.java): Today's
+ *  coins and sentence on the chance, whether today is weighed, and the day's
+ *  food and protein against the week's budget (the briefing's number, from
+ *  stores/body). Never a weight. */
+export const widgetLines: Readable<WidgetLines> = derived([todayPulse, body, liveWeights()], ([$p, $b, $w]) => {
+  const eaten = $b.intake.get($b.today);
+  const kcal = Math.round(eaten?.kcal ?? 0);
+  const share = $b.week?.share ?? null;
+  return {
+    date: $b.today,
+    title: chanceSentence($p.odds, slimming($b.goalKg, $b.currentKg, $b.keepSince)),
+    weighed: (($w as any[]) ?? []).some((x) => x?.date === $b.today && x.weight != null),
+    unit: weightUnit(),
+    lit: coinsLit($p.odds, $b.weight?.n ?? 0),
+    food: share ? `${kcal.toLocaleString()} of ${share.toLocaleString()} kcal` : kcal ? `${kcal.toLocaleString()} kcal` : 'Nothing logged yet',
+    protein: `${Math.round(eaten?.protein ?? 0)} of ${$b.proteinTargetG} g protein`,
+  };
+});

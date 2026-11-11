@@ -6,7 +6,7 @@
 // into another area. Pure: everything here is data in, data out.
 export { fitWeightLine, weightVerdict, chanceOf, paceVsPlan, diagnoseStall, goalDirection, WINDOW_DAYS, CAREFUL_CARRY } from './insights.ts';
 export type { WeighIn, WeightVerdict, Pace, StallDiagnosis, GoalDirection } from './insights.ts';
-export { oddsOf, pulse, slimming, chanceSentence } from './pulse.ts';
+export { oddsOf, pulse, slimming, chanceSentence, coinsLit } from './pulse.ts';
 export type { Odds, KeepInput, Pulse } from './pulse.ts';
 export { suggestLine, LINE_MARGIN_KG, lineState } from './line.ts';
 export type { LineState } from './line.ts';

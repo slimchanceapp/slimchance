@@ -4705,6 +4705,65 @@ check('a night the watch split in two is one night, and a nap stays a nap', asyn
   assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /const nights = sleepNights\(sleeps,/, 'the sync counts nights, not sessions');
 });
 
+check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, and its coins are Today’s', async () => {
+  // Build 23 (2026-11-11). The owner: "it's massive and it's empty". Android's
+  // widget quality guidelines: rearrange as the widget grows (never scale up),
+  // resize to 2x1 and up to 4x2, 48 dp touch targets, the system's corner, light
+  // and dark, an empty state that says what to do.
+  const { readFileSync, existsSync } = await import('node:fs');
+  const res = 'android/app/src/main/res/';
+  const info = readFileSync(res + 'xml/widget_today_info.xml', 'utf8');
+  for (const a of ['minResizeWidth="110dp"', 'minResizeHeight="40dp"', 'targetCellWidth="4"', 'targetCellHeight="2"', 'maxResizeHeight=']) assert.ok(info.includes(a), a);
+  const w = readFileSync('android/app/src/main/java/com/toxicminds/recompos/SlimWidget.java', 'utf8');
+  assert.equal([...w.matchAll(/sizes\.put\(new SizeF\(/g)].length, 8, 'a layout for each size, one row to two and up');
+  assert.match(w, /if \(Build\.VERSION\.SDK_INT >= 31\) \{[\s\S]*?new RemoteViews\(sizes\)/);
+  // A widget may hold only the views RemoteViews allows; any other shows
+  // "Problem loading widget" on the home screen.
+  const ALLOWED = new Set(['LinearLayout', 'FrameLayout', 'RelativeLayout', 'GridLayout', 'TextView', 'ImageView', 'Button', 'ImageButton', 'ProgressBar', 'Chronometer', 'AnalogClock', 'TextClock', 'ViewFlipper', 'ListView', 'GridView', 'StackView', 'AdapterViewFlipper', 'ViewStub']);
+  for (const f of ['layout/widget_today.xml', 'layout/widget_small.xml']) {
+    const x = readFileSync(res + f, 'utf8');
+    for (const [, tag] of x.matchAll(/<([A-Za-z.]+)[\s>]/g)) assert.ok(ALLOWED.has(tag), `${f}: <${tag}> can't be in a widget`);
+    assert.match(x, /android:id="@android:id\/background"/, `${f}: the system's launch animation`);
+    for (const h of x.matchAll(/android:id="@\+id\/widget_(weigh|scan|photo|act)"[\s\S]*?android:layout_height="(\d+)dp"/g)) assert.ok(+h[2] >= 48, `${f}: ${h[1]} is a 48 dp target`);
+  }
+  assert.match(readFileSync(res + 'values-v31/widget.xml', 'utf8'), /@android:dimen\/system_app_widget_background_radius/);
+  for (let n = 0; n <= 10; n++) {
+    const c = readFileSync(res + `drawable/coins_${n}.xml`, 'utf8');
+    assert.equal([...c.matchAll(/fillColor="@color\/widget_coin"/g)].length, n, `coins_${n} lights ${n}`);
+    assert.equal([...c.matchAll(/<path /g)].length, 10);
+  }
+  assert.ok(!existsSync(res + 'drawable/coins_11.xml'));
+  // The same coins as Today, the briefing's food numbers, words for an empty widget.
+  const { coinsLit, oddsOf } = await import('../src/lib/body/pulse.ts');
+  assert.equal(coinsLit(null, 3), 3, 'the first week counts mornings');
+  assert.equal(coinsLit(null, 40), 10);
+  assert.equal(coinsLit(oddsOf(0.6, 'x'), 3), 6, 'then the chance');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const lit = \$derived\(coinsLit\(p\.odds, \$body\.weight\?\.n \?\? 0\)\);/);
+  const stores = readFileSync('src/lib/stores/moments.ts', 'utf8');
+  assert.match(stores, /lit: coinsLit\(\$p\.odds, \$b\.weight\?\.n \?\? 0\)/);
+  assert.match(stores, /const share = \$b\.week\?\.share \?\? null;/, 'the week’s budget from stores/body, like the briefing');
+  assert.match(w, /static final String FIRST_LINE = "Open Slim Chance to see your chance here\.";/);
+  assert.match(w, /"New day: nothing logged yet"/, 'yesterday’s food is never shown as today’s');
+  // Scan and Photo open the food logger, ready.
+  const { widgetRoute } = await import('../src/lib/moments/widgetLinks.ts');
+  assert.equal(widgetRoute('slimchance://food/scan'), '/recipes?add=scan');
+  assert.equal(widgetRoute('slimchance://food/photo'), '/recipes?add=photo');
+  for (const bad of [null, '', 'slimchance://food/scan/x', 'https://slimchance.app/food/scan', 'slimchance://food/delete']) assert.equal(widgetRoute(bad), null, String(bad));
+  assert.match(w, /SCAN = "slimchance:\/\/food\/scan"/);
+  assert.match(w, /PHOTO = "slimchance:\/\/food\/photo"/);
+  const links = readFileSync('src/lib/moments/widgetLinks.ts', 'utf8');
+  assert.match(links, /App\.getLaunchUrl\(\)[\s\S]*?sessionStorage\.getItem\('widget-launch'\) !== launch[\s\S]*?App\.addListener\('appUrlOpen', \(e\) => open\(e\.url\)\)/, 'the launch link once, then each link while open');
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  assert.match(layout, /import\('\$lib\/moments\/widgetLinks'\)/, 'loaded when needed, never on the first screen');
+  assert.doesNotMatch(layout, /^\s*import [^;]*moments\/widgetLinks/m);
+  const food = readFileSync('src/routes/recipes/+page.svelte', 'utf8');
+  assert.match(food, /if \(add === 'scan'\) logger\.startScan\(\);\s*else logger\.askPhoto\(\);[\s\S]*?goto\(`\$\{base\}\/recipes`, \{ replaceState: true, noScroll: true, keepFocus: true \}\);/);
+  const fl = readFileSync('src/lib/components/FoodLogger.svelte', 'utf8');
+  assert.match(fl, /export function startScan\(\) \{ notice = ''; photoAsk = false; scanning = true; \}/);
+  assert.match(fl, /export function askPhoto\(\)/);
+  assert.match(fl, /\{#if photoAsk\}[\s\S]*?photo\('meal'\)/, 'the camera opens from a tap in the app');
+});
+
 check('an error report says which build it came from', async () => {
   // 2026-11-11: every client_errors row had app_version null, so no error could
   // be tied to a deploy. errorLog read a global nothing ever set; the build's
@@ -5060,8 +5119,9 @@ check('the home-screen widget shows the chance and a weigh-in, never a weight, a
     assert.ok(!/coin toss\. Every morning/.test(readFileSync(f, 'utf8')), `${f} says it through chanceSentence`);
   }
   // No weight leaves for the widget.
-  const lines = stores.match(/export const widgetLines[\s\S]*?\n\}\)\);/)[0];
-  assert.deepEqual([...lines.matchAll(/^ {2}(\w+):/gm)].map((m) => m[1]), ['date', 'title', 'weighed', 'unit']);
+  const lines = stores.match(/export const widgetLines[\s\S]*?\n\}\);/)[0];
+  assert.deepEqual([...lines.matchAll(/^ {4}(\w+):/gm)].map((m) => m[1]), ['date', 'title', 'weighed', 'unit', 'lit', 'food', 'protein']);
+  assert.doesNotMatch(lines, /wtNum|wtShort|dwt|unitWord|trendKg|latestKg|\.kg\b/, 'no weight is formatted for it');
   const dir = 'android/app/src/main/java/com/toxicminds/recompos/';
   const w = readFileSync(dir + 'SlimWidget.java', 'utf8');
   assert.ok(!/AlarmManager\.RTC_WAKEUP|setAlarmClock\(|AllowWhileIdle\(|setExact/.test(w), 'the day turns over without waking the phone');
@@ -5596,8 +5656,9 @@ check('the Moments area keeps its boundary: the briefing, the hold and the plans
   // lessons, the journal and the plans behind index.ts; plans saved through
   // commitments.ts, the phone's moments through nativeAlarms.ts and
   // momentActions.ts (which saves a weigh-in and a breakfast through Body's and
-  // Nutrition's own save doors), the forecast through weather.ts.
-  await areaBorder('moments', { doors: ['commitments', 'momentActions', 'nativeAlarms', 'weather'], uses: ['body', 'nutrition'], shell: {
+  // Nutrition's own save doors), the forecast through weather.ts, and the
+  // widget's Scan and Photo links through widgetLinks.ts (2026-11-11).
+  await areaBorder('moments', { doors: ['commitments', 'momentActions', 'nativeAlarms', 'weather', 'widgetLinks'], uses: ['body', 'nutrition'], shell: {
     'commitments.ts': ['src/lib/stores/sync', 'src/lib/stores/user'],
     'momentActions.ts': ['src/lib/body/weighIn', 'src/lib/nutrition/foodLog'],
     'nativeAlarms.ts': ['src/lib/platform'],

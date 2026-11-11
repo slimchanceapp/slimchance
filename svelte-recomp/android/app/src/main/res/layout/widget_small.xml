@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home-screen widget one row high (SlimWidget): the chance as ten coins,
+     today's food when there is room, and the one action that matters now
+     (Weigh in until today's weigh-in, then Scan). -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/widget_bg"
+    android:gravity="center_vertical"
+    android:orientation="horizontal"
+    android:paddingStart="14dp"
+    android:paddingEnd="6dp">
+
+    <ImageView
+        android:id="@+id/widget_coins"
+        android:layout_width="0dp"
+        android:layout_height="12dp"
+        android:layout_weight="1"
+        android:adjustViewBounds="true"
+        android:contentDescription="6 of 10 coins lit"
+        android:scaleType="fitStart"
+        android:src="@drawable/coins_6" />
+
+    <TextView
+        android:id="@+id/widget_food"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="8dp"
+        android:ellipsize="end"
+        android:maxLines="2"
+        android:text="1,580 of 2,100 kcal"
+        android:textColor="@color/widget_muted"
+        android:textSize="12sp" />
+
+    <LinearLayout
+        android:id="@+id/widget_act"
+        android:layout_width="wrap_content"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/widget_pill"
+        android:gravity="center"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp">
+
+        <TextView
+            android:id="@+id/widget_act_label"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-medium"
+            android:maxLines="1"
+            android:text="Weigh in"
+            android:textColor="#100E26"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

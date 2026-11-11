@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The chance as ten coins, 1 lit (home-screen widget). Made by the loop in
+     the build 23 commit; the selfcheck counts the lit coins. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="171.5dp" android:height="14dp"
+    android:viewportWidth="294" android:viewportHeight="24">
+    <path android:fillColor="@color/widget_coin" android:strokeColor="@color/widget_coin_edge" android:strokeWidth="1.5" android:pathData="M2,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M32,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M62,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M92,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M122,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M152,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M182,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M212,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M242,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+    <path android:fillColor="#00000000" android:strokeColor="@color/widget_coin_dim" android:strokeWidth="1.5" android:pathData="M272,12a10,10 0 1,0 20,0a10,10 0 1,0 -20,0" />
+</vector>

@@ -116,14 +116,12 @@ public class MomentsPlugin extends Plugin {
         call.resolve(o);
     }
 
-    /** { date, title, weighed, unit }: the home-screen widget's sentence and
-     *  whether that day is weighed (src/lib/stores/moments.ts, widgetLines). */
+    /** { date, title, weighed, unit, lit, food, protein }: what the home-screen
+     *  widget shows (src/lib/stores/moments.ts, widgetLines; SlimWidget reads it). */
     @PluginMethod
     public void setWidget(PluginCall call) {
         prefs().edit()
-            .putString("widget_date", call.getString("date", ""))
-            .putString("widget_title", call.getString("title", ""))
-            .putBoolean("widget_weighed", Boolean.TRUE.equals(call.getBoolean("weighed", false)))
+            .putString("widget_json", call.getData().toString())
             .putString("widget_unit", call.getString("unit", "kg"))
             .commit();
         SlimWidget.refresh(getContext());

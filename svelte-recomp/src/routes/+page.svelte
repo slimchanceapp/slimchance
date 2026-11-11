@@ -16,7 +16,7 @@
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { cardNav } from '$lib/actions/cardNav';
-  import { morningsThisWeek, slimming, chanceSentence } from '$lib/body';
+  import { morningsThisWeek, slimming, chanceSentence, coinsLit } from '$lib/body';
   import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import { body, stall, line, scaleUp, todayPulse } from '$lib/stores/body';
   import { dayOne } from '$lib/stores/dayOne';
@@ -127,7 +127,7 @@
   const story = $derived(p.odds ? null : $body.weight?.state === 'not-enough' ? p.story : null);
   // The chance as a count that rolls up, one coin landing per step; in the
   // first week the coins count the mornings on the scale instead.
-  const lit = $derived(p.odds?.lit ?? Math.min(10, $body.weight?.n ?? 0));
+  const lit = $derived(coinsLit(p.odds, $body.weight?.n ?? 0));
   let shown = $state(0);
   $effect(() => {
     const to = lit;

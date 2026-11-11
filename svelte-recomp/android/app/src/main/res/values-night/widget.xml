@@ -5,4 +5,7 @@
     <color name="widget_text">#F4F2FF</color>
     <color name="widget_muted">#A9A5CF</color>
     <color name="widget_brass">#FCC419</color>
+    <color name="widget_tonal">#2C2858</color>
+    <color name="widget_coin_edge">#FCC419</color>
+    <color name="widget_coin_dim">#4A4680</color>
 </resources>

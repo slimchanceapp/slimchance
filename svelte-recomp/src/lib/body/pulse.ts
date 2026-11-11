@@ -83,6 +83,10 @@ export function oddsOf(p: number | null, what: string): Odds | null {
 export const slimming = (goalKg: number | null, kg: number | null, keepSince: string | null): boolean =>
   goalKg != null && kg != null && goalKg < kg && !keepSince;
 
+/** The coins lit, of ten: the chance once there are odds, and in the first
+ *  week the mornings on the scale. Today's hero and the home-screen widget. */
+export const coinsLit = (odds: Odds | null, mornings: number): number => odds?.lit ?? Math.min(10, mornings);
+
 /** The one sentence on the chance: Today's hero and the home-screen widget.
  *  Said of the chance, never of the body: "Slim, for now" read as "you're
  *  slim" next to a weight (the owner, 2026-11-03). */

@@ -145,6 +145,12 @@
     fileInput?.click();
   }
 
+  // From the home-screen widget (the Food page calls these): the scanner opens
+  // straight away; the camera needs a tap, so a big button asks for it.
+  let photoAsk = $state(false);
+  export function startScan() { notice = ''; photoAsk = false; scanning = true; }
+  export function askPhoto() { notice = ''; scanning = false; photoAsk = true; }
+
   // A meal photo waits for a few optional words before it goes (the owner,
   // 2026-11-03: "before I could say a few words describing the food").
   let snap = $state<string | null>(null);
@@ -279,6 +285,9 @@
     </button>
   </div>
   <input bind:this={fileInput} type="file" accept="image/*" capture="environment" onchange={onPhoto} hidden>
+  {#if photoAsk}
+    <button class="btn bp lg-ask" onclick={() => { photoAsk = false; photo('meal'); }}>Take a photo of your meal</button>
+  {/if}
 
   {#if snap && !working}
     <div class="lg-snap">
@@ -531,4 +540,5 @@
   .lg-manual input{padding:9px 8px;text-align:center}
   .lg-warn{font-size:0.75rem;color:var(--led-warn,#ffb020);margin:-4px 0 10px}
   .lg-actions{display:grid;grid-template-columns:1fr 2fr;gap:8px}
+  .lg-ask{display:block;width:100%;margin:10px 0 2px;min-height:48px}
 </style>

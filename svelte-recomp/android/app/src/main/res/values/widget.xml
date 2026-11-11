@@ -5,5 +5,10 @@
     <color name="widget_text">#141A33</color>
     <color name="widget_muted">#5B6380</color>
     <color name="widget_brass">#B7861F</color>
-    <string name="widget_description">Your chance today, and a button for this morning’s weigh-in. No weight is shown.</string>
+    <color name="widget_tonal">#EEF0F8</color>
+    <color name="widget_coin">#FCC419</color>
+    <color name="widget_coin_edge">#B7861F</color>
+    <color name="widget_coin_dim">#C9CFE0</color>
+    <dimen name="widget_radius">24dp</dimen>
+    <string name="widget_description">Your chance as ten coins, today’s food and protein, and one tap to weigh in, scan a barcode or photograph a meal. It never shows your weight.</string>
 </resources>

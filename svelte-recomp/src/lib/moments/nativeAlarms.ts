@@ -271,9 +271,15 @@ export async function armMoments(moments: MomentPayload[]): Promise<void> {
   }
 }
 
-/** The home-screen widget's sentence, and whether `date` is weighed
- *  (src/lib/stores/moments.ts). */
-export interface WidgetLines { date: string; title: string; weighed: boolean; unit: string }
+/** What the home-screen widget shows (src/lib/stores/moments.ts, widgetLines). */
+export interface WidgetLines {
+  date: string; title: string; weighed: boolean; unit: string;
+  /** Coins lit, of ten. */
+  lit?: number;
+  /** "1,580 of 2,100 kcal" and "62 of 160 g protein". */
+  food?: string; protein?: string;
+}
+
 let widgetWith = '';
 
 /** Keep the home-screen widget current (build 22+). Sent only on a change; an
