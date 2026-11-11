@@ -36,7 +36,8 @@ Every deploy is checked against all of it.
 3. **`npm run ship` is the only way the web app goes live.** It refuses
    uncommitted or unpushed work, runs verify, and deploys with the commit as the
    build's version, and refuses a dependency with a known high or critical
-   vulnerability (`npm audit`). Then it checks the live site (`scripts/smoke.mjs`): every
+   vulnerability (`npm audit`) or a database security finding nobody has
+   accepted (`scripts/advisors.mjs`). Then it checks the live site (`scripts/smoke.mjs`): every
    address serves that commit, the pages people land on load, and the edge
    functions answer. If that check fails, it rolls back to the deployment that
    was live before.
@@ -126,8 +127,9 @@ emails the owner (GitHub's own notice).
     migrations, so a new one can't drop it).
   - No key in the repo (checked); GitHub secret scanning and push protection
     on the public repo; `npm audit` at every ship.
-  - After a migration, run the database advisor and read every warning; the
-    accepted ones are written down in the migration that causes them.
+  - Supabase's security advisor runs at every ship (`scripts/advisors.mjs`):
+    each finding must be one we read and accepted, with the reason, in
+    `scripts/advisor-accepted.json`, or the deploy stops.
 - **Simple first (KISS, YAGNI).** The smallest change that works, and no code
   for a need that hasn't arrived yet.
 - **Fail loudly.** Errors are recorded (`client_errors`), never swallowed where

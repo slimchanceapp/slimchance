@@ -14,6 +14,8 @@ git fetch -q origin main
 npm run verify
 # Any dependency, build tools included (SvelteKit's runtime ships from devDependencies).
 npm audit --audit-level=high >/dev/null || fail "npm audit found a high or critical vulnerability: run npm audit, fix it, then ship."
+# The database's security advisor: every finding read and accepted, with why.
+(set -a; . ~/.config/recompos/supabase.env; set +a; node scripts/advisors.mjs) || fail "the database advisor found something new: fix it, or accept it with the reason in scripts/advisor-accepted.json."
 [ -z "$(git status --porcelain --untracked-files=no)" ] || fail "verify changed tracked files (the baseline grew?): commit and push them, then ship again."
 
 SHA=$(git rev-parse --short=12 HEAD)
