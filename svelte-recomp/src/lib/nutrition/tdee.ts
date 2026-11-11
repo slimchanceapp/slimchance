@@ -5,8 +5,8 @@
 // comes with an actual calorie target and a realistic timeline attached.
 
 import { KCAL_PER_KG } from './adaptiveTdee.ts';
-import { wtShortU } from './units.ts';
-import type { GoalDirection } from './body/index.ts';
+import { wtShortU } from '../units.ts';
+import type { GoalDirection } from '../body/index.ts';
 
 export interface TdeeInput {
   weightKg: number;

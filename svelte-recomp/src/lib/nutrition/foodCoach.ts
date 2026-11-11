@@ -7,7 +7,7 @@
 // moving. This turns the running totals into one honest, actionable sentence.
 //
 // Pure + framework-free, so it's unit-tested in selfcheck.js.
-import type { GoalDirection as Direction } from './body/index.ts';
+import type { GoalDirection as Direction } from '../body/index.ts';
 
 export type FoodTone = 'good' | 'ok' | 'warn' | 'bad' | 'na';
 export type { Direction };

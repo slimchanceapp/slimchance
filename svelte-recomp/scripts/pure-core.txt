@@ -3,7 +3,7 @@
 # directly or through what they import. selfcheck fails if one stops being
 # pure. Add a module when it joins the core; removing one needs a reason in
 # the commit, as with baseline.txt (2026-11-10, book chapter 5).
-adaptiveTdee.ts
+nutrition/adaptiveTdee.ts
 brain.ts
 briefing.ts
 cheer.ts
@@ -15,11 +15,12 @@ dayOne.ts
 exportData.ts
 fit.ts
 fitness.ts
-food.ts
-foodCoach.ts
+nutrition/food.ts
+nutrition/foodCoach.ts
 freshness.ts
 hold.ts
 body/importWeights.ts
+journal.ts
 index.ts
 body/insights.ts
 kind.ts
@@ -27,18 +28,18 @@ lessons.ts
 liftStalls.ts
 body/line.ts
 mcp.ts
-mealPlan.ts
+nutrition/mealPlan.ts
 body/milestone.ts
 muscleVolume.ts
 nextWeight.ts
-nutritionPatterns.ts
+nutrition/nutritionPatterns.ts
 paging.ts
 plans.ts
 plates.ts
 profile.ts
 program.ts
 body/pulse.ts
-quickAdd.ts
+nutrition/quickAdd.ts
 readiness.ts
 recomp.ts
 body/scale.ts
@@ -49,13 +50,14 @@ situational.ts
 sleepPerformance.ts
 body/slimTrack.ts
 strength.ts
-tdee.ts
+nutrition/tdee.ts
 trainingHeatmap.ts
 units.ts
-week.ts
+nutrition/week.ts
 weekCheckIn.ts
 weeklyReview.ts
 weeklyShare.ts
 trainPlan.ts
 ask.ts
 body/index.ts
+nutrition/index.ts

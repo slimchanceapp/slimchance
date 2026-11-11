@@ -2,7 +2,7 @@
 // it (2026-10-31). A new plan replaces the old one; past days simply stop
 // showing.
 import { writable } from 'svelte/store';
-import type { CheckedPlan } from '$lib/mealPlan';
+import type { CheckedPlan } from '$lib/nutrition';
 
 const KEY = 'recompos.coachPlan';
 

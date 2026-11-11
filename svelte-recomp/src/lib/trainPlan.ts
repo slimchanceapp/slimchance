@@ -46,3 +46,14 @@ export function checkTrainPlan(
   }
   return { ok: true, why: null, days, note: plain(reply.note, 300) };
 }
+
+/** The Train hero's colour. Orange means "look here", so it waits until a
+ *  planned training day has passed without one: "0 of 2" on a Monday morning
+ *  is the plan, not a miss (2026-11-10). Never red. `plannedDows` are the
+ *  plan's training days, 0 = Sunday as in Date.getDay(). */
+export function trainingTone(done: number, target: number, plannedDows: number[], todayDow: number): 'good' | 'ok' | 'warn' {
+  if (done >= target) return 'good';
+  const mon = (d: number) => (d + 6) % 7; // Monday 0 .. Sunday 6
+  const due = plannedDows.filter((d) => mon(d) < mon(todayDow)).length;
+  return done >= due ? 'ok' : 'warn';
+}

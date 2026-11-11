@@ -56,20 +56,20 @@ const { preferredSource: guessWatchOrigin } = await import('../src/lib/health/wa
 const { ymd, todayYmd, mondayOf, shiftYmd } = await import('../src/lib/date.ts');
 const { foldDailyFocus, todaysFocus } = await import('../src/lib/coach.ts');
 const { weightVerdict, tCritical, paceVsPlan, fitWeightLine, diagnoseStall, goalDirection } = await import('../src/lib/body/insights.ts');
-const { proteinByTrainingDay } = await import('../src/lib/nutritionPatterns.ts');
+const { proteinByTrainingDay } = await import('../src/lib/nutrition/nutritionPatterns.ts');
 const { watchAgreement, recoveryCost } = await import('../src/lib/signals.ts');
 const { EXERCISE_TYPES, ACTIVITY_MUSCLE_LOAD, QUICK_ACTIVITIES } = await import('../src/lib/health/exercise.ts');
 
 const { sessionMuscleLoad, sessionRpe, activityLoadAU, buildActivitySessions, isSameSessionAsLogged } =
   await import('../src/lib/health/exercise.ts');
-const { calcBmr, calcTdee, projectGoalWithTdee, resolveCalorieTarget } = await import('../src/lib/tdee.ts');
-const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/lib/adaptiveTdee.ts');
+const { calcBmr, calcTdee, projectGoalWithTdee, resolveCalorieTarget } = await import('../src/lib/nutrition/tdee.ts');
+const { adaptiveTdee, targetIntakeForLoss, KCAL_PER_KG } = await import('../src/lib/nutrition/adaptiveTdee.ts');
 const { computeReadiness, recoveryState, acuteChronicRatio, sessionLoad, exerciseModifier } =
   await import('../src/lib/readiness.ts');
 const { estOneRM, bestE1RM, strengthTrend } = await import('../src/lib/strength.ts');
 const { parseCalorieTarget, waterTargetLitres } = await import('../src/lib/coach.ts');
 const { inferEquipment, nextGymWeight, roundToGymWeight } = await import('../src/lib/nextWeight.ts');
-const { evaluateFood } = await import('../src/lib/foodCoach.ts');
+const { evaluateFood } = await import('../src/lib/nutrition/foodCoach.ts');
 const { PATTERNS, toneHaptic } = await import('../src/lib/haptics.ts');
 
 // --- Today's Focus folds into three topics --------------------------------
@@ -358,7 +358,7 @@ check('the first week shows one next step at a time, only before a trend', async
 
 console.log('\nquick add — the taps that replace typing');
 
-const { frequentFoods, proteinFillers, groupIntoMeals, repeatDay } = await import('../src/lib/quickAdd.ts');
+const { frequentFoods, proteinFillers, groupIntoMeals, repeatDay } = await import('../src/lib/nutrition/quickAdd.ts');
 
 const FOOD = [
   { name: 'Skyr', date: '2026-08-09', kcal: 120, protein_g: 20, carbs_g: 7, fat_g: 0, created_at: '2026-08-09T07:10:00Z' },
@@ -448,7 +448,7 @@ console.log('\ndirection — the app cannot only know how to cut');
 
 // projectGoalWithTdee and dayOnePlan are already imported above; only the new
 // direction-aware helpers need pulling in here.
-const { projectionSummary } = await import('../src/lib/tdee.ts');
+const { projectionSummary } = await import('../src/lib/nutrition/tdee.ts');
 const d1 = dayOnePlan;
 
 const RECOVERING = { height_cm: 175, birth_year: 1992, sex: 'male', goal_kg: 66, start_kg: 58, activity_level: 'light' };
@@ -3013,7 +3013,7 @@ check('celebrate is a distinct multi-beat crescendo', () => {
 const { muscleVolume, SET_FLOOR, SET_CEILING } = await import('../src/lib/muscleVolume.ts');
 const { liftStalls } = await import('../src/lib/liftStalls.ts');
 const { sleepPerformance } = await import('../src/lib/sleepPerformance.ts');
-const { nutritionPatterns } = await import('../src/lib/nutritionPatterns.ts');
+const { nutritionPatterns } = await import('../src/lib/nutrition/nutritionPatterns.ts');
 const { trainingHeatmap } = await import('../src/lib/trainingHeatmap.ts');
 
 const GROUPS = ['Chest', 'Back', 'Quads', 'Shoulders'];
@@ -3172,8 +3172,8 @@ check('training heatmap: grid geometry and counts are right', () => {
 
 console.log('\nfood — one logger, every source');
 
-const food = await import('../src/lib/food.ts');
-const { frequentFoods: freq } = await import('../src/lib/quickAdd.ts');
+const food = await import('../src/lib/nutrition/food.ts');
+const { frequentFoods: freq } = await import('../src/lib/nutrition/quickAdd.ts');
 const { extractJson } = await import('../../supabase/functions/_shared/llm.ts');
 
 check('legacy provenance suffixes come off the name', () => {
@@ -3441,7 +3441,7 @@ const flatWeights = Array.from({ length: flatDays }, (_, i) => ({ date: shiftYmd
 const flatIntake = Array.from({ length: flatDays }, (_, i) => ({ date: shiftYmd(-(flatDays - 1 - i), new Date('2026-10-18T12:00:00')), kcal: 2000 + (i % 7 >= 5 ? 400 : -160) }));
 
 check('the week’s maintenance is learned in the log’s units once the scale rules the formula out', async () => {
-  const { weeklyMaintenance } = await import('../src/lib/adaptiveTdee.ts');
+  const { weeklyMaintenance } = await import('../src/lib/nutrition/adaptiveTdee.ts');
   const w = weeklyMaintenance({ intake: flatIntake, weights: flatWeights, weekStart: '2026-10-19', formulaKcal: 3200 });
   assert.equal(w.formulaRuledOut, true);
   assert.ok(w.kcal > 1850 && w.kcal < 2200, `holding weight on ~2,000 logged → ~2,000, got ${w.kcal}`);
@@ -3451,7 +3451,7 @@ check('the week’s maintenance is learned in the log’s units once the scale r
 });
 
 check('the week’s maintenance moves gently from Sunday to Sunday, and goes stale', async () => {
-  const { weeklyMaintenance } = await import('../src/lib/adaptiveTdee.ts');
+  const { weeklyMaintenance } = await import('../src/lib/nutrition/adaptiveTdee.ts');
   const weeks = ['2026-09-21', '2026-09-28', '2026-10-05', '2026-10-12', '2026-10-19']
     .map((weekStart) => weeklyMaintenance({ intake: flatIntake, weights: flatWeights, weekStart, formulaKcal: 3200 }).kcal);
   const jumps = weeks.slice(1).map((k, i) => Math.abs(k - weeks[i]));
@@ -3477,7 +3477,7 @@ check('the week’s target holds still all week and is read from last Sunday', a
 });
 
 check('the week is the budget: today’s share is what’s left, spread evenly', async () => {
-  const { weekBudget } = await import('../src/lib/week.ts');
+  const { weekBudget } = await import('../src/lib/nutrition/week.ts');
   const intake = new Map([['2026-10-12', { kcal: 1800 }], ['2026-10-16', { kcal: 3000 }], ['2026-10-17', { kcal: 900 }], ['2026-10-11', { kcal: 9999 }]]);
   const sat = weekBudget(1800, intake, '2026-10-17');
   // Tuesday to Thursday logged nothing, so they count at the target (2026-10-31).
@@ -3537,10 +3537,10 @@ check('weight rate, learned burn and targets are computed in one place', async (
   ].filter((f) => /\.(ts|svelte)$/.test(f));
   const offenders = (re, allowed) => files.filter((f) => !allowed.includes(f) && re.test(readFileSync(f, 'utf8')));
   assert.deepEqual(offenders(/sxy|\(xs\[i\] - mx\)|weeklyLoss\(/, ['src/lib/body/insights.ts']), [], 'one least-squares weight slope');
-  assert.deepEqual(offenders(/adaptiveTdee\(\{/, ['src/lib/adaptiveTdee.ts']), [], 'one learned burn');
+  assert.deepEqual(offenders(/adaptiveTdee\(\{/, ['src/lib/nutrition/adaptiveTdee.ts']), [], 'one learned burn');
   assert.deepEqual(offenders(/weeklyMaintenance\(\{/, ['src/lib/stores/body.ts']), [], 'one week’s maintenance');
   assert.deepEqual(offenders(/diagnoseStall\(\{/, ['src/lib/stores/body.ts']), [], 'one stall diagnosis');
-  assert.deepEqual(offenders(/weekShape\(/, ['src/lib/stores/body.ts', 'src/lib/week.ts']), [], 'one week shape, so the card and the stall clue agree');
+  assert.deepEqual(offenders(/weekShape\(/, ['src/lib/stores/body.ts', 'src/lib/nutrition/week.ts']), [], 'one week shape, so the card and the stall clue agree');
   assert.deepEqual(offenders(/resolveCalorieTarget\(\{/, ['src/lib/stores/body.ts']), [], 'one calorie target');
   assert.deepEqual(offenders(/goalKg \* 1\.8|GOAL_KG \* 1\.8/, []), [], 'one protein target (profile.proteinTargetG)');
 });
@@ -3552,7 +3552,7 @@ console.log('\nreal life — the line, the plans, the week, coming back');
 const { lineState, suggestLine } = await import('../src/lib/body/line.ts');
 const { activePlan, cueActive, cleanPlans, CUES } = await import('../src/lib/plans.ts');
 const { morningsThisWeek, weighInMessage } = await import('../src/lib/body/scale.ts');
-const { weekShape } = await import('../src/lib/week.ts');
+const { weekShape } = await import('../src/lib/nutrition/week.ts');
 
 // Synthetic mornings (the repo is public): a steady loss to a low, then a regain.
 const dayAt = (i) => shiftYmd(i, new Date('2026-07-01T12:00:00'));
@@ -3652,7 +3652,7 @@ check('the ceiling and the next stop are named for their direction everywhere th
 });
 
 check('the Sunday check-ins become a journal, newest first, in the user’s words', async () => {
-  const { journalWeeks } = await import('../src/lib/week.ts');
+  const { journalWeeks } = await import('../src/lib/journal.ts');
   const weights = Array.from({ length: 40 }, (_, i) => ({ date: shiftYmd(-(39 - i), new Date('2026-10-18T12:00:00')), weight: +(114 - i * 0.04).toFixed(1) }));
   const logs = [
     { date: '2026-10-05', week_check: { effort: 'right', hunger: 'fine', adherence: 'nailed', planText: 'Leftovers in a box.', note: 'Cinema, no popcorn.' } },
@@ -3765,7 +3765,7 @@ check('“today” comes from one store, constants from one module', async () =>
   const local = files.filter((f) => /void \$nowTick; return todayYmd\(\)/.test(readFileSync(f, 'utf8')));
   assert.deepEqual(local, [], 'use todayDate from stores/refresh');
   const kcal = files.filter((f) => /const KCAL_PER_KG\s*=/.test(readFileSync(f, 'utf8')));
-  assert.deepEqual(kcal, ['src/lib/adaptiveTdee.ts']);
+  assert.deepEqual(kcal, ['src/lib/nutrition/adaptiveTdee.ts']);
 });
 
 check('live stores never leak a subscription per call', async () => {
@@ -3955,8 +3955,8 @@ check('the coach plans the next days inside the floor, and the app does every su
   // The AI picks foods and grams from the table; the app adds up every number
   // and refuses a plan under the floor, over the day, short of protein, or
   // with a food the table doesn't have. Never a hard day to pay one back.
-  const { planFoods, usualFoods, planDayKcal, checkPlan, PLAN_STAPLES } = await import('../src/lib/mealPlan.ts');
-  const { CUT_FLOOR } = await import('../src/lib/tdee.ts');
+  const { planFoods, usualFoods, planDayKcal, checkPlan, PLAN_STAPLES } = await import('../src/lib/nutrition/mealPlan.ts');
+  const { CUT_FLOOR } = await import('../src/lib/nutrition/tdee.ts');
   const usual = usualFoods([{ date: '2026-10-29', name: 'Tvaroh s whey', grams: 400, kcal: 400, protein_g: 70 }, { date: '2026-09-01', name: 'Old soup', grams: 300, kcal: 120, protein_g: 3 }], '2026-10-03');
   const foods = planFoods(usual);
   assert.equal(foods.length, PLAN_STAPLES.length + 1, 'every staple is in the food table, plus the usual food from the last four weeks');
@@ -3993,7 +3993,7 @@ check('a meal plan a little off its day is fitted by the app, which does the sum
   // never the calculator. A day within reach is scaled to the day's aim, in 5 g
   // steps; one more than 1.5 times off, or short of protein after fitting, is
   // still refused.
-  const { planFoods, checkPlan } = await import('../src/lib/mealPlan.ts');
+  const { planFoods, checkPlan } = await import('../src/lib/nutrition/mealPlan.ts');
   const foods = planFoods([]);
   const day = (meals) => ({ days: [{ date: '2026-11-13', meals }], note: 'Your usual hours.' });
   const big = [{ time: '15:00', items: [{ food: 'Chicken breast, raw', grams: 700 }, { food: 'Olive oil', grams: 60 }, { food: 'Apple', grams: 300 }] },
@@ -4254,7 +4254,7 @@ check('a day’s share of the week is worked out in one place', async () => {
     ...readdirSync('src/lib', { recursive: true }).map((f) => `src/lib/${f}`),
     ...readdirSync('src/routes', { recursive: true }).map((f) => `src/routes/${f}`),
   ].filter((f) => /\.(ts|svelte)$/.test(f));
-  const offenders = files.filter((f) => !['src/lib/stores/body.ts', 'src/lib/week.ts'].includes(f) && /weekBudget\(/.test(readFileSync(f, 'utf8')));
+  const offenders = files.filter((f) => !['src/lib/stores/body.ts', 'src/lib/nutrition/week.ts'].includes(f) && /weekBudget\(/.test(readFileSync(f, 'utf8')));
   assert.deepEqual(offenders, [], 'the briefing reads body.week and body.tomorrow');
 });
 
@@ -4312,7 +4312,7 @@ check('refresh writes in batches: no save per day, no unpaged pull', async () =>
 });
 
 // ── Briefing buttons ─────────────────────────────────────────────────────────
-const { usualBreakfast, notYetLogged } = await import('../src/lib/quickAdd.ts');
+const { usualBreakfast, notYetLogged } = await import('../src/lib/nutrition/quickAdd.ts');
 const breakfastDays = (n, items, hour = '06:40') => Array.from({ length: n }, (_, i) => {
   const d = new Date('2026-10-18T12:00:00'); d.setDate(d.getDate() - 1 - i);
   const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -4352,7 +4352,7 @@ check('the briefing names what its breakfast button logs', () => {
 check('food is saved in one place, so the notification logs it the way the app does', async () => {
   const { readFileSync } = await import('node:fs');
   const files = await srcFiles();
-  assert.deepEqual(files.filter((f) => /upsertRecords?\('food_logs'/.test(readFileSync(f, 'utf8'))), ['src/lib/foodLog.ts']);
+  assert.deepEqual(files.filter((f) => /upsertRecords?\('food_logs'/.test(readFileSync(f, 'utf8'))), ['src/lib/nutrition/foodLog.ts']);
   const actions = readFileSync('src/lib/momentActions.ts', 'utf8');
   assert.match(actions, /saveWeighIn\(/, 'a weight from the watch goes through the one weigh-in path, typo guard included');
   assert.match(actions, /saveFoods\(/);
@@ -4438,7 +4438,7 @@ check('choosing the next stop keeps the one reached, for the journal', async () 
 });
 
 check('the letter from last month tells the month back, in the user’s words', async () => {
-  const { monthLetter, lastMonth } = await import('../src/lib/week.ts');
+  const { monthLetter, lastMonth } = await import('../src/lib/journal.ts');
   assert.equal(lastMonth('2026-11-01'), '2026-10');
   assert.equal(lastMonth('2027-01-02'), '2026-12', 'January looks back at December');
   const w = [];
@@ -4662,7 +4662,7 @@ check('your usual meals are one tap each, found the honest way, and never logged
   // "usual breakfast" grown into every meal. A usual is the same foods on at
   // least 5 of the last 14 days, as usualBreakfast decides it; a day that varies
   // has none. It beats "repeat yesterday" when yesterday wasn't a usual day.
-  const { usualMeals } = await import('../src/lib/quickAdd.ts');
+  const { usualMeals } = await import('../src/lib/nutrition/quickAdd.ts');
   const logs = [];
   for (let k = 1; k <= 10; k++) {
     const date = shiftYmd(-k, new Date('2026-11-11T12:00:00'));
@@ -5019,7 +5019,7 @@ check('a day with nothing logged is neither room nor debt in the week’s budget
   // 2026-10-31: a stranger who started on a Saturday, and one who weighed in
   // all week but logged no food, read "0 of 5,758 kcal": each day without a
   // log counted as a day they ate nothing, and its room piled onto the weekend.
-  const { weekBudget } = await import('../src/lib/week.ts');
+  const { weekBudget } = await import('../src/lib/nutrition/week.ts');
   assert.equal(weekBudget(1645, new Map(), '2026-10-31').share, 1645, 'no log all week: today is a day at the target');
   const wed = weekBudget(1645, new Map([['2026-10-26', { kcal: 1500 }]]), '2026-10-28');
   assert.equal(wed.before, 1500 + 1645, 'Monday as logged, Tuesday at the target');
@@ -5082,7 +5082,7 @@ check('Today shows one next thing at a time, and today’s plan', async () => {
 });
 
 check('the coach’s plan is kept, and its meals are ticked as they are logged', async () => {
-  const { todaysMeals } = await import('../src/lib/mealPlan.ts');
+  const { todaysMeals } = await import('../src/lib/nutrition/mealPlan.ts');
   const item = (food, grams) => ({ food, grams, kcal: 0, protein: 0 });
   const plan = { ok: true, why: null, note: '', days: [{ date: '2026-11-04', kcal: 1500, protein: 170, meals: [
     { time: '15:00', kcal: 700, protein: 80, items: [item('Chicken breast', 250), item('Rice', 150)] },
@@ -5248,7 +5248,7 @@ check('Progress answers "am I getting there?" first, then fitter, this week, det
 check('a planned meal is logged in one tap, at its planned grams, and ticks itself off', async () => {
   // The owner, 2026-11-03: the coach's plan was "a long list, and then I have
   // to scroll all the way down to do the thing I am supposed to do".
-  const { mealAsFoods, todaysMeals } = await import('../src/lib/mealPlan.ts');
+  const { mealAsFoods, todaysMeals } = await import('../src/lib/nutrition/mealPlan.ts');
   const meal = { time: '15:00', kcal: 520, protein: 94, items: [
     { food: 'Chicken breast, cooked', grams: 200, kcal: 330, protein: 62 },
     { food: 'Mystery bowl', grams: 100, kcal: 190, protein: 32 }] };
@@ -5406,7 +5406,7 @@ check('the theme switch turns light on at once, not after a restart', async () =
 check('Train turns orange only after a planned day passes without training, never on a Monday morning', async () => {
   // 2026-11-10: "0 of 2 this week" was orange from Monday morning, before any
   // session was due, because the colour only counted sessions done.
-  const { trainingTone } = await import('../src/lib/week.ts');
+  const { trainingTone } = await import('../src/lib/trainPlan.ts');
   const monThu = [1, 4];
   assert.equal(trainingTone(0, 2, monThu, 1), 'ok', 'Monday morning: nothing due yet');
   assert.equal(trainingTone(0, 2, monThu, 2), 'warn', 'Tuesday after a missed Monday: look here');
@@ -5660,41 +5660,60 @@ check('Slim Chance offers no medical features: no medication log and no rehab pr
   assert.doesNotMatch(listing, /medication and treatment management|physical therapy and rehabilitation/i, 'the Play declaration is health and fitness only');
 });
 
-check('the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area', async () => {
-  // 2026-11-11, decision 0006's first slice (book chapter 5): Body moved into
-  // src/lib/body behind one door for reading (index.ts, pure) and one way in
-  // for a weigh-in (weighIn.ts). The move found the odds asking the Coach area
-  // which way the goal is, and three Nutrition and Health signals functions
-  // living in Body's file. Both fixed; this keeps them fixed.
+// One border rule for every area with its own folder (decision 0006, book
+// chapter 5). Outside the area, only its doors may be imported (inline
+// import() types included); inside, an area uses only itself, the shared
+// kernel, the doors of the areas it builds on, and, for its shell files, the
+// adapters each one names.
+const KERNEL = ['src/lib/units', 'src/lib/date'];
+async function areaBorder(area, { doors, uses = [], shell = {} }) {
   const { readFileSync } = await import('node:fs');
   const { posix } = await import('node:path');
+  const home = `src/lib/${area}`;
   const target = (f, spec) => spec.startsWith('$lib/') ? `src/lib/${spec.slice(5)}`
     : spec.startsWith('.') ? posix.normalize(posix.join(posix.dirname(f), spec)) : null;
   const imports = (f) => [...readFileSync(f, 'utf8').matchAll(/^\s*import\s+(?:type\s+)?(?:[^'";]*?from\s+)?['"]([^'"]+)['"]|\bimport\(\s*['"]([^'"]+)['"]\s*\)/gm)]
     .map((m) => target(f, m[1] ?? m[2])).filter(Boolean).map((t) => t.replace(/\.ts$/, ''));
-  const DOORS = ['src/lib/body', 'src/lib/body/index', 'src/lib/body/weighIn'];
-  const KERNEL = ['src/lib/units', 'src/lib/date'];
-  const SHELL = { 'src/lib/body/weighIn.ts': ['src/lib/db/dexie', 'src/lib/stores/sync', 'src/lib/stores/toast', 'src/lib/haptics', 'src/lib/health/writeBack'] };
+  const open = [home, `${home}/index`, ...doors.map((d) => `${home}/${d}`)];
   const files = await srcFiles();
-  assert.ok(files.includes('src/lib/body/index.ts') && files.includes('src/lib/body/insights.ts'), 'Body lives in src/lib/body');
+  assert.ok(files.includes(`${home}/index.ts`), `${area} lives in ${home}, behind index.ts`);
   for (const f of files) {
-    const inside = f.startsWith('src/lib/body/');
+    const inside = f.startsWith(`${home}/`);
     for (const t of imports(f)) {
       if (!inside) {
-        if (t.startsWith('src/lib/body/') || t === 'src/lib/body') assert.ok(DOORS.includes(t), `${f} reaches past Body's door into ${t}: import it from $lib/body`);
+        if (t === home || t.startsWith(`${home}/`)) assert.ok(open.includes(t), `${f} reaches past ${area}'s door into ${t}: import it from $lib/${area}`);
       } else {
-        const ok = t.startsWith('src/lib/body/') || KERNEL.includes(t) || (SHELL[f] ?? []).includes(t);
-        assert.ok(ok, `${f} reaches into another area (${t}): Body may use only itself and ${KERNEL.join(', ')}`);
+        const ok = t.startsWith(`${home}/`) || KERNEL.includes(t)
+          || uses.some((u) => t === `src/lib/${u}` || t === `src/lib/${u}/index`)
+          || (shell[f.slice(home.length + 1)] ?? []).includes(t);
+        assert.ok(ok, `${f} reaches into another area (${t}): ${area} may use only itself, ${[...KERNEL, ...uses.map((u) => `${u}'s door`)].join(', ')}`);
       }
     }
   }
+}
+
+check('the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area', async () => {
+  // 2026-11-11, decision 0006's first slice: Body behind one door for reading
+  // (index.ts, pure) and one way in for a weigh-in (weighIn.ts). The move found
+  // the odds asking the Coach area which way the goal is, and three Nutrition
+  // and Health signals functions in Body's file. Both fixed; this keeps them so.
+  await areaBorder('body', { doors: ['weighIn'], shell: { 'weighIn.ts': ['src/lib/db/dexie', 'src/lib/stores/sync', 'src/lib/stores/toast', 'src/lib/haptics', 'src/lib/health/writeBack'] } });
+});
+
+check('the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body', async () => {
+  // 2026-11-11, the second slice: food, the week's budget, the learned burn and
+  // meal plans behind index.ts, saving food through foodLog.ts and looking it
+  // up through foodSources.ts. The move found the month letter, the weekly
+  // journal and Train's colour living in week.ts; they went to journal.ts and
+  // trainPlan.ts.
+  await areaBorder('nutrition', { doors: ['foodLog', 'foodSources'], uses: ['body'], shell: { 'foodLog.ts': ['src/lib/stores/sync'], 'foodSources.ts': ['src/lib/db/client'] } });
 });
 
 check('a barcode Open Food Facts doesn’t know is asked of USDA’s branded foods, and shown as theirs', async () => {
   // 2026-11-10: the stranger test is mostly people in the US, whose packaged
   // food USDA FoodData Central covers. A real answer from it, as food-search
   // passes it through (values per 100 g).
-  const { usdaCandidate } = await import('../src/lib/food.ts');
+  const { usdaCandidate } = await import('../src/lib/nutrition/food.ts');
   const c = usdaCandidate({ gtinUpc: '022000050311', description: '5 FLAVORS BIG RING GUMMIES CANDY, CHERRY', brandName: 'LIFE SAVERS', brandOwner: 'Mars, Inc.',
     servingSize: 37.0, servingSizeUnit: 'GRM', packageWeight: '8.6 oz/243 g',
     foodNutrients: [{ nutrientNumber: '208', value: 351 }, { nutrientNumber: '203', value: 2.7 }, { nutrientNumber: '205', value: 83.8 }, { nutrientNumber: '204', value: 0 }] });
@@ -5710,7 +5729,7 @@ check('a barcode Open Food Facts doesn’t know is asked of USDA’s branded foo
   assert.match(fn, /if \(code && !hits\.length\) \{\s*const food = await usda\(code\)/, 'USDA only when Open Food Facts has nothing');
   assert.match(fn, /headers: \{ 'X-Api-Key': FDC_KEY \}/, 'the key in a header, never in a URL');
   assert.match(fn, /code\.length === 12 \? `code:\(\$\{code\} OR 0\$\{code\}\)`/, 'a 12-digit US code is also tried as Open Food Facts files it');
-  assert.match(readFileSync('src/lib/foodSources.ts', 'utf8'), /data\?\.usda \? usdaCandidate\(data\.usda\)/);
+  assert.match(readFileSync('src/lib/nutrition/foodSources.ts', 'utf8'), /data\?\.usda \? usdaCandidate\(data\.usda\)/);
   assert.match(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /source === 'usda'\}USDA FoodData Central/);
 });
 

@@ -16,7 +16,7 @@ import { buildFacts, checkReply, factsDigest, type BrainReply } from '$lib/brain
 import { checkAnswer, type AskChecked } from '$lib/ask';
 import { trainedDates } from '$lib/health/exercise';
 import { cleanPlans } from '$lib/plans';
-import { frequentFoods } from '$lib/quickAdd';
+import { frequentFoods } from '$lib/nutrition';
 import { toUnit, weightUnit } from '$lib/units';
 
 const KEY = 'recompos.brain';

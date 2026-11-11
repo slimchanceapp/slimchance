@@ -4,7 +4,7 @@
   import { upsertRecord } from '$lib/stores/sync';
   import { liveWeights, liveGoal, liveLog, liveGoalReason, liveTracks, liveProfile } from '$lib/stores/live';
   import { ageFrom } from '$lib/profile';
-  import { projectGoal, projectGoalWithTdee, ACTIVITY_LABELS, type ActivityLevel } from '$lib/tdee';
+  import { projectGoal, projectGoalWithTdee, ACTIVITY_LABELS, type ActivityLevel } from '$lib/nutrition';
   import { waterTargetLitres } from '$lib/coach';
   import { body } from '$lib/stores/body';
   import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';

@@ -22,11 +22,11 @@
   import { dayOne } from '$lib/stores/dayOne';
   import { coachOn } from '$lib/stores/brain';
   import { coachPlan } from '$lib/stores/coachPlan';
-  import { todaysMeals, mealAsFoods, type PlanMeal } from '$lib/mealPlan';
-  import { saveFoods } from '$lib/foodLog';
+  import { todaysMeals, mealAsFoods, type PlanMeal } from '$lib/nutrition';
+  import { saveFoods } from '$lib/nutrition/foodLog';
   import { kindWord } from '$lib/kind';
   import { cheerFor } from '$lib/cheer';
-  import { CUT_FLOOR } from '$lib/tdee';
+  import { CUT_FLOOR } from '$lib/nutrition';
   import { lessonFor } from '$lib/lessons';
   import { editing } from '$lib/commitments';
   import { sportOf } from '$lib/plans';

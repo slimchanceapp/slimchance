@@ -9,10 +9,10 @@
   import { coachOn, coachNotes } from '$lib/stores/brain';
   import { liveFoodLogs } from '$lib/stores/live';
   import { supabase } from '$lib/db/client';
-  import { CUT_FLOOR } from '$lib/tdee';
+  import { CUT_FLOOR } from '$lib/nutrition';
   import { shiftYmd } from '$lib/date';
-  import { planFoods, usualFoods, planDayKcal, checkPlan, todaysMeals, mealAsFoods, type CheckedPlan, type PlanMeal } from '$lib/mealPlan';
-  import { saveFoods } from '$lib/foodLog';
+  import { planFoods, usualFoods, planDayKcal, checkPlan, todaysMeals, mealAsFoods, type CheckedPlan, type PlanMeal } from '$lib/nutrition';
+  import { saveFoods } from '$lib/nutrition/foodLog';
   import { userId } from '$lib/stores/user';
   import { coachPlan } from '$lib/stores/coachPlan';
 

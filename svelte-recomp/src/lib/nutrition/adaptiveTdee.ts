@@ -25,7 +25,7 @@
 // loose to steer a target with, however many days were logged. (Counting days
 // alone once labelled four estimates between 1,736 and 2,732 kcal all "high".)
 
-import { fitWeightLine, WINDOW_DAYS } from './body/index.ts';
+import { fitWeightLine, WINDOW_DAYS } from '../body/index.ts';
 
 /** Standard energy density of body-mass change (~7700 kcal per kg). */
 export const KCAL_PER_KG = 7700;

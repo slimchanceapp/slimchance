@@ -9,9 +9,9 @@
   // buttons in the box scan a barcode or take a photo — of a meal, or of a
   // nutrition table. Every path ends in the same review card: portion, macros,
   // Log. Empty, the box shows your staples, yesterday, and yesterday's meals.
-  import { historyFoods, searchLocal, scale, times, sum, estimateLocally, type Candidate, type Macros, type NewFood } from '$lib/food';
-  import { searchProducts, lookupBarcode, estimateWithAI, type AiItem } from '$lib/foodSources';
-  import { frequentFoods, proteinFillers, repeatDay, groupIntoMeals, usualMeals, notYetLogged } from '$lib/quickAdd';
+  import { historyFoods, searchLocal, scale, times, sum, estimateLocally, type Candidate, type Macros, type NewFood } from '$lib/nutrition';
+  import { searchProducts, lookupBarcode, estimateWithAI, type AiItem } from '$lib/nutrition/foodSources';
+  import { frequentFoods, proteinFillers, repeatDay, groupIntoMeals, usualMeals, notYetLogged } from '$lib/nutrition';
   import { fileToDownscaledDataUrl } from '$lib/image';
   import { shiftYmd } from '$lib/date';
   import { haptic } from '$lib/haptics';

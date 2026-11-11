@@ -11,7 +11,7 @@
   // and a torch button; a checksum on every read and two matching reads in a
   // row before a code counts; and the number pad is always one tap away.
   import { onMount, onDestroy } from 'svelte';
-  import { validGtin } from '$lib/food';
+  import { validGtin } from '$lib/nutrition';
   import { haptic } from '$lib/haptics';
 
   let { onCode, onClose }: { onCode: (code: string) => void; onClose: () => void } = $props();

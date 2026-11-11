@@ -19,7 +19,7 @@
 // Explicit .ts extensions: scripts/selfcheck.js imports this module directly under
 // node's type-stripping, which does not resolve extensionless specifiers. tsconfig
 // sets rewriteRelativeImportExtensions, so the build rewrites these normally.
-import { projectGoal, type ActivityLevel } from './tdee.ts';
+import { projectGoal, type ActivityLevel } from './nutrition/index.ts';
 import { ageFrom, type Profile } from './profile.ts';
 import { shiftYmd } from './date.ts';
 import { dwt } from './units.ts';

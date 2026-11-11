@@ -39,3 +39,8 @@ its own limits (for example the MCP server under heavy outside traffic).
   snapshot unchanged), same size (1,075,462 bytes of JavaScript before,
   1,075,458 after), same speed (the trend maths timed in both trees). Book
   chapter 5 has what the move found.
+- **2026-11-11: Nutrition moved** into `svelte-recomp/src/lib/nutrition`
+  behind `index.ts`, with `foodLog.ts` and `foodSources.ts` as its shell
+  doors; it builds only on Body's door. The border check became one rule for
+  every area. Same behaviour, same speed; the first screen ended 160 bytes
+  lighter after the size check caught a 3.6 KB slip on the way.

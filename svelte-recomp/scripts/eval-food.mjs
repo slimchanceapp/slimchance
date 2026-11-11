@@ -6,13 +6,13 @@
 //   ai       the production prompt (read from supabase/functions/estimate-food
 //            at run time, so this can't drift from what the app sends) to
 //            Gemini with the production settings
-//   offline  the app's no-AI fallback, estimateLocally in src/lib/food.ts
+//   offline  the app's no-AI fallback, estimateLocally in src/lib/nutrition/food.ts
 // Scored by the typical error (median of |estimate - truth| / truth), the share
 // within 20%, and the lean (median signed error: + means it guesses high).
 //
 // Usage: set -a; . ~/.config/recompos/cloudflare-ai.env; set +a; node scripts/eval-food.mjs [n=150]   (EVAL_ENGINE=gemini: its own key)
 import { readFileSync } from 'node:fs';
-import { estimateLocally } from '../src/lib/food.ts';
+import { estimateLocally } from '../src/lib/nutrition/food.ts';
 
 // Engines: EVAL_ENGINE=gemma (default) runs Google's open Gemma 4 on Cloudflare
 // Workers AI, the free allowance the app also uses, so the run is capped well

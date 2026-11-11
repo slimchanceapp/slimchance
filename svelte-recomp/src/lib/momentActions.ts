@@ -5,9 +5,9 @@
 import { get, writable } from 'svelte/store';
 import { momentsAck, momentsPending, type MomentInput } from '$lib/nativeAlarms';
 import { NeedsConfirm, saveWeighIn } from '$lib/body/weighIn';
-import { saveFoods } from '$lib/foodLog';
+import { saveFoods } from '$lib/nutrition/foodLog';
 import { upsertRecord } from '$lib/stores/sync';
-import { notYetLogged } from '$lib/quickAdd';
+import { notYetLogged } from '$lib/nutrition';
 import { parseWt } from '$lib/units';
 
 /** What was typed on the notification is in the person's own unit (the

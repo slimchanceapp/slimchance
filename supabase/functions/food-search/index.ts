@@ -8,7 +8,7 @@
 // Deliberately thin. It runs a Slovakia/Czechia query and a world query in
 // parallel and returns the raw hits, de-duplicated. Normalising (kJ-only
 // products, names in any language) and ranking happen in the app, in
-// src/lib/food.ts, where they are unit-tested and shared with barcode lookups.
+// src/lib/nutrition/food.ts, where they are unit-tested and shared with barcode lookups.
 //
 //   POST {"q": "pilos tvaroh"}       -> {"hits": [...]}
 //   POST {"code": "8585002503541"}   -> {"hits": [one product]}   (barcode fallback)
@@ -17,7 +17,7 @@
 // USDA FoodData Central (2026-11-10): asked only when Open Food Facts has no
 // product for a code. Its branded foods cover most packaged food sold in the
 // US, where Open Food Facts is thinner. The raw food goes back; the app shapes
-// it (src/lib/food.ts usdaCandidate). The key travels in a header, never a URL.
+// it (src/lib/nutrition/food.ts usdaCandidate). The key travels in a header, never a URL.
 
 import { corsHeaders, json } from '../_shared/llm.ts';
 import { gate } from '../_shared/auth.ts';

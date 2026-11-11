@@ -314,6 +314,7 @@ the Body area keeps its boundary: the app reaches it only through its door, and 
 the Food hero praises protein when it’s hit and never colours a day still in progress
 the Google Play build updates only through Play and loads slimchance.app
 the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8
+the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body
 the Stoic lines rotate by date, never at random, and each is sourced
 the Sunday check-ins become a journal, newest first, in the user’s words
 the Sunday review asks about the user’s own plan, in their words

@@ -18,9 +18,9 @@
 // 14.1% of budgets more than 200 kcal too low (bias -24); 55% of the person's
 // usual day 9.9% (bias +6); a perfect partial-day detector 8.5%. A cut at a
 // share of the usual day was the only rule that came near it; one judged by
-// the person's own spread (MAD) stayed near today's. src/lib/adaptiveTdee.ts
+// the person's own spread (MAD) stayed near today's. src/lib/nutrition/adaptiveTdee.ts
 // uses 55%.
-import { adaptiveTdee } from '../src/lib/adaptiveTdee.ts';
+import { adaptiveTdee } from '../src/lib/nutrition/adaptiveTdee.ts';
 
 const N = Number(process.argv[2]) || 4000;
 let seed = 20261111;

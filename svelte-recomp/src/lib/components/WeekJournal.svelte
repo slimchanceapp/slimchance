@@ -4,7 +4,7 @@
   // that writes itself a week at a time — private, and only ever in the
   // user's own words.
   import { liveDailyLogs, liveWeights } from '$lib/stores/live';
-  import { journalWeeks, monthLetter } from '$lib/week';
+  import { journalWeeks, monthLetter } from '$lib/journal';
   import { todayDate } from '$lib/stores/refresh';
   import { changeWord, dwtNum, wtNum } from '$lib/units';
 

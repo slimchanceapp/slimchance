@@ -5,7 +5,7 @@
   // unit-tested; hides itself until there are a few logged days.
   import { liveFoodLogs, liveGoal, liveWeights } from '$lib/stores/live';
   import { proteinTargetG as calcProteinTarget } from '$lib/profile';
-  import { nutritionPatterns } from '$lib/nutritionPatterns';
+  import { nutritionPatterns } from '$lib/nutrition';
 
   const _food = liveFoodLogs();
   const _goal = liveGoal();

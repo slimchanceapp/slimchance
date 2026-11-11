@@ -1,12 +1,12 @@
 <script lang="ts">
   // THE LETTER FROM LAST MONTH. On the 1st to the 3rd, Today opens with the
   // month just gone, told back in the app's numbers and the user's own Sunday
-  // words (week.ts monthLetter). Remembering is what keeping weight off runs
+  // words (journal.ts monthLetter). Remembering is what keeping weight off runs
   // on, and a solo journey has nobody else to do the remembering. It stays
   // in the Progress journal after it's put away.
   import { liveDailyLogs, liveWeights, liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';
-  import { lastMonth, monthLetter } from '$lib/week';
+  import { lastMonth, monthLetter } from '$lib/journal';
   import type { MilestoneSetting } from '$lib/body';
   import { dwt, wt, wtNum, wtShortU } from '$lib/units';
 

@@ -15,10 +15,10 @@
 //
 // 2026-11-11 on Gemma 4: evening notes 12/12 and training weeks 8/8 on the
 // first try; meal plans 2/6, every miss a day's sum. Since the app fits a
-// day's portions to its aim (src/lib/mealPlan.ts checkPlan), 6/6.
+// day's portions to its aim (src/lib/nutrition/mealPlan.ts checkPlan), 6/6.
 import { readFileSync } from 'node:fs';
 import { buildFacts, checkReply } from '../src/lib/brain.ts';
-import { checkPlan, planFoods } from '../src/lib/mealPlan.ts';
+import { checkPlan, planFoods } from '../src/lib/nutrition/mealPlan.ts';
 import { checkTrainPlan } from '../src/lib/trainPlan.ts';
 
 const KEY = process.env.CLOUDFLARE_AI_TOKEN, ACCOUNT = process.env.CLOUDFLARE_ACCOUNT_ID;

@@ -3,22 +3,27 @@
 // entry, the app, the layout and Today, with every chunk they import). Moving
 // code between areas (decision 0006) must never make a phone download more.
 // Over budget fails verify. A deliberate increase raises the budget in the same
-// commit, with the reason, like baseline.txt; a drop of over 1% lowers it on its own.
+// commit, with the reason, like baseline.txt; a drop of over 0.2% lowers it on its own.
 import { readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs';
 
 const OUT = '.svelte-kit/output/client';
 const BUDGET = 'scripts/bundle-budget.json';
-const SLACK = 1.01; // 1%: a few bytes move with every build
+const SLACK = 1.002; // 0.2%: a few bytes move with every build; 1% let a 3.6 KB first-screen slip through (2026-11-11)
 
 const m = JSON.parse(readFileSync(`${OUT}/.vite/manifest.json`, 'utf8'));
 const size = (f) => statSync(`${OUT}/${f}`).size;
 const total = readdirSync(`${OUT}/_app/immutable`, { recursive: true })
   .filter((f) => f.endsWith('.js')).reduce((s, f) => s + size(`_app/immutable/${f}`), 0);
-const FIRST = ['node_modules/@sveltejs/kit/src/runtime/client/entry.js', '.svelte-kit/generated/client-optimized/app.js',
+// Matched by how the key ends: where node_modules sits (a link, a CI runner) changes the start.
+const FIRST = ['@sveltejs/kit/src/runtime/client/entry.js', '.svelte-kit/generated/client-optimized/app.js',
   '.svelte-kit/generated/client-optimized/nodes/0.js', '.svelte-kit/generated/client-optimized/nodes/2.js'];
 const files = new Set();
 const walk = (k) => { const e = m[k]; if (!e || files.has(e.file)) return; files.add(e.file); for (const i of e.imports ?? []) walk(i); };
-for (const k of FIRST) { if (!m[k]) { console.error(`bundle-check: ${k} is not in the build; update FIRST`); process.exit(1); } walk(k); }
+for (const end of FIRST) {
+  const k = Object.keys(m).find((key) => key.endsWith(end));
+  if (!k) { console.error(`bundle-check: nothing in the build ends with ${end}; update FIRST`); process.exit(1); }
+  walk(k);
+}
 const first = [...files].reduce((s, f) => s + size(f), 0);
 
 const now = { total, first };
@@ -27,7 +32,7 @@ const kb = (n) => `${(n / 1024).toFixed(1)} KB`;
 let over = false, lower = false;
 for (const k of ['total', 'first']) {
   if (now[k] > budget[k] * SLACK) { over = true; console.error(`bundle-check: ${k} JavaScript is ${kb(now[k])}, over its budget of ${kb(budget[k])}. Find what grew, or raise the budget in ${BUDGET} with the reason in the commit.`); }
-  else if (now[k] * SLACK < budget[k]) lower = true; // only a real drop (over 1%) moves it, so a few bytes don't stop a ship
+  else if (now[k] * SLACK < budget[k]) lower = true; // only a real drop (over 0.2%) moves it, so a few bytes don't stop a ship
 }
 if (over) process.exit(1);
 if (lower) writeFileSync(BUDGET, JSON.stringify({ total: Math.min(now.total, budget.total), first: Math.min(now.first, budget.first) }, null, 2) + '\n');

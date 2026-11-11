@@ -9,7 +9,7 @@
 //             the offline estimator in $lib/food
 
 import { supabase } from '$lib/db/client';
-import { rankProducts, offCandidate, usdaCandidate, type Candidate, type Macros } from '$lib/food';
+import { rankProducts, offCandidate, usdaCandidate, type Candidate, type Macros } from './food';
 
 export type AiItem = Macros & { name: string; grams: number | null };
 export type AiMeal = Macros & { mode: 'meal'; name: string; items: AiItem[]; confidence: 'low' | 'medium' | 'high'; provider: string };

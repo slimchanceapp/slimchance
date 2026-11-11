@@ -18,7 +18,7 @@
   import db from '$lib/db/dexie';
   import { todayYmd } from '$lib/date';
   import { ageFrom, suggestGoalKg, proteinTargetG, ftInToCm, cmToFtIn, type Sex, type ActivityLevel } from '$lib/profile';
-  import { calcTdee, projectGoalWithTdee, projectionSummary } from '$lib/tdee';
+  import { calcTdee, projectGoalWithTdee, projectionSummary } from '$lib/nutrition';
   import { notify } from '$lib/stores/notices';
   import { supabase } from '$lib/db/client';
   import { CUES, cleanPlans, type PlanCue } from '$lib/plans';

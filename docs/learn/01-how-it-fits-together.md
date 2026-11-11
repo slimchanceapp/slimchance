@@ -498,9 +498,9 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Trend | Where the weight really is under the daily water noise | `weightVerdict`, `body/insights.ts` |
 | The chance (coins) | How likely the trend is really going the goal's way | `chanceOf`, `body/insights.ts`; words in `body/pulse.ts` |
 | The path | How far from the start to the goal | `body/slimTrack.ts` |
-| The budget | The week's calories, not the day's | `weekBudget`, `week.ts` |
-| Learned burn | What this body burns, learned from the log and the scale | `weeklyMaintenance`, `adaptiveTdee.ts` |
-| The floor | The least anyone is ever planned to eat | `CUT_FLOOR`, `tdee.ts` |
+| The budget | The week's calories, not the day's | `weekBudget`, `nutrition/week.ts` |
+| Learned burn | What this body burns, learned from the log and the scale | `weeklyMaintenance`, `nutrition/adaptiveTdee.ts` |
+| The floor | The least anyone is ever planned to eat | `CUT_FLOOR`, `nutrition/tdee.ts` |
 | A trained day | Lifting logged, or 30+ minutes of watch-recorded sport | `trainedDates`, `health/exercise.ts` |
 | A stall | The trend has ruled out the plan's pace | `diagnoseStall`, `body/insights.ts` |
 | Moments | The morning briefing and the evening hold | `stores/moments.ts` |
@@ -510,11 +510,11 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Area | What it knows | Core (pure) | Shell (talks to the world) |
 |---|---|---|---|
 | Body (`src/lib/body`) | Weigh-ins, trend, chance, path, ceiling, stops | `insights` `pulse` `line` `slimTrack` `milestone` `scale` `scaleUp` `importWeights`, read through `index.ts` | `weighIn`, `stores/body` |
-| Nutrition | Food, the week's budget, the learned burn | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` | `foodLog`, `foodSources`, the food edge functions |
-| Training | Sessions, programs, lifts | `program` `strength` `liftStalls` `plates` | the Train screen, `health/logActivity` |
+| Nutrition (`src/lib/nutrition`) | Food, the week's budget, the learned burn, meal plans | `food` `week` `adaptiveTdee` `tdee` `mealPlan` `nutritionPatterns` `foodCoach` `quickAdd`, read through `index.ts` | `foodLog`, `foodSources`, the food edge functions |
+| Training | Sessions, programs, lifts | `program` `strength` `liftStalls` `plates` `trainPlan` | the Train screen, `health/logActivity` |
 | Health signals | Sleep, resting heart rate, HRV, steps | `signals` `readiness` `fitness` | `health/*` (Health Connect), Apple Health |
 | Coach | The AI's words, checked | `brain` `coach` | `stores/brain`, the coach edge function |
-| Moments | Briefing, evening hold, kind words | `briefing` `hold` `cheer` `kind` `lessons` | `stores/moments`, the Android receiver |
+| Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
 | Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
 | Identity and data | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live` |
 | Metrics | Are we helping? | `fit` | `events`, the Numbers page, `owner_metrics` |
@@ -608,6 +608,34 @@ that is now measured on every verify: `scripts/bundle-check.mjs` sums all the
 JavaScript and what the first screen needs, against
 `scripts/bundle-budget.json`. A deliberate increase raises the budget with a
 reason in the commit, the same way the baseline grows.
+
+### The second area: Nutrition
+
+The same day, Nutrition followed: food, the week's budget, the learned burn,
+meal plans and the patterns in a food log, in `src/lib/nutrition`. Its door
+was written from what the rest of the app actually imports, and it has two
+shell doors: `foodLog.ts` saves food, `foodSources.ts` looks it up. It may
+build on Body's door and nothing else, and the border check is now one rule
+for every area, so each new area costs one line.
+
+Nutrition had no wrong-way dependency, but its door gave away three
+strangers: `week.ts` also held the weekly journal, last month's letter and
+the colour of Train's hero. They moved to `journal.ts` and `trainPlan.ts`.
+
+And the size check earned its keep. The first home I gave the month letter
+was the weekly review module. Everything still passed, but the first screen
+grew by 3.6 KB: the morning moments load at startup and read the letter, so
+the whole weekly review came along. The total had shrunk, so only the
+first-screen number showed it. The letter got its own small module, and the
+first screen ended 160 bytes lighter than before. The check's slack was 1%,
+which let the slip pass; it is 0.2% now.
+
+| What | Before | After |
+|---|---|---|
+| Checks and the personas snapshot | all pass | all pass, snapshot unchanged |
+| JavaScript in all | 1,036,715 bytes | 1,036,688 bytes |
+| JavaScript for the first screen | 700,144 bytes | 699,984 bytes |
+| The learned budget, 300 runs on 120 days | about 250 ms | about 250 ms |
 
 **Try it.** Add `import { weightVerdict } from './body/insights.ts';` to the
 top of `src/lib/week.ts` and run `node scripts/selfcheck.js`: "week.ts

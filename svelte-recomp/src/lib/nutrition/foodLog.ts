@@ -2,7 +2,7 @@
 // re-logging) and the morning briefing's "log usual breakfast" button both come
 // here, so a meal is the same rows wherever it was logged.
 import { upsertRecords } from '$lib/stores/sync';
-import type { NewFood } from '$lib/food';
+import type { NewFood } from './food';
 
 /** One request for the whole meal: all of it is saved or none, so a failure
  *  can be retried without doubling the items that had gone through. */

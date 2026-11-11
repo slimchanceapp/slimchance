@@ -10,9 +10,9 @@
   import { swipeActions } from '$lib/actions/swipe';
   import FoodLogger from '$lib/components/FoodLogger.svelte';
   import NutritionInsights from '$lib/components/NutritionInsights.svelte';
-  import { cleanName, sourceOf, type NewFood } from '$lib/food';
-  import { saveFoods } from '$lib/foodLog';
-  import { evaluateFood } from '$lib/foodCoach';
+  import { cleanName, sourceOf, type NewFood } from '$lib/nutrition';
+  import { saveFoods } from '$lib/nutrition/foodLog';
+  import { evaluateFood } from '$lib/nutrition';
   import { speak } from '$lib/stores/toast';
   import { haptic } from '$lib/haptics';
   import db from '$lib/db/dexie';

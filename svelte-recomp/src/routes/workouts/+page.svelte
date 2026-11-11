@@ -15,7 +15,7 @@
   import PageHero from '$lib/components/PageHero.svelte';
   import TrainPlan from '$lib/components/TrainPlan.svelte';
   import { sessionsLeft } from '$lib/trainPlan';
-  import { trainingTone } from '$lib/week';
+  import { trainingTone } from '$lib/trainPlan';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/nextWeight';

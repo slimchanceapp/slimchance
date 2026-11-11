@@ -11,7 +11,7 @@
 //
 //   POST {"facts": {...}}  ->  {"reply": {...}, "provider": "...", "ms": n}
 //   POST {"mode": "plan", "facts": {...}}  ->  the same envelope, the reply a
-//     plan of foods and grams for the next days (src/lib/mealPlan.ts checks it
+//     plan of foods and grams for the next days (src/lib/nutrition/mealPlan.ts checks it
 //     and works out every number itself).
 
 import { ask, corsHeaders, extractJson, json } from '../_shared/llm.ts';

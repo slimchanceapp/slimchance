@@ -17,7 +17,7 @@
   import { liveProfile } from '$lib/stores/live';
   import { nowTick } from '$lib/stores/refresh';
   import { shiftYmd } from '$lib/date';
-  import { proteinByTrainingDay } from '$lib/nutritionPatterns';
+  import { proteinByTrainingDay } from '$lib/nutrition';
   import { watchAgreement } from '$lib/signals';
   import MiniChart from '$lib/components/MiniChart.svelte';
   import { changeWord, dwt, dwtNum, toUnit, unitWord, weightUnit, wt, wtNum, wtShort, wtShortU } from '$lib/units';
