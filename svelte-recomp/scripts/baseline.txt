@@ -356,6 +356,7 @@ the live site is checked on a schedule, not only when someone deploys
 the major brands all resolve
 the manifest declares exactly the write permissions the code uses
 the manifest declares notifications and exact alarms
+the morning briefing comes at the first unlock after its time, whatever the hour
 the morning notification takes a weight on the number pad
 the morning rating decides progress, hold, or back off
 the native build number matches the gradle versionCode

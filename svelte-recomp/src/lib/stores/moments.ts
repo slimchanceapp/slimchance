@@ -117,13 +117,18 @@ export const holds: Readable<Array<Briefing | null>> = derived(
   },
 );
 
+/** The morning briefing's window ends with the day: the first unlock after its
+ *  time brings it, whatever the hour (the owner, 2026-11-11, after a late night
+ *  when it closed at noon: "any time I unlock my phone after 6am"). */
+export const MORNING_UNTIL = 24 * 60;
+
 export interface Moment { date: string; key: 'morning' | 'evening'; after: number; until: number; title: string; body: string; actions?: MomentActions }
 
 /** Everything Android should hold, with each one's window. */
 export const moments: Readable<Moment[]> = derived([momentSetting, briefings, holds], ([$s, $b, $h]) => {
   if (!$s) return [];
   const out: Moment[] = [];
-  if ($s.on) for (const b of $b) out.push({ ...b, key: 'morning', after: minutesOf($s.after), until: 12 * 60 });
+  if ($s.on) for (const b of $b) out.push({ ...b, key: 'morning', after: minutesOf($s.after), until: MORNING_UNTIL });
   if ($s.hold) for (const h of $h) if (h) out.push({ ...h, key: 'evening', after: holdAfter(new Date(`${h.date}T12:00:00`).getDay()), until: HOLD_UNTIL });
   return out;
 });

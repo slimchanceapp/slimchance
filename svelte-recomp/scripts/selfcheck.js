@@ -3924,6 +3924,18 @@ check('with the briefing on, the morning weigh-in and the weekend-plan pings fol
   assert.ok(situationalNudges(fri).some((n) => n.key === 'plan' && n.atMinutes === 16 * 60 + 30), 'Friday’s still comes before leaving work');
 });
 
+check('the morning briefing comes at the first unlock after its time, whatever the hour', async () => {
+  // 2026-11-11, the owner: no briefing after a late night, because the morning
+  // window closed at noon and his first unlock came after it. His rule, for
+  // everyone: "any time I unlock my phone after 6am, I want to see it". The
+  // window now runs to the end of the day; MomentClock.java still posts each
+  // moment once, at the first unlock inside its window.
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('src/lib/stores/moments.ts', 'utf8');
+  assert.match(src, /export const MORNING_UNTIL = 24 \* 60;/);
+  assert.match(src, /key: 'morning', after: minutesOf\(\$s\.after\), until: MORNING_UNTIL \}/);
+});
+
 check('each goes out at the first unlock inside its window (MomentClock.java)', async () => {
   const { spawnSync } = await import('node:child_process');
   const file = 'android/app/src/main/java/com/toxicminds/recompos/MomentClock.java';
