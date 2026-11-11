@@ -15,7 +15,7 @@ import db from '$lib/db/dexie';
 import { supabase } from '$lib/db/client';
 import { upsertRecords } from '$lib/stores/sync';
 import { buildActivitySessions } from '../training/index';
-import { sleepNights } from './sleep';
+import { sleepNights, asleepSpans } from './sleep';
 import { hasPlugin, isAndroidApp, isIOSApp } from '$lib/platform';
 import { type RecordType, READ_TYPES, READ_PERMISSION, WRITE_TYPES, canWrite, readTypesKey } from './permissions';
 import { pickOriginByDay, countOrigins, percentile, changedDays, sameSessions } from './dedupe';
@@ -23,9 +23,6 @@ import { preferredSource } from './watches';
 import { scaleDays } from './scaleWeights';
 import { notify } from '$lib/stores/notices';
 
-// Health Connect sleep-stage codes counted as actually asleep
-// (2 SLEEPING, 4 LIGHT, 5 DEEP, 6 REM). Awake / out-of-bed / awake-in-bed excluded.
-const ASLEEP_STAGES = new Set([2, 4, 5, 6]);
 
 // Set by aggregate(), read by the sync that calls it, so the per-source step
 // breakdown can reach the diagnostics UI without rethreading the return type.
@@ -181,20 +178,6 @@ type DayAgg = {
   hrv: number | null;
 };
 
-/** Minutes actually asleep in a SleepSession, from its stages when present. */
-function sleepMinutes(s: any): number {
-  if (Array.isArray(s.stages) && s.stages.length) {
-    let mins = 0;
-    for (const st of s.stages) {
-      if (ASLEEP_STAGES.has(Number(st.stage))) {
-        mins += (new Date(st.endTime).getTime() - new Date(st.startTime).getTime()) / 60000;
-      }
-    }
-    if (mins > 0) return mins;
-  }
-  return (new Date(s.endTime).getTime() - new Date(s.startTime).getTime()) / 60000;
-}
-
 const originOf = (r: any) => String(r?.metadata?.dataOrigin || 'unknown');
 
 /**
@@ -234,7 +217,7 @@ function aggregate(
   // take that source's LONGEST night for the day: summing every night would
   // fold afternoon naps into "last night's sleep", and summing across sources
   // counted the same night twice when both the watch and the phone recorded it. —
-  const nights = sleepNights(sleeps, { originOf, minutesOf: sleepMinutes, dayOf: ymd });
+  const nights = sleepNights(sleeps, { originOf, spansOf: asleepSpans, dayOf: ymd });
   const sleepPick = pickOriginByDay(nights, {
     dayOf: (n) => n.day,
     valueOf: (n) => n.minutes,

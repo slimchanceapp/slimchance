@@ -4679,8 +4679,8 @@ check('a night the watch split in two is one night, and a nap stays a nap', asyn
   const { sleepNights, NIGHT_GAP_MIN } = await import('../src/lib/health/sleep.ts');
   const W = 'watch', P = 'phone';
   const s = (start, end, origin = W) => ({ startTime: start, endTime: end, origin });
-  const mins = (x) => (Date.parse(x.endTime) - Date.parse(x.startTime)) / 60000;
-  const nights = (list) => sleepNights(list, { originOf: (x) => x.origin, minutesOf: mins, dayOf: (t) => new Date(t).toISOString().slice(0, 10) });
+  const whole = (x) => [[Date.parse(x.startTime), Date.parse(x.endTime)]];
+  const nights = (list) => sleepNights(list, { originOf: (x) => x.origin, spansOf: whole, dayOf: (t) => new Date(t).toISOString().slice(0, 10) });
 
   const split = nights([s('2026-10-28T21:40:00Z', '2026-10-29T02:00:00Z'), s('2026-10-29T03:00:00Z', '2026-10-29T05:10:00Z')]);
   assert.equal(split.length, 1, 'one night');
@@ -4703,6 +4703,44 @@ check('a night the watch split in two is one night, and a nap stays a nap', asyn
 
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /const nights = sleepNights\(sleeps,/, 'the sync counts nights, not sessions');
+});
+
+check('a night broken by a long wake, or written in overlapping pieces, keeps all its sleep', async () => {
+  // 2026-11-11: 9 and 11 Nov read 4.1 and 5.0 hours for full nights the owner
+  // slept in pieces ("not short sleeps, just discontinuous"). A wake past the
+  // two-hour join split the night and the day kept the bigger piece; pieces
+  // that overlapped kept only the bigger one.
+  const { sleepNights, spanMinutes, asleepSpans, NIGHT_GAP_MIN } = await import('../src/lib/health/sleep.ts');
+  const s = (start, end, stages) => ({ startTime: start, endTime: end, origin: 'watch', stages });
+  const nights = (list) => sleepNights(list, { originOf: (x) => x.origin, spansOf: asleepSpans, dayOf: (t) => new Date(t).toISOString().slice(0, 10) });
+
+  const longWake = nights([s('2026-11-08T22:30:00Z', '2026-11-09T02:30:00Z'), s('2026-11-09T05:00:00Z', '2026-11-09T07:30:00Z')]);
+  assert.equal(longWake.length, 1, 'awake from 2:30 to 5:00 is still one night');
+  assert.equal(longWake[0].minutes, 240 + 150, 'both pieces count');
+  assert.ok(NIGHT_GAP_MIN >= 180, 'a wake of three hours in the night still joins');
+  const noonNap = nights([s('2026-11-09T04:52:00Z', '2026-11-09T08:57:00Z'), s('2026-11-09T12:15:00Z', '2026-11-09T13:15:00Z')]);
+  assert.equal(noonNap.length, 2, 'a noon nap 3.3 hours after waking stays a nap (the study\'s closest nap)');
+
+  const overlap = nights([s('2026-11-10T22:30:00Z', '2026-11-11T03:00:00Z'), s('2026-11-11T02:50:00Z', '2026-11-11T07:20:00Z')]);
+  assert.equal(overlap.length, 1);
+  assert.equal(overlap[0].minutes, 530, '22:30 to 7:20 once, not the bigger piece alone');
+
+  const nap = nights([s('2026-11-08T22:30:00Z', '2026-11-09T06:30:00Z'), s('2026-11-09T13:00:00Z', '2026-11-09T13:40:00Z')]);
+  assert.equal(nap.length, 2, 'a nap six hours after waking stays a nap');
+
+  // Asleep stretches: stages when there are any (awake never counts), else the whole session.
+  const staged = s('2026-11-08T22:00:00Z', '2026-11-09T06:00:00Z', [
+    { stage: 4, startTime: '2026-11-08T22:00:00Z', endTime: '2026-11-09T01:00:00Z' },
+    { stage: 1, startTime: '2026-11-09T01:00:00Z', endTime: '2026-11-09T02:00:00Z' },
+    { stage: 5, startTime: '2026-11-09T02:00:00Z', endTime: '2026-11-09T06:00:00Z' },
+  ]);
+  assert.equal(spanMinutes(asleepSpans(staged)), 420, 'the hour awake is left out');
+  assert.equal(spanMinutes(asleepSpans(s('2026-11-08T22:00:00Z', '2026-11-09T06:00:00Z'))), 480, 'no stages: the whole session');
+  assert.equal(spanMinutes([[0, 3600e3], [1800e3, 5400e3], [7200e3, 9000e3]]), 120, 'overlaps once, gaps left out');
+  assert.equal(spanMinutes([]), 0);
+
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /sleepNights\(sleeps, \{ originOf, spansOf: asleepSpans, dayOf: ymd \}\)/, 'the sync counts asleep stretches');
 });
 
 check('a day with nothing logged is neither room nor debt in the week’s budget', async () => {

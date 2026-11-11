@@ -64,6 +64,7 @@ a morning reminder is set only where it can arrive, at the person’s own time, 
 a name is used only when there is one
 a next stop is reached when the trend stays there three days, not on one lucky morning
 a next stop knows what it means at this height
+a night broken by a long wake, or written in overlapping pieces, keeps all its sleep
 a night the watch split in two is one night, and a nap stays a nap
 a normal swing is told with the band it was judged by, measured from the trend
 a nudge only exists while the fact behind it is still true
