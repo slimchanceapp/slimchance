@@ -5535,6 +5535,22 @@ check('every table the app syncs or exports is created by a migration, so the re
   for (const t of tables) assert.match(sql, new RegExp(`create table (if not exists )?(public\\.)?${t}\\b`, 'i'), `${t} is synced or exported but no migration creates it`);
 });
 
+check('Train opens on the week: how training is going waits in one closed row, and nothing there asks for logging', async () => {
+  // 2026-11-11, the last of the 10-31 Train cuts: muscle recovery, what hit
+  // each muscle and the history insights sat below the week, open, and for a
+  // watch-only trainer mostly empty. Now one DetailRow (closed: nothing drawn).
+  const { readFileSync } = await import('node:fs');
+  const page = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  const open = page.indexOf('<DetailRow title="How your training is going"'), close = page.indexOf('</DetailRow>', open);
+  assert.ok(open > 0 && close > open, 'one row for how training is going');
+  for (const part of ['class="flip-viewport"', 'Insights from your history', '<WorkoutInsights />']) {
+    const at = page.indexOf(part);
+    assert.ok(at > open && at < close, `${part} is inside the row`);
+    assert.equal(page.indexOf(part, at + 1), -1, `${part} appears once`);
+  }
+  assert.doesNotMatch(page, /Log a workout to see/, 'an empty card explains; it never asks for logging');
+});
+
 check('Slim Chance offers no medical features: no medication log and no rehab program (Google Play)', async () => {
   // 2026-11-11: Google Play rejected the closed test. Medical features
   // (medication management, physical therapy and rehabilitation) may only be

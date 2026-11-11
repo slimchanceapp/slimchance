@@ -16,6 +16,7 @@
   import TrainPlan from '$lib/components/TrainPlan.svelte';
   import { sessionsLeft } from '$lib/training';
   import { trainingTone } from '$lib/training';
+  import DetailRow from '$lib/components/DetailRow.svelte';
   import WorkoutInsights from '$lib/components/WorkoutInsights.svelte';
   import PlateWarmupCalc from '$lib/components/PlateWarmupCalc.svelte';
   import { inferEquipment, nextGymWeight, roundToGymWeight } from '$lib/training';
@@ -1076,50 +1077,6 @@
   {/if}
 
 
-  {#if analytics && historyInsights}
-    <div class="card">
-      <div class="flex jb ac">
-        <div class="card-lbl" style="margin-bottom:0">Insights from your history</div>
-        <button class="flip-btn" onclick={() => showInsights = !showInsights}>{showInsights ? 'Less ▲' : 'More ▾'}</button>
-      </div>
-
-      <div class="ins-stats">
-        <div class="ins-stat"><span class="ins-val">{historyInsights.totalSessions}</span><span class="ins-lbl">sessions</span></div>
-        <div class="ins-stat"><span class="ins-val">{Math.round(historyInsights.totalTonnage).toLocaleString()}</span><span class="ins-lbl">kg lifted</span></div>
-        <div class="ins-stat"><span class="ins-val">{historyInsights.perWeek}</span><span class="ins-lbl">sessions/wk</span></div>
-      </div>
-
-      <div class="ins-list">
-        {#if historyInsights.volDeltaPct !== null}
-          <div class="ins-item" class:good={historyInsights.volDeltaPct >= 0} class:warn={historyInsights.volDeltaPct < 0}>
-            {historyInsights.volDeltaPct >= 0 ? '📈' : '📉'}
-            Weekly volume {historyInsights.volDeltaPct >= 0 ? 'up' : 'down'} <b>{Math.abs(historyInsights.volDeltaPct)}%</b> vs the week before
-            ({Math.round(historyInsights.vol7).toLocaleString()} vs {Math.round(historyInsights.volPrev7).toLocaleString()} kg).
-            {historyInsights.volDeltaPct >= 0 ? 'Progressive overload is working — this is what protects lean mass in a deficit.' : 'Dips are fine near a deep-diet week; just avoid a long slide.'}
-          </div>
-        {/if}
-        {#if historyInsights.recentPRs.length > 0}
-          <div class="ins-item good">🏆 Recent PR: <b>{historyInsights.recentPRs[0].name}</b> — {historyInsights.recentPRs[0].weight_kg}kg × {historyInsights.recentPRs[0].reps} (est. 1RM {Math.round(historyInsights.recentPRs[0].oneRM)}kg). Getting stronger while dieting = you're recomping, not just losing.</div>
-        {/if}
-        {#if historyInsights.neglected.length > 0}
-          <div class="ins-item warn">🎯 Neglected: <b>{historyInsights.neglected.slice(0, 2).map((m) => m.group).join(' & ')}</b>{historyInsights.neglected[0].status === 'none' ? ' (never logged)' : ` (last ${hoursAgoPhrase(historyInsights.neglected[0].hoursAgo)})`}. Balanced training keeps physique proportional — slot {historyInsights.neglected.length > 1 ? 'them' : 'it'} in next.</div>
-        {/if}
-        {#if historyInsights.topMuscle}
-          <div class="ins-item">💪 Most-trained lately: <b>{historyInsights.topMuscle}</b> ({historyInsights.topSets} sets / 14d).</div>
-        {/if}
-
-        {#if showInsights}
-          <div class="ins-item">🗓️ <b>{historyInsights.sessions14}</b> sessions in the last 14 days. {historyInsights.perWeek >= 3 ? 'Great consistency — 3+/wk is the sweet spot for recomposition.' : 'Aim for 3+/week to maximise lean-mass retention while cutting.'}</div>
-          {#if historyInsights.recentPRs.length > 1}
-            <div class="ins-item good">🥈 Also PR'd: {historyInsights.recentPRs.slice(1, 4).map((p) => p.name).join(', ')}.</div>
-          {/if}
-          {#if $_goalReason}
-            <div class="ins-item">🔗 Tied to your goal — {$_goalReason} Strength trend + volume above are the evidence your training is defending muscle as the scale drops.</div>
-          {/if}
-        {/if}
-      </div>
-    </div>
-  {/if}
 
 
   {#if completions.length > 0}
@@ -1278,6 +1235,9 @@
 
 
 {#if analytics}
+<!-- Train answers "what this week"; how it is going waits in one closed row
+     (2026-11-11, the backlog's last Train cut). Closed, none of it is drawn. -->
+<DetailRow title="How your training is going" hint="Muscle recovery, what hit each muscle, and the patterns in your history">
 <div class="flip-viewport" style="height:{recoveryFlipped ? recBackH : recFrontH}px">
   <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_static_element_interactions -->
   <div class="flip-inner" class:flipped={recoveryFlipped}>
@@ -1332,17 +1292,59 @@
             </div>
           </div>
         {:else}
-          <div style="font-size:0.75rem;color:var(--muted)">Log a workout to see which exercises drove each muscle's recovery.</div>
+          <div style="font-size:0.75rem;color:var(--muted)">No exercise detail yet: a watch records the session, not its exercises.</div>
         {/each}
       </div>
     </div>
   </div>
 </div>
 
-{/if}
+{#if historyInsights}
+    <div class="card">
+      <div class="flex jb ac">
+        <div class="card-lbl" style="margin-bottom:0">Insights from your history</div>
+        <button class="flip-btn" onclick={() => showInsights = !showInsights}>{showInsights ? 'Less ▲' : 'More ▾'}</button>
+      </div>
 
-{#if analytics}
+      <div class="ins-stats">
+        <div class="ins-stat"><span class="ins-val">{historyInsights.totalSessions}</span><span class="ins-lbl">sessions</span></div>
+        <div class="ins-stat"><span class="ins-val">{Math.round(historyInsights.totalTonnage).toLocaleString()}</span><span class="ins-lbl">kg lifted</span></div>
+        <div class="ins-stat"><span class="ins-val">{historyInsights.perWeek}</span><span class="ins-lbl">sessions/wk</span></div>
+      </div>
+
+      <div class="ins-list">
+        {#if historyInsights.volDeltaPct !== null}
+          <div class="ins-item" class:good={historyInsights.volDeltaPct >= 0} class:warn={historyInsights.volDeltaPct < 0}>
+            {historyInsights.volDeltaPct >= 0 ? '📈' : '📉'}
+            Weekly volume {historyInsights.volDeltaPct >= 0 ? 'up' : 'down'} <b>{Math.abs(historyInsights.volDeltaPct)}%</b> vs the week before
+            ({Math.round(historyInsights.vol7).toLocaleString()} vs {Math.round(historyInsights.volPrev7).toLocaleString()} kg).
+            {historyInsights.volDeltaPct >= 0 ? 'Progressive overload is working — this is what protects lean mass in a deficit.' : 'Dips are fine near a deep-diet week; just avoid a long slide.'}
+          </div>
+        {/if}
+        {#if historyInsights.recentPRs.length > 0}
+          <div class="ins-item good">🏆 Recent PR: <b>{historyInsights.recentPRs[0].name}</b> — {historyInsights.recentPRs[0].weight_kg}kg × {historyInsights.recentPRs[0].reps} (est. 1RM {Math.round(historyInsights.recentPRs[0].oneRM)}kg). Getting stronger while dieting = you're recomping, not just losing.</div>
+        {/if}
+        {#if historyInsights.neglected.length > 0}
+          <div class="ins-item warn">🎯 Neglected: <b>{historyInsights.neglected.slice(0, 2).map((m) => m.group).join(' & ')}</b>{historyInsights.neglected[0].status === 'none' ? ' (never logged)' : ` (last ${hoursAgoPhrase(historyInsights.neglected[0].hoursAgo)})`}. Balanced training keeps physique proportional — slot {historyInsights.neglected.length > 1 ? 'them' : 'it'} in next.</div>
+        {/if}
+        {#if historyInsights.topMuscle}
+          <div class="ins-item">💪 Most-trained lately: <b>{historyInsights.topMuscle}</b> ({historyInsights.topSets} sets / 14d).</div>
+        {/if}
+
+        {#if showInsights}
+          <div class="ins-item">🗓️ <b>{historyInsights.sessions14}</b> sessions in the last 14 days. {historyInsights.perWeek >= 3 ? 'Great consistency — 3+/wk is the sweet spot for recomposition.' : 'Aim for 3+/week to maximise lean-mass retention while cutting.'}</div>
+          {#if historyInsights.recentPRs.length > 1}
+            <div class="ins-item good">🥈 Also PR'd: {historyInsights.recentPRs.slice(1, 4).map((p) => p.name).join(', ')}.</div>
+          {/if}
+          {#if $_goalReason}
+            <div class="ins-item">🔗 Tied to your goal — {$_goalReason} Strength trend + volume above are the evidence your training is defending muscle as the scale drops.</div>
+          {/if}
+        {/if}
+      </div>
+    </div>
+{/if}
   <WorkoutInsights />
+</DetailRow>
 {/if}
 {/if}
 

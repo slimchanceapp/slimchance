@@ -22,6 +22,7 @@ Samsung is recognised — the gap that broke the old regex
 Slim Chance offers no medical features: no medication log and no rehab program (Google Play)
 Today shows one next thing at a time, and today’s plan
 Today stays calm: one card for the day, no cards that said a little each
+Train opens on the week: how training is going waits in one closed row, and nothing there asks for logging
 Train turns orange only after a planned day passes without training, never on a Monday morning
 a Capacitor plugin proxy is never returned from an async function
 a Capacitor weekday is one ahead of a JS getDay()
