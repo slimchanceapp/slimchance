@@ -12,11 +12,10 @@ cycle.ts
 date.ts
 dayOne.ts
 exportData.ts
-fit.ts
+metrics/fit.ts
 health/fitness.ts
 nutrition/food.ts
 nutrition/foodCoach.ts
-freshness.ts
 hold.ts
 body/importWeights.ts
 journal.ts
@@ -72,3 +71,4 @@ health/dedupe.ts
 health/scaleWeights.ts
 health/permissions.ts
 health/watches.ts
+metrics/index.ts

@@ -2718,35 +2718,8 @@ check('brand ids are unique', () => {
 });
 
 // ── New world-class feature modules ──────────────────────────────────────────
-const { signalFreshness, daysBetweenYmd, latestDate } = await import('../src/lib/freshness.ts');
 const { weeklyReview } = await import('../src/lib/weeklyReview.ts');
 
-console.log('\nfreshness — honest signal age (the stale-watch-data fix, generalised)');
-
-check('a reading dated today is fresh; older is stale; none is missing', () => {
-  assert.equal(signalFreshness('2026-03-10', '2026-03-10').state, 'fresh');
-  assert.equal(signalFreshness('2026-03-08', '2026-03-10').state, 'stale');
-  assert.equal(signalFreshness(null, '2026-03-10').state, 'missing');
-  assert.equal(signalFreshness(undefined, '2026-03-10').state, 'missing');
-});
-
-check('freshWithinDays widens the fresh window; labels read naturally', () => {
-  assert.equal(signalFreshness('2026-03-09', '2026-03-10', { freshWithinDays: 1 }).state, 'fresh');
-  assert.equal(signalFreshness('2026-03-10', '2026-03-10', { zeroLabel: 'Last night' }).label, 'Last night');
-  assert.equal(signalFreshness('2026-03-09', '2026-03-10').label, 'Yesterday');
-  assert.equal(signalFreshness('2026-03-07', '2026-03-10').label, '3 days ago');
-  assert.equal(signalFreshness(null, '2026-03-10', { missingLabel: 'None' }).label, 'None');
-});
-
-check('daysBetweenYmd + latestDate pick the freshest matching reading', () => {
-  assert.equal(daysBetweenYmd('2026-03-01', '2026-03-04'), 3);
-  const rows = [
-    { date: '2026-03-01', sleep: 7 }, { date: '2026-03-05', sleep: null }, { date: '2026-03-03', sleep: 6 },
-  ];
-  assert.equal(latestDate(rows), '2026-03-05');
-  assert.equal(latestDate(rows, (r) => r.sleep != null), '2026-03-03');
-  assert.equal(latestDate([]), null);
-});
 
 console.log('\nweeklyReview — the Sunday-night digest + next-week adjustments');
 
@@ -4815,7 +4788,7 @@ check('drop-off is counted in our own database, by a fixed list, and only the ow
   const { readFileSync } = await import('node:fs');
   const { readdirSync } = await import('node:fs');
   const sql = readFileSync('../supabase/migrations/20261029100000_app_events.sql', 'utf8');
-  const ts = readFileSync('src/lib/events.ts', 'utf8');
+  const ts = readFileSync('src/lib/metrics/events.ts', 'utf8');
   // The newest migration that defines note_event is the list in force.
   const latest = readdirSync('../supabase/migrations').sort().map((f) => readFileSync(`../supabase/migrations/${f}`, 'utf8')).filter((t) => /p_event not in \(/.test(t)).at(-1);
   const inSql = latest.match(/p_event not in \(([^)]*)\)/)[1].match(/'([a-z_0-9]+)'/g).map((s) => s.slice(1, -1));
@@ -4997,7 +4970,7 @@ check('each person’s first link tag is counted with the setup numbers, by tag,
   for (const page of ['about', 'guides/why-the-scale-went-up', 'guides/consistent-beats-accurate']) {
     assert.match(readFileSync(`static/${page}/index.html`, 'utf8'), /<script src="\/from\.js"><\/script>/, `${page} keeps the tag`);
   }
-  assert.match(readFileSync('src/lib/events.ts', 'utf8'), /supabase\.rpc\('note_origin', \{ p_from: tag \}\)/);
+  assert.match(readFileSync('src/lib/metrics/events.ts', 'utf8'), /supabase\.rpc\('note_origin', \{ p_from: tag \}\)/);
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /noteOrigin\(\);/);
   assert.match(sql, /'by_from'/, 'the Numbers page gets the steps per tag');
   assert.match(sql, /alter table public\.app_origins enable row level security;/, 'no client reads the tags');
@@ -5007,7 +4980,7 @@ check('each person’s first link tag is counted with the setup numbers, by tag,
 check('people are asked once, a few days in, whether Slim Chance is for them and what is in the way', async () => {
   // 2026-10-31: of the strangers who logged anything, seven in eight left
   // within four entries, and none said why.
-  const { fitAskDue, FIT_ANSWERS, FIT_REASONS } = await import('../src/lib/fit.ts');
+  const { fitAskDue, FIT_ANSWERS, FIT_REASONS } = await import('../src/lib/metrics/fit.ts');
   const due = (joined, extra = {}) => fitAskDue({ joined, today: '2026-11-06', setupDone: true, answered: false, ...extra });
   assert.equal(due('2026-11-05'), false, 'not on day two');
   assert.equal(due('2026-11-04'), true, 'from day three');
@@ -5016,7 +4989,7 @@ check('people are asked once, a few days in, whether Slim Chance is for them and
   assert.equal(due('2026-11-04', { setupDone: false }), false, 'only after setup');
   assert.equal(due('2026-11-04', { answered: true }), false, 'once');
   const { readFileSync } = await import('node:fs');
-  const listed = readFileSync('src/lib/events.ts', 'utf8').match(/APP_EVENTS = \[([^\]]*)\]/)[1];
+  const listed = readFileSync('src/lib/metrics/events.ts', 'utf8').match(/APP_EVENTS = \[([^\]]*)\]/)[1];
   for (const x of [...FIT_ANSWERS, ...FIT_REASONS]) assert.ok(listed.includes(`'${x.event}'`), `${x.event} is a counted event`);
   const today = readFileSync('src/routes/+page.svelte', 'utf8');
   const slot = today.match(/<div class="next">([\s\S]*?)<\/div>\s*<!-- \/next -->/)?.[1] ?? '';
@@ -5638,6 +5611,12 @@ check('the Health signals area keeps its boundary: the app reaches it only throu
     'healthConnect.ts': ['src/lib/db/dexie', 'src/lib/db/client', 'src/lib/stores/sync', 'src/lib/platform', 'src/lib/stores/notices'],
     'writeBack.ts': ['src/lib/platform'],
   } });
+});
+
+check('the Metrics area keeps its boundary: events are counted only through its door', async () => {
+  // 2026-11-11, the fifth slice: "is it for you?" behind index.ts, and
+  // note_event reached only through events.ts, so no screen counts its own way.
+  await areaBorder('metrics', { doors: ['events'], shell: { 'events.ts': ['src/lib/db/client'] } });
 });
 
 check('the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area', async () => {

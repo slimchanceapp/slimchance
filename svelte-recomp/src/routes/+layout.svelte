@@ -25,7 +25,7 @@
   import { syncHealthConnect } from '$lib/health/healthConnect';
   import { pullToRefresh } from '$lib/actions/pullToRefresh';
   import { refreshAll, refreshing, refreshError, lastRefresh, startClock, stopClock, nowTick } from '$lib/stores/refresh';
-  import { noteEvent, noteOrigin } from '$lib/events';
+  import { noteEvent, noteOrigin } from '$lib/metrics/events';
   import Onboarding from '$lib/components/Onboarding.svelte';
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
   import { trainedDates } from '$lib/training';

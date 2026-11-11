@@ -3,7 +3,7 @@
 // who logged anything, seven in eight left within four entries and nobody
 // said why. The answer and the reason are counted like the setup steps:
 // totals only (src/lib/events.ts).
-import { shiftYmd } from './date.ts';
+import { shiftYmd } from '../date.ts';
 
 export const FIT_ANSWERS = [
   { event: 'fit_yes', label: 'Yes, so far' },

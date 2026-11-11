@@ -52,4 +52,9 @@ its own limits (for example the MCP server under heavy outside traffic).
   beside the Health Connect adapters, behind `index.ts`; Health Connect is
   reached only through `healthConnect.ts`, `writeBack.ts` and `watches.ts`.
   Muscle recovery went to Training first; dead load code went. Built output
-  byte-for-byte unchanged. Left: Moments, Coach, Identity and data, Metrics.
+  byte-for-byte unchanged.
+- **2026-11-11: Metrics moved** into `svelte-recomp/src/lib/metrics`: the
+  "is it for you?" question behind `index.ts`, events counted only through
+  `events.ts`. **Identity and data stays the platform** (`db/`, `stores/`):
+  every area reads and writes through it, so a border around it would guard
+  nothing. Left: Moments and Coach, as one slice (each reads the other).

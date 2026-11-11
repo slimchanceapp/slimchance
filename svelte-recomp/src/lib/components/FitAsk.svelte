@@ -5,9 +5,9 @@
   import { user } from '$lib/stores/user';
   import { liveProfile } from '$lib/stores/live';
   import { todayDate } from '$lib/stores/refresh';
-  import { noteEvent } from '$lib/events';
+  import { noteEvent } from '$lib/metrics/events';
   import { ymd } from '$lib/date';
-  import { FIT_ANSWERS, FIT_REASONS, fitAskDue } from '$lib/fit';
+  import { FIT_ANSWERS, FIT_REASONS, fitAskDue } from '$lib/metrics';
 
   const KEY = 'recompos.fitAsked';
   const _p = liveProfile();

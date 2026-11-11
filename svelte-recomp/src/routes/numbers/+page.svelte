@@ -3,7 +3,7 @@
   // what broke for them. Totals only, from owner_metrics (migration
   // 20261029100000_app_events), which answers only the accounts in app_owners;
   // anyone else gets nothing. Not linked from the app: the owner keeps the URL.
-  import { FIT_ANSWERS, FIT_REASONS } from '$lib/fit';
+  import { FIT_ANSWERS, FIT_REASONS } from '$lib/metrics';
   import { supabase } from '$lib/db/client';
   import PageHero from '$lib/components/PageHero.svelte';
 

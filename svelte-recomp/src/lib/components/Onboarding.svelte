@@ -27,7 +27,7 @@
   import { saveMoments } from '$lib/stores/moments';
   import { isIOSApp, isNativeApp } from '$lib/platform';
   import { CALENDAR_KEY, canPush, localTz } from '$lib/reminder';
-  import { noteEvent } from '$lib/events';
+  import { noteEvent } from '$lib/metrics/events';
   import WeightInput from './WeightInput.svelte';
   import { dwt, roundIn, type Units, wtShortU } from '$lib/units';
   import { useUnits } from '$lib/stores/units';

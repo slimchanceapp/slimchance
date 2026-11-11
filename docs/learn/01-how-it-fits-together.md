@@ -516,8 +516,8 @@ code. Chapter 1's "one source of truth" rule is this idea under another name.
 | Coach | The AI's words, checked | `brain` `ask` | `stores/brain`, the coach and ask edge functions |
 | Moments | Briefing, evening hold, kind words, the journal and the month's letter | `briefing` `hold` `cheer` `kind` `lessons` `journal` | `stores/moments`, the Android receiver |
 | Medication | Doses, effects, the doctor report | `meds` | the Medication screen |
-| Identity and data | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live` |
-| Metrics | Are we helping? | `fit` | `events`, the Numbers page, `owner_metrics` |
+| Identity and data (the platform) | Accounts, the device's copy, sync | `profile` `exportData` | `db/*`, `stores/sync`, `stores/live`: every area reads and writes through it, so it stays the shared shell, not an area |
+| Metrics (`src/lib/metrics`) | Are we helping? | `fit`, read through `index.ts` | `events`, the Numbers page, `owner_metrics` |
 | The outside world | Other people's AI assistants | `mcp` | `routes/mcp/+server.ts` |
 | Shared kernel | Units and dates, which every area speaks | `units` `date` | `stores/units` |
 

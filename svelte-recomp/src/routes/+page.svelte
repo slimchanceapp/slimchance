@@ -8,7 +8,7 @@
   import { shiftYmd } from '$lib/date';
   import { upsertRecord } from '$lib/stores/sync';
   import { userId, user, isTrial } from '$lib/stores/user';
-  import { noteEvent } from '$lib/events';
+  import { noteEvent } from '$lib/metrics/events';
   import { CALENDAR_KEY, calendarUrl } from '$lib/reminder';
   import { saveAccountOpen, importOpen } from '$lib/stores/notices';
   import { liveProfile } from '$lib/stores/live';
