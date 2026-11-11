@@ -4720,6 +4720,28 @@ check('a day with nothing planned says so, not its weekday twice', async () => {
   assert.match(src, /byDow\.get\(dow\) \|\| \{ day_of_week: dow, label: 'Nothing planned', session_key: null, note: '' \}/);
 });
 
+check('your usual meals are one tap each, found the honest way, and never logged twice', async () => {
+  // 2026-11-11, backlog P5 (food friction, the first reason people quit):
+  // "usual breakfast" grown into every meal. A usual is the same foods on at
+  // least 5 of the last 14 days, as usualBreakfast decides it; a day that varies
+  // has none. It beats "repeat yesterday" when yesterday wasn't a usual day.
+  const { usualMeals } = await import('../src/lib/quickAdd.ts');
+  const logs = [];
+  for (let k = 1; k <= 10; k++) {
+    const date = shiftYmd(-k, new Date('2026-11-11T12:00:00'));
+    logs.push({ date, name: k % 3 === 0 ? 'Chicken bowl' : `Lunch ${k}`, kcal: 640, protein_g: 48, created_at: `${date}T13:05:00` }); // the bowl on 3 days only
+    if (k !== 4) for (const [name, kcal] of [['Tvaroh', 196], ['Whey', 120]]) logs.push({ date, name, kcal, protein_g: 30, created_at: `${date}T21:10:00` });
+  }
+  const u = usualMeals(logs, '2026-11-11');
+  assert.deepEqual(u.map((m) => m.label), ['Snack'], 'a lunch that varies has no usual; the late tvaroh and whey is one');
+  assert.deepEqual(u[0].items.map((x) => x.name), ['Tvaroh', 'Whey']);
+  assert.equal(usualMeals(logs.filter((l) => l.date >= '2026-11-08'), '2026-11-11').length, 0, 'three days are not a usual');
+  const { readFileSync } = await import('node:fs');
+  const ui = readFileSync('src/lib/components/FoodLogger.svelte', 'utf8');
+  assert.match(ui, /usualMeals\(logs, today\)/, 'the logger offers them');
+  assert.match(ui, /notYetLogged\(logs, m\.items, today\)/, 'a second tap adds nothing');
+});
+
 check('is it working: the first two weeks against the last two, in the person’s own numbers', async () => {
   // 2026-11-11 (planned 10-18 as the owner's before-and-after): what changed,
   // never why; behaviour first, and no word of praise for a weight.

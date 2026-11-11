@@ -421,4 +421,5 @@ with the hold on, the evening’s pings fold into it
 worst topic sorts first regardless of reading order
 ymd pads month and day
 ymd uses LOCAL date, not UTC
+your usual meals are one tap each, found the honest way, and never logged twice
 “today” comes from one store, constants from one module

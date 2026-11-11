@@ -11,7 +11,7 @@
   // Log. Empty, the box shows your staples, yesterday, and yesterday's meals.
   import { historyFoods, searchLocal, scale, times, sum, estimateLocally, type Candidate, type Macros, type NewFood } from '$lib/food';
   import { searchProducts, lookupBarcode, estimateWithAI, type AiItem } from '$lib/foodSources';
-  import { frequentFoods, proteinFillers, repeatDay, groupIntoMeals } from '$lib/quickAdd';
+  import { frequentFoods, proteinFillers, repeatDay, groupIntoMeals, usualMeals, notYetLogged } from '$lib/quickAdd';
   import { fileToDownscaledDataUrl } from '$lib/image';
   import { shiftYmd } from '$lib/date';
   import { haptic } from '$lib/haptics';
@@ -51,7 +51,12 @@
   const fillers = $derived(proteinLeft >= 15 ? proteinFillers(logs, 3) : []);
   const staples = $derived(frequentFoods(logs, 8).filter((s) => !fillers.some((f) => f.name === s.name)));
   const yesterdayLeft = $derived(repeatDay(logs, yesterday, today));
-  const meals = $derived(groupIntoMeals(logs, yesterday));
+  // Your usual meals, one tap each (the same foods on 5 of the last 14 days),
+  // with what's already logged today left out so a second tap adds nothing.
+  const usuals = $derived(usualMeals(logs, today).map((m) => ({ ...m, left: notYetLogged(logs, m.items, today) })).filter((m) => m.left.length));
+  const sameFoods = (a: { items: Array<{ name: string }> }, b: { items: Array<{ name: string }> }) =>
+    a.items.map((x) => x.name.toLowerCase()).sort().join('|') === b.items.map((x) => x.name.toLowerCase()).sort().join('|');
+  const meals = $derived(groupIntoMeals(logs, yesterday).filter((m) => !usuals.some((u) => u.label === m.label && sameFoods(u, m))));
   const hasQuery = $derived(query.trim().length >= 2);
 
   // ── Online search: debounced, one request in flight, every request timed ──
@@ -402,7 +407,7 @@
       {/if}
       <button class="lg-row lg-manual-row" onclick={manual}><span>✎ Enter the numbers myself</span></button>
     </div>
-  {:else if fillers.length || staples.length || yesterdayLeft.length || meals.length}
+  {:else if fillers.length || staples.length || yesterdayLeft.length || meals.length || usuals.length}
     <!-- Empty box: the taps that replace typing, all from your own history. -->
     <div class="lg-quick">
       {#if fillers.length}
@@ -426,6 +431,11 @@
           {/each}
         </div>
       {/if}
+      {#each usuals as m (m.key)}
+        <button class="lg-row" disabled={saving} onclick={() => quick(m.left, `usual ${m.label.toLowerCase()}`)}>
+          <span>★ Your usual {m.label.toLowerCase()}</span><em>{Math.round(m.left.reduce((s, f) => s + f.kcal, 0))} kcal — {m.left.map((i) => i.name).join(', ')}</em>
+        </button>
+      {/each}
       {#if yesterdayLeft.length}
         <button class="lg-row" disabled={saving} onclick={() => quick(yesterdayLeft, 'yesterday')}>
           <span>↺ Repeat yesterday</span><em>{yesterdayLeft.length} items · {Math.round(yesterdayLeft.reduce((s, f) => s + f.kcal, 0))} kcal</em>

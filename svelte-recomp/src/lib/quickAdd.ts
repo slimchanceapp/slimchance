@@ -229,3 +229,37 @@ export function usualBreakfast(logs: FoodRow[], date: string, days = 14, minDays
   for (const v of seen.values()) if (!best || v.count > best.count) best = v;
   return best && best.count >= minDays ? best.latest : null;
 }
+
+const SLOT_ORDER = ['Breakfast', 'Lunch', 'Dinner', 'Snack'];
+
+/**
+ * Every usual meal, not just breakfast (2026-11-11, food friction): for each
+ * slot of the day, the same foods (by name) on at least `minDays` of the `days`
+ * days before `date`, with the portions from the latest of them. A slot that
+ * varies has no usual, as with usualBreakfast: one tap is only honest when
+ * there is a usual. In the order of the day.
+ */
+export function usualMeals(logs: FoodRow[], date: string, days = 14, minDays = 5): Meal[] {
+  const seen = new Map<string, { label: string; count: number; latest: Meal }>();
+  const at = new Date(`${date}T12:00:00`);
+  for (let i = 1; i <= days; i++) {
+    const d = new Date(at);
+    d.setDate(d.getDate() - i);
+    const ymd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const counted = new Set<string>();
+    for (const m of groupIntoMeals(logs, ymd)) {
+      const key = `${m.label}#${[...new Set(m.items.map((x) => foodKey(x.name)))].sort().join('|')}`;
+      if (counted.has(key)) continue;
+      counted.add(key);
+      const had = seen.get(key);
+      // Days run newest first, so the first one met is the latest portion.
+      seen.set(key, { label: m.label, count: (had?.count ?? 0) + 1, latest: had?.latest ?? m });
+    }
+  }
+  const best = new Map<string, { count: number; latest: Meal }>();
+  for (const v of seen.values()) {
+    const b = best.get(v.label);
+    if (v.count >= minDays && (!b || v.count > b.count)) best.set(v.label, v);
+  }
+  return [...best.entries()].sort((a, b) => SLOT_ORDER.indexOf(a[0]) - SLOT_ORDER.indexOf(b[0])).map(([, v]) => v.latest);
+}
