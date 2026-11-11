@@ -7,12 +7,12 @@
     "androidScheme": "https"
   },
   "android": {
-    "backgroundColor": "#000000"
+    "backgroundColor": "#100E26"
   },
   "plugins": {
     "LocalNotifications": {
       "smallIcon": "ic_stat_moderly",
-      "iconColor": "#C9A54E"
+      "iconColor": "#FCC419"
     }
   }
 }

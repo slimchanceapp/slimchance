@@ -24,7 +24,7 @@ import { isAndroidApp } from '../platform.ts';
 // Keep EQUAL to `versionCode` in android/app/build.gradle. Bump both together
 // whenever a native change ships — that's the whole trigger for an in-place
 // update prompt.
-export const LATEST_NATIVE_BUILD = 20;
+export const LATEST_NATIVE_BUILD = 21;
 
 // The stable, rolling download link the CI release always publishes to.
 export const APK_URL =
