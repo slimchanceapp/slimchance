@@ -159,7 +159,7 @@
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       const dow = d.getDay();
-      const entry = byDow.get(dow) || { day_of_week: dow, label: DAY_NAMES[dow], session_key: null, note: '' };
+      const entry = byDow.get(dow) || { day_of_week: dow, label: 'Nothing planned', session_key: null, note: '' };
       return { ...entry, date: d, dayName: DAY_NAMES[dow] };
     });
   }
@@ -186,7 +186,8 @@
 
   function startEditDay(d: PlanDay) {
     editingDow = d.day_of_week;
-    editLabel = d.label;
+    // A day with no row yet starts with an empty name, not "Nothing planned".
+    editLabel = schedule.some((s) => s.day_of_week === d.day_of_week) ? d.label : '';
     editNote = d.note;
     editSessionKey = d.session_key || '';
   }

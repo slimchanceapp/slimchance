@@ -41,6 +41,7 @@ a daily digest says what broke, in totals, and only new errors raise the alarm
 a day is celebrated for protein, or for a budget kept while fed enough, never for eating too little
 a day is stored on the device once: server-numbered rows are kept only as the server returned them
 a day with nothing logged is neither room nor debt in the week’s budget
+a day with nothing planned says so, not its weekday twice
 a day’s share of the week is worked out in one place
 a declared brand that is absent falls back instead of returning nothing
 a deload snaps to a real, rackable weight (rounds, not up)

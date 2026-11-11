@@ -4657,6 +4657,14 @@ check('a high morning is explained from the person’s own data, and only from i
   assert.equal(explainUp({ ...base, kg: 90.9, prev: { date: '2026-10-10', kg: 89.9 }, trendKg: 90.6 }), null, 'a week-old reading is no comparison');
 });
 
+check('a day with nothing planned says so, not its weekday twice', async () => {
+  // 2026-11-10, the Train screenshot: a day without a schedule row took its
+  // weekday as its label, so the card read "Tuesday" beside "Tuesday".
+  const { readFileSync } = await import('node:fs');
+  const src = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  assert.match(src, /byDow\.get\(dow\) \|\| \{ day_of_week: dow, label: 'Nothing planned', session_key: null, note: '' \}/);
+});
+
 check('a normal swing is told with the band it was judged by, measured from the trend', async () => {
   // 2026-11-11, the new store screenshots: "Up 0.9 kg from yesterday. That's
   // inside your usual day-to-day swing of about ±0.5 kg." The test was twice the
