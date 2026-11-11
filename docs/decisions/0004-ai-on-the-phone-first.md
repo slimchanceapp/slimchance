@@ -59,3 +59,8 @@ model download becomes worth its size.
   moves only if the phone does at least as well.
 - Sources: [Prompt API, get started](https://developers.google.com/ml-kit/genai/prompt/android/get-started),
   [Android Developers blog, May 2025](https://android-developers.googleblog.com/2025/05/on-device-gen-ai-apis-ml-kit-gemini-nano.html).
+- **2026-11-11, later:** the owner's phone is a Pixel 7, which isn't on
+  Google's lists for on-device Gemini Nano (the Prompt API appears to need
+  Pixel 9 or 10 class phones), and neither are the cheap phones the mission
+  is for. The probe waits for a supported phone to test on; the cloud chain
+  (Gemma, free) serves everyone meanwhile.

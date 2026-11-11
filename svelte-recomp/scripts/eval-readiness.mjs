@@ -112,7 +112,7 @@ for (let i = 0; i < N; i++) {
     const before = (n) => rows.filter((x) => x.date < r.date && x.date >= day(k - n));
     add('old: 14-day average, 8 h sleep', r.strained, computeReadiness(r, before(14))?.label);
     add('own normal range (60 days)', r.strained, readyFromNormal(r, before(60))?.word);
-    // The same mornings from a watch that never shares HRV (most Samsung ones).
+    // The same mornings from a watch that never shares HRV (like the owner's OnePlus, via OHealth).
     const noHrv = (x) => ({ ...x, hrv: null });
     add('own normal range, no HRV', r.strained, readyFromNormal(noHrv(r), before(60).map(noHrv))?.word);
   }

@@ -5458,7 +5458,7 @@ check('every function that runs with the owner\u2019s rights pins its search pat
 });
 
 check('readiness can say "an easy day" from a watch that never sends HRV', async () => {
-  // 2026-11-11: the owner's Samsung watch has never sent HRV through Health
+  // 2026-11-11: the owner's OnePlus watch (OHealth) has never sent HRV through Health
   // Connect, and without it the morning read could only say Fair or Good.
   // Resting heart rate and sleep decide "Low" then (scripts/eval-readiness.mjs).
   const { readyFromNormal } = await import('../src/lib/health/readiness.ts');

@@ -56,8 +56,8 @@ export function readyFromNormal(today: BiometricEntry | undefined, history: Biom
   const { hrvN, rhrN, usualSleep, zHrv, zRhr, short } = normalZ(today, history);
   if (zHrv == null && zRhr == null && short == null) return null;
   const h = zHrv ?? 0, r = zRhr ?? 0, s = short ?? 0;
-  // Without HRV (most Samsung watches don't share it with Health Connect: the
-  // owner's account has never had one) the HRV rule could never say Low.
+  // Without HRV (many watch apps don't pass it to Health Connect: the owner's
+  // OnePlus watch, through OHealth, never has) the HRV rule could never say Low.
   // Resting heart rate and sleep decide it instead (eval-readiness, no-HRV
   // rows: 22-51% of strained mornings caught, 1-2% of ordinary ones called easy).
   const low = zHrv == null
