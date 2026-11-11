@@ -191,6 +191,19 @@ export function buildActivitySessions(input: BuildInput): ActivitySession[] {
   const hrSeries = input.hrSeries || [];
   const nowISO = new Date(input.now ?? Date.now()).toISOString();
 
+  // Heart-rate samples read once and sorted by time, so each session finds its
+  // own by binary search. Re-reading every sample for every session cost about
+  // 240 ms on a laptop for a 14-day read (more on a phone, on app open).
+  const hr = hrSeries
+    .flatMap((series) => (series?.samples || []).map((s: any) => [new Date(s.time).getTime(), Number(s.beatsPerMinute)] as [number, number]))
+    .filter(([t]) => isFinite(t))
+    .sort((a, b) => a[0] - b[0]);
+  const firstAtOrAfter = (t: number) => {
+    let lo = 0, hi = hr.length;
+    while (lo < hi) { const mid = (lo + hi) >> 1; if (hr[mid][0] < t) lo = mid + 1; else hi = mid; }
+    return lo;
+  };
+
   const raw: ActivitySession[] = [];
   for (const ex of exercises) {
     const start = new Date(ex.startTime).getTime();
@@ -212,16 +225,11 @@ export function buildActivitySessions(input: BuildInput): ActivitySession[] {
     // Average HR from any heart-rate series samples inside the window.
     let hrSum = 0;
     let hrN = 0;
-    for (const series of hrSeries) {
-      for (const s of series?.samples || []) {
-        const t = new Date(s.time).getTime();
-        if (t >= start && t <= end) {
-          const bpm = Number(s.beatsPerMinute);
-          if (bpm > 0) {
-            hrSum += bpm;
-            hrN++;
-          }
-        }
+    for (let i = firstAtOrAfter(start); i < hr.length && hr[i][0] <= end; i++) {
+      const bpm = hr[i][1];
+      if (bpm > 0) {
+        hrSum += bpm;
+        hrN++;
       }
     }
 

@@ -5733,6 +5733,24 @@ check('the Body area keeps its boundary: the app reaches it only through its doo
   await areaBorder('body', { doors: ['weighIn'], shell: { 'weighIn.ts': ['src/lib/db/dexie', 'src/lib/stores/sync', 'src/lib/stores/toast', 'src/lib/haptics', 'src/lib/health/writeBack'] } });
 });
 
+check('a workout finds its heart rate by binary search, with the same answer as reading every sample', async () => {
+  // 2026-11-11: each session re-read every heart-rate sample of the read
+  // (tens of thousands on a full read, with second-by-second workout data):
+  // about 240 ms on a laptop. Now the samples are sorted once. Same answer as
+  // the plain scan, on overlapping series, unsorted samples, bad times and zeros.
+  const { buildActivitySessions } = await import('../src/lib/training/exercise.ts');
+  let seed = 4; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const t0 = Date.parse('2026-11-01T06:00:00Z');
+  const iso = (ms) => new Date(ms).toISOString();
+  const exercises = Array.from({ length: 12 }, (_, k) => { const s = t0 + k * 7 * 36e5 + rnd() * 36e5; return { exerciseType: 56, startTime: iso(s), endTime: iso(s + (10 + rnd() * 80) * 6e4) }; });
+  const hrSeries = Array.from({ length: 6 }, () => ({ samples: Array.from({ length: 400 }, () => ({ time: rnd() < 0.02 ? 'not a time' : iso(t0 + rnd() * 90 * 36e5), beatsPerMinute: rnd() < 0.05 ? 0 : 60 + Math.round(rnd() * 100) })) }));
+  const got = buildActivitySessions({ uid: 'u', exercises, hrSeries, now: t0 });
+  const plain = (start, end) => { let sum = 0, n = 0; for (const se of hrSeries) for (const x of se.samples) { const t = new Date(x.time).getTime(); if (t >= start && t <= end && x.beatsPerMinute > 0) { sum += x.beatsPerMinute; n++; } } return n ? Math.round(sum / n) : null; };
+  assert.equal(got.length, exercises.length);
+  for (const s of got) assert.equal(s.avg_hr, plain(Date.parse(s.start), Date.parse(s.end)), s.start);
+  assert.ok(got.some((s) => s.avg_hr != null) && got.some((s) => s.avg_hr == null) === got.some((s) => plain(Date.parse(s.start), Date.parse(s.end)) == null));
+});
+
 check('the Training area keeps its boundary: the app reaches it only through its doors, and it reaches no other area', async () => {
   // 2026-11-11, the third slice: lifts, plates, the exercise library, watch
   // workouts and the one definition of a trained day behind index.ts, logging
