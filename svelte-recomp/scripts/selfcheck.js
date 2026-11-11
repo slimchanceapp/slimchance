@@ -4638,7 +4638,7 @@ check('a high morning is explained from the person’s own data, and only from i
   // Nothing to see: an honest "no trace in a log", and the trend held.
   let x = explainUp({ ...base, intake: new Map() });
   assert.equal(x.title, 'Up 0.9 kg from yesterday');
-  assert.match(x.reasons[0], /^That's inside your usual day-to-day swing of about ±0\.4 kg\.$/);
+  assert.equal(x.reasons[0], 'This morning sits 0.7 kg above your trend, and your mornings usually land within about 0.8 kg of it: a normal swing.');
   assert.equal(x.trend, 'Your trend held at 90.6 kg. One morning is noise; the trend is the number.');
   // A big Sunday, a Monday that always reads heavy, and the first session in three weeks.
   const busy = new Map(intake); busy.set('2026-10-18', { kcal: 3100 });
@@ -4655,6 +4655,22 @@ check('a high morning is explained from the person’s own data, and only from i
   // Not up: nothing to explain.
   assert.equal(explainUp({ ...base, kg: 90.5 }), null);
   assert.equal(explainUp({ ...base, kg: 90.9, prev: { date: '2026-10-10', kg: 89.9 }, trendKg: 90.6 }), null, 'a week-old reading is no comparison');
+});
+
+check('a normal swing is told with the band it was judged by, measured from the trend', async () => {
+  // 2026-11-11, the new store screenshots: "Up 0.9 kg from yesterday. That's
+  // inside your usual day-to-day swing of about ±0.5 kg." The test was twice the
+  // usual scatter (1.0 kg); the sentence quoted the scatter itself, so the words
+  // contradicted the number. A morning still at or below the trend (yesterday
+  // was simply low) was called a swing above it.
+  const { explainUp } = await import('../src/lib/scaleUp.ts');
+  const base = { today: '2026-11-11', kg: 94.4, prev: { date: '2026-11-10', kg: 93.5 }, trendKg: 93.5, trendPrevKg: 93.5,
+    scatterKg: 0.5, intake: new Map(), weekdayOffsets: null, trained: new Set() };
+  const x = explainUp(base);
+  assert.equal(x.reasons[0], 'This morning sits 0.9 kg above your trend, and your mornings usually land within about 1.0 kg of it: a normal swing.');
+  const low = explainUp({ ...base, kg: 93.4, prev: { date: '2026-11-10', kg: 92.8 } });
+  assert.equal(low.title, 'Up 0.6 kg from yesterday');
+  assert.equal(low.reasons[0], 'This morning is at or below your trend: yesterday was simply a low one.');
 });
 
 check('keeping it off: the hero counts days inside the range, never a streak, and points at the plan when over', async () => {

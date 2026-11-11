@@ -79,8 +79,12 @@ export function explainUp(i: UpInput): UpExplained | null {
     const logged = [...i.intake].some(([d, v]) => d >= shift(i.today, -14) && v.kcal > 0);
     reasons.push(i.trendKg == null
       ? 'Normal in the first days: most mornings move up to a kilo either way, from water, salt and what’s still being digested. That’s why Slim Chance waits for a week of mornings before it calls a trend.'
-      : i.scatterKg != null && over != null && over <= i.scatterKg * 2
-        ? `That's inside your usual day-to-day swing of about ±${dwt(i.scatterKg)}.`
+      : over != null && over < 0.05
+        ? 'This morning is at or below your trend: yesterday was simply a low one.'
+        // Quote the band the morning was judged by (twice the usual scatter),
+        // or the words contradict the number on screen.
+        : i.scatterKg != null && over != null && over <= i.scatterKg * 2
+        ? `This morning sits ${dwt(over)} above your trend, and your mornings usually land within about ${dwt(i.scatterKg * 2)} of it: a normal swing.`
         : logged
           ? 'Nothing in your log explains it. Salt, a late meal, a short night or a slower gut all move the scale and leave no trace in a log.'
           : 'Salt, a late meal, a short night or a slower gut all move the scale for a day or two.');

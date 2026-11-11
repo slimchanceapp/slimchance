@@ -65,6 +65,7 @@ a name is used only when there is one
 a next stop is reached when the trend stays there three days, not on one lucky morning
 a next stop knows what it means at this height
 a night the watch split in two is one night, and a nap stays a nap
+a normal swing is told with the band it was judged by, measured from the trend
 a nudge only exists while the fact behind it is still true
 a nudge whose time has passed today is not scheduled for the past
 a one-off AI photo estimate never becomes a staple chip
