@@ -78,6 +78,22 @@ export function oddsOf(p: number | null, what: string): Odds | null {
   return { lit, text };
 }
 
+/** Losing toward a goal under the trend, not keeping it off: then the chance
+ *  is said as a chance of slimming. */
+export const slimming = (goalKg: number | null, kg: number | null, keepSince: string | null): boolean =>
+  goalKg != null && kg != null && goalKg < kg && !keepSince;
+
+/** The one sentence on the chance: Today's hero and the home-screen widget.
+ *  Said of the chance, never of the body: "Slim, for now" read as "you're
+ *  slim" next to a weight (the owner, 2026-11-03). */
+export function chanceSentence(odds: Odds | null, losing: boolean): string {
+  return !odds ? 'Each morning on the scale lights a coin.'
+    : !losing ? odds.text
+    : odds.lit >= 8 ? 'Your chance of slimming looks great. Right on track!'
+    : odds.lit >= 4 ? 'Your chance of slimming is a coin toss. Every morning sharpens it.'
+    : 'Your chance of slimming is low right now.';
+}
+
 export function pulse(i: PulseInput): Pulse {
   const w = i.weight;
   const trend = w?.trendKg ?? null;

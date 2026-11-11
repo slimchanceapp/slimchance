@@ -30,8 +30,8 @@
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
   import { trainedDates } from '$lib/training';
   import { shiftYmd } from '$lib/date';
-  import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, type AlarmRow } from '$lib/moments/nativeAlarms';
-  import { moments, momentSetting, refreshForecast } from '$lib/stores/moments';
+  import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, setWidget, type AlarmRow } from '$lib/moments/nativeAlarms';
+  import { moments, momentSetting, refreshForecast, widgetLines } from '$lib/stores/moments';
   import { saveMomentInputs, confirmWeight, answerWeight, nativeKg, type MomentContext } from '$lib/moments/momentActions';
   import { onMomentsInput } from '$lib/moments/nativeAlarms';
   import { offTrend } from '$lib/body';
@@ -324,6 +324,11 @@
     if (!$user || !support || !$_profileLoaded) return;
     if (!$moments.length) { disarmMoments(); return; }
     armMoments($moments);
+  });
+  // The home-screen widget, kept current while the app is open (build 22+).
+  $effect(() => {
+    if (!$user || support !== 'all' || !$_profileLoaded) return;
+    setWidget($widgetLines);
   });
 
   // What was entered on the briefing's buttons (a weight, a back rating, the

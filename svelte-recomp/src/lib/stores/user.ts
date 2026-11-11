@@ -89,8 +89,9 @@ export async function deleteAccount(): Promise<void> {
     try { msg ??= (await (error as any)?.context?.json())?.error; } catch { /* no body */ }
     throw new Error(msg || 'Could not delete the account. Nothing was lost; try again.');
   }
-  const { scheduleNativeAlarms, scheduleNudges, disarmMoments } = await import('$lib/moments/nativeAlarms');
-  await Promise.allSettled([scheduleNativeAlarms([]), scheduleNudges([]), disarmMoments()]);
+  const { scheduleNativeAlarms, scheduleNudges, disarmMoments, setWidget } = await import('$lib/moments/nativeAlarms');
+  // The widget goes back to its first line: nothing of theirs left on the home screen.
+  await Promise.allSettled([scheduleNativeAlarms([]), scheduleNudges([]), disarmMoments(), setWidget({ date: '', title: '', weighed: false, unit: 'kg' })]);
   const { default: db } = await import('$lib/db/dexie');
   db.close();
   await db.delete().catch(() => {});

@@ -336,6 +336,7 @@ the forecast reads Open-Meteo by day, and only daytime rain counts
 the goal date reads as a date a human would say
 the hero reads the trend, the distance to the next stop, and a pace that is never red
 the hero speaks of the chance, never of the body
+the home-screen widget shows the chance and a weigh-in, never a weight, and never wakes the phone
 the iPhone app reads Apple Health weigh-ins by the same one-a-day rules
 the icon is one drawing everywhere: the S is an outline, and the iPhone icon is opaque
 the letter from last month tells the month back, in the user’s words

@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The home-screen widget in Daylight (the app's light theme, src/app.css). -->
+<resources>
+    <color name="widget_bg">#FFFFFF</color>
+    <color name="widget_text">#141A33</color>
+    <color name="widget_muted">#5B6380</color>
+    <color name="widget_brass">#B7861F</color>
+    <string name="widget_description">Your chance today, and a button for this morning’s weigh-in. No weight is shown.</string>
+</resources>

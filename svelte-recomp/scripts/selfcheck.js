@@ -1478,7 +1478,7 @@ check('deleting an account takes everything, and only the caller’s', async () 
   assert.match(fn, /confirm !== 'delete'/);
   assert.ok(fn.indexOf('/storage/v1/object/') < fn.indexOf('/auth/v1/admin/users/'), 'files first: they do not cascade');
   const client = readFileSync('src/lib/stores/user.ts', 'utf8');
-  for (const step of ['disarmMoments()', 'scheduleNativeAlarms([])', 'scheduleNudges([])', 'db.delete()', 'localStorage.clear()', 'auth.signOut()']) {
+  for (const step of ['disarmMoments()', "setWidget({ date: '', title: ''", 'scheduleNativeAlarms([])', 'scheduleNudges([])', 'db.delete()', 'localStorage.clear()', 'auth.signOut()']) {
     assert.ok(client.includes(step), `after deletion, this device: ${step}`);
   }
 });
@@ -4986,6 +4986,46 @@ check('the morning notification takes a weight on the number pad', async () => {
   assert.match(readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8'), /android:name="\.QuickWeighActivity"\s+android:exported="false"/);
 });
 
+check('the home-screen widget shows the chance and a weigh-in, never a weight, and never wakes the phone', async () => {
+  // Build 22 (2026-11-11). A home screen is seen by whoever is near the phone,
+  // so the widget carries Today's sentence on the chance and whether today is
+  // weighed, nothing more; its "Weigh in" is the briefing's number pad.
+  const { readFileSync } = await import('node:fs');
+  const { chanceSentence, slimming, oddsOf } = await import('../src/lib/body/pulse.ts');
+  assert.equal(chanceSentence(null, true), 'Each morning on the scale lights a coin.');
+  const toss = oddsOf(0.5, 'going down');
+  assert.equal(chanceSentence(toss, false), toss.text, 'keeping or gaining: the odds say it');
+  assert.equal(chanceSentence(oddsOf(0.9, 'x'), true), 'Your chance of slimming looks great. Right on track!');
+  assert.equal(chanceSentence(oddsOf(0.5, 'x'), true), 'Your chance of slimming is a coin toss. Every morning sharpens it.');
+  assert.equal(chanceSentence(oddsOf(0.2, 'x'), true), 'Your chance of slimming is low right now.');
+  assert.equal(slimming(100, 112, null), true);
+  assert.equal(slimming(100, 112, '2026-11-01'), false, 'keeping it off is not slimming');
+  assert.equal(slimming(null, 112, null), false);
+  // One sentence, said in one place, for Today and the widget.
+  const stores = readFileSync('src/lib/stores/moments.ts', 'utf8');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /chanceSentence\(p\.odds, losing\)/);
+  assert.match(stores, /title: chanceSentence\(\$p\.odds, slimming\(/);
+  for (const f of ['src/routes/+page.svelte', 'src/lib/stores/moments.ts']) {
+    assert.ok(!/coin toss\. Every morning/.test(readFileSync(f, 'utf8')), `${f} says it through chanceSentence`);
+  }
+  // No weight leaves for the widget.
+  const lines = stores.match(/export const widgetLines[\s\S]*?\n\}\)\);/)[0];
+  assert.deepEqual([...lines.matchAll(/^ {2}(\w+):/gm)].map((m) => m[1]), ['date', 'title', 'weighed', 'unit']);
+  const dir = 'android/app/src/main/java/com/toxicminds/recompos/';
+  const w = readFileSync(dir + 'SlimWidget.java', 'utf8');
+  assert.ok(!/AlarmManager\.RTC_WAKEUP|setAlarmClock\(|AllowWhileIdle\(|setExact/.test(w), 'the day turns over without waking the phone');
+  assert.match(w, /am\.set\(AlarmManager\.RTC, next, dayTurns\(ctx\)\)/);
+  assert.match(readFileSync('android/app/src/main/res/xml/widget_today_info.xml', 'utf8'), /android:updatePeriodMillis="0"/, 'no periodic wake-ups');
+  assert.match(w, /new Intent\(ctx, QuickWeighActivity\.class\)\.putExtra\("key", "morning"\)/);
+  assert.ok(!/putExtra\("date"/.test(w), 'no date: a weigh-in is for the day it is typed, whenever the widget was drawn');
+  assert.match(readFileSync(dir + 'QuickWeighActivity.java', 'utf8'), /final String date = sent != null \? sent : java\.time\.LocalDate\.now\(\)\.toString\(\);/);
+  const rx = readFileSync(dir + 'MomentReceiver.java', 'utf8');
+  assert.match(rx, /String unit = acts != null \? acts\.optString\("unit", fallback\) : fallback;/, 'without a briefing an lb reading is still read in lb');
+  assert.match(rx, /repost\(ctx, p, date, key\);\s+SlimWidget\.refresh\(ctx\);/, 'a weigh-in from the briefing turns the widget too');
+  assert.match(rx, /if \(!showing\) return;/, 'a weigh-in from the widget never pops up the briefing');
+  assert.match(readFileSync('android/app/src/main/AndroidManifest.xml', 'utf8'), /android:name="\.SlimWidget"\s+android:exported="false"[\s\S]*?android:resource="@xml\/widget_today_info"/);
+});
+
 check('a meal photo waits for a few optional words before it goes', async () => {
   // The owner, 2026-11-03: the words could only be typed before the photo, so
   // in practice never.
@@ -5660,9 +5700,10 @@ check('the coach arranges your own sessions over the week: never a new one, neve
 check('the hero speaks of the chance, never of the body', async () => {
   // 2026-11-03: "Slim, for now" beside a weight read as "you're slim".
   const { readFileSync } = await import('node:fs');
-  const today = readFileSync('src/routes/+page.svelte', 'utf8');
-  assert.match(today, /'Your chance of slimming is low right now\.'/, 'the subject is the chance (the owner\'s wording, 2026-11-03)');
-  assert.doesNotMatch(today, /'Slim, for now\.'|'Not so slim\.'/);
+  // The sentence lives in body/pulse.ts (chanceSentence) since the widget says it too.
+  const said = readFileSync('src/lib/body/pulse.ts', 'utf8');
+  assert.match(said, /'Your chance of slimming is low right now\.'/, 'the subject is the chance (the owner\'s wording, 2026-11-03)');
+  for (const src of [said, readFileSync('src/routes/+page.svelte', 'utf8')]) assert.doesNotMatch(src, /'Slim, for now\.'|'Not so slim\.'/);
 });
 
 check('the chance is honest: simulated people with a known truth get odds within about a coin of it', async () => {

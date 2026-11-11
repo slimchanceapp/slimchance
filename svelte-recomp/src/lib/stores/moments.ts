@@ -5,7 +5,7 @@
 // window, the iPhone leaves it silently on the lock screen as the window opens.
 // The Alarms card shows them, so what arrives is never a surprise.
 import { derived, get, writable, type Readable } from 'svelte/store';
-import { body } from './body';
+import { body, todayPulse } from './body';
 import { liveDailyLogs, liveFoodLogs, liveProfile, liveSchedule, liveWeights, liveWorkoutSessions } from './live';
 import { upsertRecord } from './sync';
 import { userId } from './user';
@@ -16,7 +16,8 @@ import { usualBreakfast, type QuickFood } from '$lib/nutrition';
 import { shiftYmd } from '$lib/date';
 import { lastMonth, monthLetter } from '$lib/moments';
 import { forecastHere } from '$lib/moments/weather';
-import { OFF_TREND_KG } from '$lib/body';
+import type { WidgetLines } from '$lib/moments/nativeAlarms';
+import { OFF_TREND_KG, chanceSentence, slimming } from '$lib/body';
 import { toUnit, weightUnit, type WeightUnit } from '$lib/units';
 import { eveningFrom } from '$lib/coach';
 import { brainToday } from './brain';
@@ -137,3 +138,12 @@ export async function saveMoments(s: MomentSetting): Promise<void> {
   if (!uid) throw new Error('Not signed in — sign back in.');
   await upsertRecord('user_settings', { user_id: uid, briefing: { on: s.on, after: s.after, hold: s.hold }, updated_at: new Date().toISOString() });
 }
+
+/** The home-screen widget (Android, build 22+): Today's sentence on the chance
+ *  and whether today is weighed, never a weight (SlimWidget.java). */
+export const widgetLines: Readable<WidgetLines> = derived([todayPulse, body, liveWeights()], ([$p, $b, $w]) => ({
+  date: $b.today,
+  title: chanceSentence($p.odds, slimming($b.goalKg, $b.currentKg, $b.keepSince)),
+  weighed: (($w as any[]) ?? []).some((x) => x?.date === $b.today && x.weight != null),
+  unit: weightUnit(),
+}));

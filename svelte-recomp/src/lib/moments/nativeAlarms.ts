@@ -271,6 +271,22 @@ export async function armMoments(moments: MomentPayload[]): Promise<void> {
   }
 }
 
+/** The home-screen widget's sentence, and whether `date` is weighed
+ *  (src/lib/stores/moments.ts). */
+export interface WidgetLines { date: string; title: string; weighed: boolean; unit: string }
+let widgetWith = '';
+
+/** Keep the home-screen widget current (build 22+). Sent only on a change; an
+ *  older build has no widget and rejects the call, which is fine. */
+export async function setWidget(w: WidgetLines): Promise<void> {
+  const key = JSON.stringify(w);
+  if (key === widgetWith) return;
+  const p = await momentsPlugin();
+  if (!p || p.name !== 'Moments') return;
+  widgetWith = key;
+  try { await p.P.setWidget(w); } catch { /* before build 22: no widget */ }
+}
+
 export async function disarmMoments(): Promise<void> {
   if (armedWith === 'off') return;
   const p = await momentsPlugin();

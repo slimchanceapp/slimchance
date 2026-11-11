@@ -18,6 +18,7 @@ public class MomentsPlugin: CAPPlugin, CAPBridgedPlugin {
         CAPPluginMethod(name: "status", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "pending", returnType: CAPPluginReturnPromise),
         CAPPluginMethod(name: "ack", returnType: CAPPluginReturnPromise),
+        CAPPluginMethod(name: "setWidget", returnType: CAPPluginReturnPromise),
     ]
 
     private let center = UNUserNotificationCenter.current()
@@ -79,6 +80,12 @@ public class MomentsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     @objc func status(_ call: CAPPluginCall) {
         state { call.resolve($0) }
+    }
+
+    // The home-screen widget is Android's for now (a WidgetKit extension waits
+    // for the App Store): taken and set aside.
+    @objc func setWidget(_ call: CAPPluginCall) {
+        call.resolve()
     }
 
     // Nothing is typed into an iPhone moment yet, so there is nothing to hand over.

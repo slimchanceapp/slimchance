@@ -16,7 +16,7 @@
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { cardNav } from '$lib/actions/cardNav';
-  import { morningsThisWeek } from '$lib/body';
+  import { morningsThisWeek, slimming, chanceSentence } from '$lib/body';
   import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import { body, stall, line, scaleUp, todayPulse } from '$lib/stores/body';
   import { dayOne } from '$lib/stores/dayOne';
@@ -137,14 +137,8 @@
     const id = setInterval(() => { k += 1; shown = Math.min(to, k); if (k >= to) clearInterval(id); }, 140);
     return () => clearInterval(id);
   });
-  const losing = $derived($body.goalKg != null && currentKg != null && $body.goalKg < currentKg && !$body.keepSince);
-  const chanceLine = $derived(!p.odds ? 'Each morning on the scale lights a coin.'
-    : !losing ? p.odds.text
-    // Said of the chance, never of the body: "Slim, for now" read as "you're
-    // slim" next to a weight (the owner, 2026-11-03).
-    : p.odds.lit >= 8 ? 'Your chance of slimming looks great. Right on track!'
-    : p.odds.lit >= 4 ? 'Your chance of slimming is a coin toss. Every morning sharpens it.'
-    : 'Your chance of slimming is low right now.');
+  const losing = $derived(slimming($body.goalKg, currentKg, $body.keepSince));
+  const chanceLine = $derived(chanceSentence(p.odds, losing));
   const turnIt = $derived(losing && p.odds && p.odds.lit <= 3 ? 'A week inside your budget turns it.' : null);
   const overCeiling = $derived(!!$line && !$line.misdrawn && $line.zone !== 'under');
   // A kind word, only when it's earned by showing up (src/lib/kind.ts).

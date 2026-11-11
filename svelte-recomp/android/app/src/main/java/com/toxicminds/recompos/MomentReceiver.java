@@ -59,7 +59,9 @@ public class MomentReceiver extends BroadcastReceiver {
             act(context, intent);
             return;
         }
-        // Our own alarm, a reboot (alarms don't survive one) or an app update.
+        // Our own alarm, a reboot (alarms don't survive one) or an app update;
+        // after either of those the widget redraws and books its midnight again.
+        if (!ACTION_CHECK.equals(a)) SlimWidget.refresh(context);
         check(context);
     }
 
@@ -137,8 +139,11 @@ public class MomentReceiver extends BroadcastReceiver {
                 // In the person's own unit: the briefing says which (kg, lb or
                 // st, typed as stones and pounds); its weighRange is in kg, or
                 // in pounds for lb and st. The app converts what it's sent.
+                // From the widget there may be no briefing today: then the
+                // unit the app last gave the widget.
                 JSONObject acts = moment.optJSONObject("actions");
-                String unit = acts != null ? acts.optString("unit", "kg") : "kg";
+                String fallback = p.getString("widget_unit", "kg");
+                String unit = acts != null ? acts.optString("unit", fallback) : fallback;
                 String word = "kg".equals(unit) ? "kg" : "lb";
                 Double kg = MomentClock.parseWeight(typed, unit);
                 if (kg == null) {
@@ -189,6 +194,13 @@ public class MomentReceiver extends BroadcastReceiver {
             p.edit().putString(noteKey, "That didn’t save. Open the app to log it.").commit();
         }
         repost(ctx, p, date, key);
+        SlimWidget.refresh(ctx);
+    }
+
+    /** A weight went in today from the briefing or the widget (it may still
+     *  be waiting for the app). */
+    static boolean weighedFrom(SharedPreferences p, String date) {
+        return json(p.getString("acted:" + date + ":morning", "{}")).has("weight");
     }
 
     /** "Show it now" on the app's card: post that armed moment at once, whatever
@@ -201,8 +213,15 @@ public class MomentReceiver extends BroadcastReceiver {
         return null;
     }
 
-    /** Show the notification again with what's been done (and without its button). */
+    /** Show the notification again with what's been done (and without its
+     *  button), only while it's on screen: a weigh-in from the widget mustn't
+     *  pop up a briefing that hasn't come yet or was swiped away. */
     private static void repost(Context ctx, SharedPreferences p, String date, String key) {
+        NotificationManager nm = (NotificationManager) ctx.getSystemService(Context.NOTIFICATION_SERVICE);
+        int id = "evening".equals(key) ? 7002 : 7001;
+        boolean showing = false;
+        if (nm != null) for (android.service.notification.StatusBarNotification s : nm.getActiveNotifications()) showing |= s.getId() == id;
+        if (!showing) return;
         for (MomentClock.Moment m : read(p)) {
             if (m.date.equals(date) && m.key.equals(key)) {
                 post(ctx, m);

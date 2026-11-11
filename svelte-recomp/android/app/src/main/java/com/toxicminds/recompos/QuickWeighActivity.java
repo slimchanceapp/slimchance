@@ -31,7 +31,9 @@ public class QuickWeighActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle saved) {
         super.onCreate(saved);
-        final String date = getIntent().getStringExtra("date");
+        // The widget sends no date: its weigh-in is for the day it's typed.
+        final String sent = getIntent().getStringExtra("date");
+        final String date = sent != null ? sent : java.time.LocalDate.now().toString();
         final String key = getIntent().getStringExtra("key");
         if (date == null || key == null) { finish(); return; }
         String word = "lb".equals(getIntent().getStringExtra("unit")) ? "lb" : "kg";
