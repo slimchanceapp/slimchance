@@ -158,7 +158,7 @@ every call the app makes on the Moments plugin exists in the APK
 every font-size is a rem, and none is below the 11px floor
 every function that spends AI or search quota checks for a signed-in user under the daily cap first
 every haptic pattern is a valid vibrate argument
-every notification wears the Slim Chance mark: the coin, in brass
+every notification wears the Slim Chance mark: the coin, in the app’s yellow
 every program exercise but the walks comes with a video
 every quick-log activity is a real Health Connect exercise type
 every synced table names its conflict key in one map

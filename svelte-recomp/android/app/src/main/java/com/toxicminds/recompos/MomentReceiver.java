@@ -353,7 +353,7 @@ public class MomentReceiver extends BroadcastReceiver {
         Intent open = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
         NotificationCompat.Builder n = new NotificationCompat.Builder(ctx, channel)
             .setSmallIcon(R.drawable.ic_stat_moderly)
-            .setColor(0xFFC9A54E) // brass: the mark and the buttons, like every notification the app posts
+            .setColor(0xFFFCC419) // brass: the mark and the buttons, like every notification the app posts
             .setContentTitle(m.title)
             .setContentText(nl > 0 ? body.substring(0, nl) : body)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(body))
