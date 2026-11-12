@@ -15,7 +15,7 @@
     <ImageView
         android:id="@+id/widget_coins"
         android:layout_width="0dp"
-        android:layout_height="12dp"
+        android:layout_height="16dp"
         android:layout_weight="1"
         android:adjustViewBounds="true"
         android:contentDescription="6 of 10 coins lit"

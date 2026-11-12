@@ -4744,6 +4744,7 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
   assert.match(stores, /const share = \$b\.week\?\.share \?\? null;/, 'the week’s budget from stores/body, like the briefing');
   assert.match(w, /static final String FIRST_LINE = "Open Slim Chance to see your chance here\.";/);
   assert.match(w, /"New day: nothing logged yet"/, 'yesterday’s food is never shown as today’s');
+  assert.match(w, /food = !has \? "" :/, 'before the app has written, the sentence alone says what to do (the first drawings said it twice)');
   // Scan and Photo open the food logger, ready.
   const { widgetRoute } = await import('../src/lib/moments/widgetLinks.ts');
   assert.equal(widgetRoute('slimchance://food/scan'), '/recipes?add=scan');

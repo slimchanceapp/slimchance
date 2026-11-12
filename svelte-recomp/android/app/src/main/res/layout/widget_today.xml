@@ -53,8 +53,8 @@
     <ImageView
         android:id="@+id/widget_coins"
         android:layout_width="match_parent"
-        android:layout_height="14dp"
-        android:layout_marginTop="10dp"
+        android:layout_height="20dp"
+        android:layout_marginTop="8dp"
         android:adjustViewBounds="true"
         android:contentDescription="6 of 10 coins lit"
         android:scaleType="fitStart"

@@ -141,7 +141,8 @@ public class SlimWidget extends AppWidgetProvider {
             title = t.isEmpty() ? FIRST_LINE : t;
             lit = w.isNull("lit") ? 0 : Math.max(0, Math.min(10, w.optInt("lit", 0)));
             // Food is the day's: after midnight, until the app writes again, a new day.
-            food = !has ? "Open the app once to fill this in." : fresh ? w.optString("food", "") : "New day: nothing logged yet";
+            // Nothing written yet: the sentence says what to do, once.
+            food = !has ? "" : fresh ? w.optString("food", "") : "New day: nothing logged yet";
             protein = has && fresh ? w.optString("protein", "") : "";
 
             String unit = p.getString("widget_unit", "kg");
@@ -176,7 +177,8 @@ public class SlimWidget extends AppWidgetProvider {
             RemoteViews v = new RemoteViews(ctx.getPackageName(), R.layout.widget_today);
             coins(v);
             v.setViewVisibility(R.id.widget_done, weighed ? View.VISIBLE : View.GONE);
-            v.setTextViewText(R.id.widget_food, protein.isEmpty() ? food : food + " · " + protein);
+            // Narrow: protein on its own line rather than broken mid-phrase.
+            v.setTextViewText(R.id.widget_food, protein.isEmpty() ? food : food + (narrow ? "\n" : " · ") + protein);
             v.setViewVisibility(R.id.widget_food, food.isEmpty() ? View.GONE : View.VISIBLE);
             v.setTextViewText(R.id.widget_title, title);
             v.setViewVisibility(R.id.widget_title, sentence || !has ? View.VISIBLE : View.GONE);
@@ -184,8 +186,10 @@ public class SlimWidget extends AppWidgetProvider {
             boolean tools = !narrow || weighed;
             v.setViewVisibility(R.id.widget_scan, tools ? View.VISIBLE : View.GONE);
             v.setViewVisibility(R.id.widget_photo, tools ? View.VISIBLE : View.GONE);
-            v.setViewVisibility(R.id.widget_scan_label, labels ? View.VISIBLE : View.GONE);
-            v.setViewVisibility(R.id.widget_photo_label, labels ? View.VISIBLE : View.GONE);
+            // Once weighed, Weigh in's room goes to Scan's and Photo's words.
+            boolean words = labels || (weighed && !narrow);
+            v.setViewVisibility(R.id.widget_scan_label, words ? View.VISIBLE : View.GONE);
+            v.setViewVisibility(R.id.widget_photo_label, words ? View.VISIBLE : View.GONE);
             click(v, R.id.widget_weigh, weigh);
             click(v, R.id.widget_scan, scan);
             click(v, R.id.widget_photo, photo);
