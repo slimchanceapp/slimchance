@@ -383,6 +383,7 @@ the week’s shape: weekday medians, the weekend gap, and the scale’s rhythm
 the week’s target holds still all week and is read from last Sunday
 the welcome screen scrolls, so Start now is reachable on a small phone
 the widget fits every size from 2x1 to 4x2, opens the food logger ready, and its coins are Today’s
+the widget is drawn at every size, light and dark, before any release
 three questions, three options each — a longer one gets skipped
 ties break deterministically (same answer every sync)
 todayYmd matches the device calendar

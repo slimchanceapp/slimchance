@@ -93,7 +93,10 @@ jobs:
         run: |
           chmod +x ./gradlew
           export ANDROID_KEYSTORE_FILE="$HOME/.recompos/recompos.keystore"
-          ./gradlew assembleSideloadDebug --no-daemon --stacktrace
+          # With the test that draws the home-screen widget (WidgetRenderTest),
+          # signed like this debug APK so it can run against it.
+          ./gradlew assembleSideloadDebug assembleSideloadDebugAndroidTest --no-daemon --stacktrace
+          cp app/build/outputs/apk/androidTest/sideload/debug/app-sideload-debug-androidTest.apk ../widget-test.apk
 
       # The old key is public, so the platform must stop accepting it: the new
       # key becomes the app's signer through a signed lineage (old -> new), and
@@ -153,6 +156,7 @@ jobs:
           path: |
             svelte-recomp/moderly.apk
             svelte-recomp/old-key-only.apk
+            svelte-recomp/widget-test.apk
           if-no-files-found: error
 
       - name: Keep the Google Play bundle
@@ -202,6 +206,17 @@ jobs:
           fi
           echo "old key refused"
           adb shell dumpsys package $PKG | grep -m1 versionCode
+          # The home-screen widget, drawn at every size in light and dark for
+          # each state of the day (WidgetRenderTest). The drawings are kept; a
+          # layout a widget can't hold fails here, so it is never released.
+          adb uninstall $PKG
+          adb install old-key-only.apk
+          adb install widget-test.apk
+          adb shell am instrument -w -e class $PKG.WidgetRenderTest $PKG.test/androidx.test.runner.AndroidJUnitRunner | tee instrument.txt
+          grep -q "^OK (1 test)" instrument.txt
+          mkdir -p widget-shots
+          adb exec-out run-as $PKG tar -cf - files/widget | tar -xf - -C widget-shots
+          echo "$(ls widget-shots/files/widget | wc -l) widget drawings"
           SH
 
       - name: Update on an emulator (Android 14)
@@ -212,6 +227,14 @@ jobs:
           arch: x86_64
           disable-animations: true
           script: sh update-test.sh
+
+      - name: Keep the widget drawings
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: widget-drawings
+          path: widget-shots/files/widget
+          if-no-files-found: warn
 
   publish:
     needs: update

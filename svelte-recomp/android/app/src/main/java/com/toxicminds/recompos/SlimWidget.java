@@ -74,20 +74,10 @@ public class SlimWidget extends AppWidgetProvider {
         if (mgr == null) return;
         int[] ids = mgr.getAppWidgetIds(new ComponentName(ctx, SlimWidget.class));
         if (ids == null || ids.length == 0) return;
-        Look look = new Look(ctx);
         if (Build.VERSION.SDK_INT >= 31) {
-            // Android picks the largest of these that fits the widget, per orientation.
-            Map<SizeF, RemoteViews> sizes = new LinkedHashMap<>();
-            sizes.put(new SizeF(110f, 40f), look.small(false, false));
-            sizes.put(new SizeF(200f, 40f), look.small(false, true));
-            sizes.put(new SizeF(300f, 40f), look.small(true, true));
-            sizes.put(new SizeF(110f, 100f), look.full(false, false, true));
-            sizes.put(new SizeF(220f, 100f), look.full(false, false, false));
-            sizes.put(new SizeF(300f, 100f), look.full(true, false, false));
-            sizes.put(new SizeF(220f, 170f), look.full(false, true, false));
-            sizes.put(new SizeF(300f, 170f), look.full(true, true, false));
-            mgr.updateAppWidget(ids, new RemoteViews(sizes));
+            mgr.updateAppWidget(ids, new RemoteViews(layouts(ctx)));
         } else {
+            Look look = new Look(ctx);
             for (int id : ids) {
                 int h = mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
                 mgr.updateAppWidget(id, h < 100 ? look.small(true, true) : look.full(true, h >= 170, false));
@@ -101,6 +91,22 @@ public class SlimWidget extends AppWidgetProvider {
             long next = LocalDate.now().plusDays(1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli() + 60_000;
             am.set(AlarmManager.RTC, next, dayTurns(ctx));
         }
+    }
+
+    /** Each size's layout, from what the app last wrote; Android 12+ shows the
+     *  largest that fits the widget, per orientation. WidgetRenderTest draws them. */
+    static Map<SizeF, RemoteViews> layouts(Context ctx) {
+        Look look = new Look(ctx);
+        Map<SizeF, RemoteViews> sizes = new LinkedHashMap<>();
+        sizes.put(new SizeF(110f, 40f), look.small(false, false));
+        sizes.put(new SizeF(200f, 40f), look.small(false, true));
+        sizes.put(new SizeF(300f, 40f), look.small(true, true));
+        sizes.put(new SizeF(110f, 100f), look.full(false, false, true));
+        sizes.put(new SizeF(220f, 100f), look.full(false, false, false));
+        sizes.put(new SizeF(300f, 100f), look.full(true, false, false));
+        sizes.put(new SizeF(220f, 170f), look.full(false, true, false));
+        sizes.put(new SizeF(300f, 170f), look.full(true, true, false));
+        return sizes;
     }
 
     private static PendingIntent dayTurns(Context ctx) {

@@ -4716,7 +4716,7 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
   for (const a of ['minResizeWidth="110dp"', 'minResizeHeight="40dp"', 'targetCellWidth="4"', 'targetCellHeight="2"', 'maxResizeHeight=']) assert.ok(info.includes(a), a);
   const w = readFileSync('android/app/src/main/java/com/toxicminds/recompos/SlimWidget.java', 'utf8');
   assert.equal([...w.matchAll(/sizes\.put\(new SizeF\(/g)].length, 8, 'a layout for each size, one row to two and up');
-  assert.match(w, /if \(Build\.VERSION\.SDK_INT >= 31\) \{[\s\S]*?new RemoteViews\(sizes\)/);
+  assert.match(w, /if \(Build\.VERSION\.SDK_INT >= 31\) \{\s*mgr\.updateAppWidget\(ids, new RemoteViews\(layouts\(ctx\)\)\);/);
   // A widget may hold only the views RemoteViews allows; any other shows
   // "Problem loading widget" on the home screen.
   const ALLOWED = new Set(['LinearLayout', 'FrameLayout', 'RelativeLayout', 'GridLayout', 'TextView', 'ImageView', 'Button', 'ImageButton', 'ProgressBar', 'Chronometer', 'AnalogClock', 'TextClock', 'ViewFlipper', 'ListView', 'GridView', 'StackView', 'AdapterViewFlipper', 'ViewStub']);
@@ -4762,6 +4762,25 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
   assert.match(fl, /export function startScan\(\) \{ notice = ''; photoAsk = false; scanning = true; \}/);
   assert.match(fl, /export function askPhoto\(\)/);
   assert.match(fl, /\{#if photoAsk\}[\s\S]*?photo\('meal'\)/, 'the camera opens from a tap in the app');
+});
+
+check('the widget is drawn at every size, light and dark, before any release', async () => {
+  // 2026-11-12: build 22's widget reached the owner "massive and empty"; nobody
+  // had seen it drawn. Now CI draws it the way a launcher does, keeps the
+  // drawings, and a layout a widget can't hold stops the release.
+  const { readFileSync, existsSync } = await import('node:fs');
+  const t = readFileSync('android/app/src/androidTest/java/com/toxicminds/recompos/WidgetRenderTest.java', 'utf8');
+  assert.match(t, /SlimWidget\.layouts\(app\)/, 'the same layouts the home screen gets');
+  assert.match(t, /rv\.apply\(ctx, host\)/, 'inflated the way a launcher does');
+  assert.match(t, /UI_MODE_NIGHT_YES : Configuration\.UI_MODE_NIGHT_NO/, 'light and dark');
+  for (const st of ['morning', 'weighed', 'newday', 'empty']) assert.match(t, new RegExp(`\\{ "${st}", `), st);
+  assert.equal([...t.match(/SIZES = \{([\s\S]*?)\};/)[1].matchAll(/\{ \d+, \d+ \}/g)].length, 8);
+  assert.ok(!existsSync('android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java'), 'the template test (wrong package) is gone');
+  const y = readFileSync('../.github/workflows/build-app-apk.yml', 'utf8');
+  assert.match(y, /assembleSideloadDebugAndroidTest/);
+  assert.match(y, /am instrument -w -e class \$PKG\.WidgetRenderTest[^\n]*\n\s*grep -q "\^OK \(1 test\)" instrument\.txt/, 'a failed drawing fails the job');
+  assert.match(y, /name: widget-drawings/);
+  assert.match(y, /publish:\s*\n\s*needs: update/, 'and nothing is released until it passes');
 });
 
 check('an error report says which build it came from', async () => {
