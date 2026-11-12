@@ -121,7 +121,7 @@ public class SlimWidget extends AppWidgetProvider {
         sizes.put(new SizeF(110f, 50f), look.small(false, false));
         sizes.put(new SizeF(200f, 50f), look.small(false, true));
         sizes.put(new SizeF(300f, 50f), look.small(true, true));
-        sizes.put(new SizeF(110f, 140f), look.full(false, false, true, 0));
+        sizes.put(new SizeF(110f, 160f), look.full(false, false, true, 0)); // its food line takes two lines
         sizes.put(new SizeF(220f, 140f), look.full(false, false, false, 0));
         sizes.put(new SizeF(300f, 140f), look.full(true, false, false, 0));
         sizes.put(new SizeF(220f, 190f), look.full(false, true, false, 0));
