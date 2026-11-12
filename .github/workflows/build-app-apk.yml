@@ -213,10 +213,11 @@ jobs:
           adb install old-key-only.apk
           adb install widget-test.apk
           adb shell am instrument -w -e class $PKG.WidgetRenderTest $PKG.test/androidx.test.runner.AndroidJUnitRunner | tee instrument.txt
-          grep -q "^OK (1 test)" instrument.txt
+          # The drawings first, so a failed one can be looked at.
           mkdir -p widget-shots
-          adb exec-out run-as $PKG tar -cf - files/widget | tar -xf - -C widget-shots
+          adb exec-out run-as $PKG tar -cf - files/widget | tar -xf - -C widget-shots || true
           echo "$(ls widget-shots/files/widget | wc -l) widget drawings"
+          grep -q "^OK (1 test)" instrument.txt
           SH
 
       - name: Update on an emulator (Android 14)
