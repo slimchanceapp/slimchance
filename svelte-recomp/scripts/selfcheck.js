@@ -4786,6 +4786,9 @@ check('the widget is drawn at every size, light and dark, before any release', a
   assert.match(t, /String gap = emptyBand\(b, d\);\s*if \(gap != null\) wrong\.add/);
   assert.match(t, /float allowed = Math\.max\(48 \* d, h \/ 5f\);/, 'at most 48 dp or a fifth of the widget');
   assert.match(t, /if \(!wrong\.isEmpty\(\)\) throw new AssertionError/, 'and a wrong drawing fails the test');
+  // Each layout is also drawn at the least size Android uses it for, so a
+  // size set too low fails (build 24 cut 7 dp off the empty widget at 3x2).
+  assert.match(t, /for \(Map\.Entry<SizeF, RemoteViews> e : layouts\.entrySet\(\)\) \{[\s\S]*?"-least-"[\s\S]*?draw\(ctx, e\.getValue\(\), w, h,/);
   assert.ok(!existsSync('android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java'), 'the template test (wrong package) is gone');
   const y = readFileSync('../.github/workflows/build-app-apk.yml', 'utf8');
   assert.match(y, /assembleSideloadDebugAndroidTest/);
@@ -4851,6 +4854,11 @@ check('a tall widget fills its height: what turns the chance, the food as bars, 
   assert.match(stores, /next: \$b\.tomorrow \? \{ date: tomorrow, \.\.\.day\(0, 0, \$b\.tomorrow\.share\), week: weekOf\(\$b\.tomorrow\.start\) \} : null,/, 'tomorrow from stores/body, nothing eaten yet');
   const w = readFileSync('android/app/src/main/java/com/toxicminds/recompos/SlimWidget.java', 'utf8');
   assert.match(w, /JSONObject day = fresh \? w : next != null && today\.equals\(next\.optString\("date"\)\) \? next : null;/, 'after midnight, tomorrow’s line; yesterday’s food is never today’s');
+  // Before the app has written: how the coins light, in the app's own words,
+  // and an empty week, so a tall widget isn't a band of nothing then either.
+  const { chanceSentence } = await import('../src/lib/body/pulse.ts');
+  assert.ok(w.includes(`static final String FIRST_HINT = "${chanceSentence(null, true)}";`), 'the first week’s line, as Today says it');
+  assert.match(w, /hint = has \? w\.optString\("hint", ""\) : FIRST_HINT;/);
   for (const more of ['1', '2']) assert.match(w, new RegExp(`sizes\\.put\\(new SizeF\\(300f, \\d+f\\), look\\.full\\(true, true, false, ${more}\\)\\);`));
   assert.match(w, /v\.setInt\(DAYS\[i\], "setSecondaryProgress", pct < 0 \? 0 : Math\.min\(pct, 150\)\);/, 'past the target in amber');
   const x = readFileSync('android/app/src/main/res/layout/widget_today.xml', 'utf8');

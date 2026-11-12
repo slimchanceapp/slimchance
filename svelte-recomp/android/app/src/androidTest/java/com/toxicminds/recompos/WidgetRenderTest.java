@@ -77,6 +77,14 @@ public class WidgetRenderTest {
                     String name = state[0] + "-" + (night ? "dark" : "light") + "-" + s[0] + "x" + s[1] + ".png";
                     draw(ctx, pick(layouts, s[0], s[1]), s[0], s[1], new File(out, name), wrong);
                 }
+                // Each layout at the least size it is used for: what fits there
+                // fits at every size Android gives it (more height only widens
+                // the gaps), so a size set too low fails here.
+                for (Map.Entry<SizeF, RemoteViews> e : layouts.entrySet()) {
+                    int w = Math.round(e.getKey().getWidth()), h = Math.round(e.getKey().getHeight());
+                    String name = state[0] + "-" + (night ? "dark" : "light") + "-least-" + w + "x" + h + ".png";
+                    draw(ctx, e.getValue(), w, h, new File(out, name), wrong);
+                }
             }
         }
         // Every drawing is made and kept first, then everything wrong is said at once.

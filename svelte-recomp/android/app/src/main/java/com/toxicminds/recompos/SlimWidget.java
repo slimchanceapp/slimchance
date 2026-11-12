@@ -43,6 +43,8 @@ public class SlimWidget extends AppWidgetProvider {
     static final String ACTION_DAY = "com.toxicminds.recompos.WIDGET_DAY";
     /** Before the app has written anything: what to do, not an empty card. */
     static final String FIRST_LINE = "Open Slim Chance to see your chance here.";
+    /** Under it when there is room: how the coins light (the app's first-week line). */
+    static final String FIRST_HINT = "Each morning on the scale lights a coin.";
     /** Where Scan and Photo open the app (widgetRoute in src/lib/moments/nativeAlarms.ts). */
     static final String SCAN = "slimchance://food/scan";
     static final String PHOTO = "slimchance://food/photo";
@@ -95,7 +97,7 @@ public class SlimWidget extends AppWidgetProvider {
             Look look = new Look(ctx);
             for (int id : ids) {
                 int h = mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
-                mgr.updateAppWidget(id, h < 100 ? look.small(true, true) : look.full(true, h >= 170, false, h >= 290 ? 2 : h >= 230 ? 1 : 0));
+                mgr.updateAppWidget(id, h < 140 ? look.small(true, true) : look.full(true, h >= 190, false, h >= 290 ? 2 : h >= 230 ? 1 : 0));
             }
         }
 
@@ -109,18 +111,21 @@ public class SlimWidget extends AppWidgetProvider {
     }
 
     /** Each size's layout, from what the app last wrote; Android 12+ shows the
-     *  largest that fits the widget, per orientation. WidgetRenderTest draws them. */
+     *  largest that fits the widget, per orientation. Each size is the least
+     *  its layout needs: WidgetRenderTest draws every layout at exactly its size
+     *  and fails one that cuts a part off (two rows from 100 dp did, 7 dp, on
+     *  build 24). Below a size, the next smaller layout. */
     static Map<SizeF, RemoteViews> layouts(Context ctx) {
         Look look = new Look(ctx);
         Map<SizeF, RemoteViews> sizes = new LinkedHashMap<>();
-        sizes.put(new SizeF(110f, 40f), look.small(false, false));
-        sizes.put(new SizeF(200f, 40f), look.small(false, true));
-        sizes.put(new SizeF(300f, 40f), look.small(true, true));
-        sizes.put(new SizeF(110f, 100f), look.full(false, false, true, 0));
-        sizes.put(new SizeF(220f, 100f), look.full(false, false, false, 0));
-        sizes.put(new SizeF(300f, 100f), look.full(true, false, false, 0));
-        sizes.put(new SizeF(220f, 170f), look.full(false, true, false, 0));
-        sizes.put(new SizeF(300f, 170f), look.full(true, true, false, 0));
+        sizes.put(new SizeF(110f, 50f), look.small(false, false));
+        sizes.put(new SizeF(200f, 50f), look.small(false, true));
+        sizes.put(new SizeF(300f, 50f), look.small(true, true));
+        sizes.put(new SizeF(110f, 140f), look.full(false, false, true, 0));
+        sizes.put(new SizeF(220f, 140f), look.full(false, false, false, 0));
+        sizes.put(new SizeF(300f, 140f), look.full(true, false, false, 0));
+        sizes.put(new SizeF(220f, 190f), look.full(false, true, false, 0));
+        sizes.put(new SizeF(300f, 190f), look.full(true, true, false, 0));
         // Taller (4x2 on tall cells, as on the owner's Pixel 7, and 4x3): what
         // turns the chance and the food as bars, then the week's days too, so
         // the height carries something instead of a band of nothing.
@@ -164,7 +169,7 @@ public class SlimWidget extends AppWidgetProvider {
             weighed = (fresh && w.optBoolean("weighed")) || MomentReceiver.weighedFrom(p, today);
             String t = w.optString("title", "");
             title = t.isEmpty() ? FIRST_LINE : t;
-            hint = w.optString("hint", "");
+            hint = has ? w.optString("hint", "") : FIRST_HINT;
             lit = w.isNull("lit") ? 0 : Math.max(0, Math.min(10, w.optInt("lit", 0)));
             // Food is the day's. After midnight, until the app writes again, the
             // day the app wrote as tomorrow (nothing eaten, the week's share for
@@ -182,7 +187,7 @@ public class SlimWidget extends AppWidgetProvider {
             if (days != null && days.length() == 7) {
                 week = new int[7];
                 for (int i = 0; i < 7; i++) week[i] = days.optInt(i, -1);
-            } else week = null;
+            } else week = has ? null : new int[] { -1, -1, -1, -1, -1, -1, -1 }; // nothing known yet: an empty week
 
             String unit = p.getString("widget_unit", "kg");
             Intent launch = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
@@ -217,10 +222,15 @@ public class SlimWidget extends AppWidgetProvider {
         RemoteViews full(boolean labels, boolean sentence, boolean narrow, int more) {
             RemoteViews v = new RemoteViews(ctx.getPackageName(), R.layout.widget_today);
             coins(v);
+            // Before the app has written, short: the line saying what to do and
+            // the buttons, not ten unlit coins.
+            v.setViewVisibility(R.id.widget_coins, has || sentence ? View.VISIBLE : View.GONE);
             v.setViewVisibility(R.id.widget_done, weighed ? View.VISIBLE : View.GONE);
             boolean bars = more >= 1 && share > 0;
-            // Narrow: protein on its own line rather than broken mid-phrase.
+            // Narrow: protein on its own line rather than broken mid-phrase;
+            // wider, one line, so the line never pushes the buttons off.
             v.setTextViewText(R.id.widget_food, protein.isEmpty() ? food : food + (narrow ? "\n" : " · ") + protein);
+            v.setInt(R.id.widget_food, "setMaxLines", narrow ? 2 : 1);
             v.setViewVisibility(R.id.widget_food, food.isEmpty() || bars ? View.GONE : View.VISIBLE);
             v.setTextViewText(R.id.widget_title, title);
             v.setViewVisibility(R.id.widget_title, sentence || !has ? View.VISIBLE : View.GONE);
