@@ -5475,6 +5475,20 @@ check('the watch cries wolf no more than about one time in twenty: a flat signal
   assert.ok(worst <= 0.06, `a flat signal was given a direction ${(worst * 100).toFixed(1)}% of the time (${at})`);
 });
 
+check('the landing page says how to join the Android test, in Google\'s order: group, opt in, install', async () => {
+  // 2026-11-12: every tester post sends people to the landing page, which said
+  // "the Android app is in testing" with no way in. Google needs the group
+  // first, then the opt-in, then the install.
+  const { readFileSync } = await import('node:fs');
+  const html = readFileSync('static/about/index.html', 'utf8');
+  const group = html.indexOf('https://groups.google.com/g/slimchance-testers');
+  const optIn = html.indexOf('https://play.google.com/apps/testing/app.slimchance');
+  const install = html.indexOf('https://play.google.com/store/apps/details?id=app.slimchance');
+  assert.ok(group > 0 && optIn > group && install > optIn, 'group, opt-in and install links, in that order');
+  assert.match(html, /in testing[^<]*<a href="#android"/, 'the line that says it is in testing links to the steps');
+  assert.match(html, /id="android"/, 'the steps have the anchor the hero links to');
+});
+
 check('nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere', async () => {
   // Decision 0001 (2026-11-05) dropped Plus; on 2026-11-10 the menu, the
   // medication page and the landing page still announced it.

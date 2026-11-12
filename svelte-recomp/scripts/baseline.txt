@@ -343,6 +343,7 @@ the hero speaks of the chance, never of the body
 the home-screen widget shows the chance and a weigh-in, never a weight, and never wakes the phone
 the iPhone app reads Apple Health weigh-ins by the same one-a-day rules
 the icon is one drawing everywhere: the S is an outline, and the iPhone icon is opaque
+the landing page says how to join the Android test, in Google's order: group, opt in, install
 the letter from last month tells the month back, in the user’s words
 the line follows a held low down, a kilo above it, and never back up
 the line is judged on the trend, and a low that doesn’t hold a week can’t move it
