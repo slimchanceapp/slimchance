@@ -11,7 +11,7 @@
     android:minResizeWidth="110dp"
     android:minResizeHeight="40dp"
     android:maxResizeWidth="530dp"
-    android:maxResizeHeight="260dp"
+    android:maxResizeHeight="420dp"
     android:previewLayout="@layout/widget_today"
     android:resizeMode="horizontal|vertical"
     android:targetCellWidth="4"

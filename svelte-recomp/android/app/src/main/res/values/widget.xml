@@ -6,9 +6,14 @@
     <color name="widget_muted">#5B6380</color>
     <color name="widget_brass">#B7861F</color>
     <color name="widget_tonal">#EEF0F8</color>
-    <color name="widget_coin">#FCC419</color>
-    <color name="widget_coin_edge">#B7861F</color>
-    <color name="widget_coin_dim">#C9CFE0</color>
+    <!-- An unlit coin: the lit one's shape in quiet colours (scripts/widget-coins.mjs). -->
+    <color name="widget_coin_off_edge">#D3D8E8</color>
+    <color name="widget_coin_off_mill">#E4E7F2</color>
+    <color name="widget_coin_off_face">#EEF0F8</color>
+    <color name="widget_coin_off_ring">#C2C8DC</color>
+    <!-- Food bars: the theme's accent (Daylight blue), past the day's target amber, never red. -->
+    <color name="widget_bar">#4263EB</color>
+    <color name="widget_over">#F08C00</color>
     <dimen name="widget_radius">24dp</dimen>
-    <string name="widget_description">Your chance as ten coins, today’s food and protein, and one tap to weigh in, scan a barcode or photograph a meal. It never shows your weight.</string>
+    <string name="widget_description">Your chance as ten coins, today’s food and protein, your week’s food, and one tap to weigh in, scan a barcode or photograph a meal. It never shows your weight.</string>
 </resources>

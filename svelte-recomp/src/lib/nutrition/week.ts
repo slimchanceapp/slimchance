@@ -5,7 +5,7 @@
 // makes the same meal a cost: a big Saturday leaves less for Sunday, it doesn't
 // break anything. Pure; see selfcheck.js.
 
-import { mondayOf } from '../date.ts';
+import { mondayOf, shiftYmd } from '../date.ts';
 import { fitWeightLine, type WeighIn } from '../body/index.ts';
 
 export interface WeekBudget {
@@ -40,6 +40,18 @@ export function weekBudget(target: number | null, intake: Map<string, { kcal: nu
   before += target * (7 - daysLeft - daysLogged);
   const budget = target * 7;
   return { start, budget, logged: Math.round(logged), before: Math.round(before), daysLeft, share: Math.round((budget - before) / daysLeft) };
+}
+
+/** The week from `start` (a Monday), a day at a time against the day's target
+ *  (`perDay`): a percentage, to half again the target. A day with nothing
+ *  logged, or after `today`, is -1: unknown, never a day without food. The
+ *  home-screen widget's week. */
+export function weekDays(intake: Map<string, { kcal: number }>, start: string, today: string, perDay: number): number[] {
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = shiftYmd(i, new Date(`${start}T12:00:00`));
+    const k = d <= today ? intake.get(d)?.kcal ?? 0 : 0;
+    return k > 0 && perDay > 0 ? Math.min(150, Math.round((100 * k) / perDay)) : -1;
+  });
 }
 
 // ---------------------------------------------------------------------------

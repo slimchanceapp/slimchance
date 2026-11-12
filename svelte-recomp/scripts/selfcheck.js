@@ -4715,7 +4715,7 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
   const info = readFileSync(res + 'xml/widget_today_info.xml', 'utf8');
   for (const a of ['minResizeWidth="110dp"', 'minResizeHeight="40dp"', 'targetCellWidth="4"', 'targetCellHeight="2"', 'maxResizeHeight=']) assert.ok(info.includes(a), a);
   const w = readFileSync('android/app/src/main/java/com/toxicminds/recompos/SlimWidget.java', 'utf8');
-  assert.equal([...w.matchAll(/sizes\.put\(new SizeF\(/g)].length, 8, 'a layout for each size, one row to two and up');
+  assert.equal([...w.matchAll(/sizes\.put\(new SizeF\(/g)].length, 12, 'a layout for each size, one row to two and up, and taller');
   assert.match(w, /if \(Build\.VERSION\.SDK_INT >= 31\) \{\s*mgr\.updateAppWidget\(ids, new RemoteViews\(layouts\(ctx\)\)\);/);
   // A widget may hold only the views RemoteViews allows; any other shows
   // "Problem loading widget" on the home screen.
@@ -4727,10 +4727,12 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
     for (const h of x.matchAll(/android:id="@\+id\/widget_(weigh|scan|photo|act)"[\s\S]*?android:layout_height="(\d+)dp"/g)) assert.ok(+h[2] >= 48, `${f}: ${h[1]} is a 48 dp target`);
   }
   assert.match(readFileSync(res + 'values-v31/widget.xml', 'utf8'), /@android:dimen\/system_app_widget_background_radius/);
+  const { coinsXml } = await import('./widget-coins.mjs');
   for (let n = 0; n <= 10; n++) {
     const c = readFileSync(res + `drawable/coins_${n}.xml`, 'utf8');
-    assert.equal([...c.matchAll(/fillColor="@color\/widget_coin"/g)].length, n, `coins_${n} lights ${n}`);
-    assert.equal([...c.matchAll(/<path /g)].length, 10);
+    assert.equal(c, coinsXml(n), `coins_${n}.xml is what scripts/widget-coins.mjs writes`);
+    assert.equal([...c.matchAll(/android:type="radial"/g)].length, n, `coins_${n} lights ${n}`);
+    assert.equal([...c.matchAll(/@color\/widget_coin_off_face/g)].length, 10 - n, `and ${10 - n} wait unlit`);
   }
   assert.ok(!existsSync(res + 'drawable/coins_11.xml'));
   // The same coins as Today, the briefing's food numbers, words for an empty widget.
@@ -4741,7 +4743,7 @@ check('the widget fits every size from 2x1 to 4x2, opens the food logger ready, 
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const lit = \$derived\(coinsLit\(p\.odds, \$body\.weight\?\.n \?\? 0\)\);/);
   const stores = readFileSync('src/lib/stores/moments.ts', 'utf8');
   assert.match(stores, /lit: coinsLit\(\$p\.odds, \$b\.weight\?\.n \?\? 0\)/);
-  assert.match(stores, /const share = \$b\.week\?\.share \?\? null;/, 'the week’s budget from stores/body, like the briefing');
+  assert.match(stores, /\.\.\.day\(Math\.round\(eaten\?\.kcal \?\? 0\), Math\.round\(eaten\?\.protein \?\? 0\), \$b\.week\?\.share \?\? null\)/, 'the week’s budget from stores/body, like the briefing');
   assert.match(w, /static final String FIRST_LINE = "Open Slim Chance to see your chance here\.";/);
   assert.match(w, /"New day: nothing logged yet"/, 'yesterday’s food is never shown as today’s');
   assert.match(w, /food = !has \? "" :/, 'before the app has written, the sentence alone says what to do (the first drawings said it twice)');
@@ -4774,14 +4776,89 @@ check('the widget is drawn at every size, light and dark, before any release', a
   assert.match(t, /SlimWidget\.layouts\(app\)/, 'the same layouts the home screen gets');
   assert.match(t, /rv\.apply\(ctx, host\)/, 'inflated the way a launcher does');
   assert.match(t, /UI_MODE_NIGHT_YES : Configuration\.UI_MODE_NIGHT_NO/, 'light and dark');
-  for (const st of ['morning', 'weighed', 'newday', 'empty']) assert.match(t, new RegExp(`\\{ "${st}", `), st);
-  assert.equal([...t.match(/SIZES = \{([\s\S]*?)\};/)[1].matchAll(/\{ \d+, \d+ \}/g)].length, 8);
+  for (const st of ['morning', 'weighed', 'tossup', 'newday', 'empty']) assert.match(t, new RegExp(`\\{ "${st}", `), st);
+  const sizes = t.match(/SIZES = \{([\s\S]*?)\};/)[1];
+  assert.equal([...sizes.matchAll(/\{ \d+, \d+ \}/g)].length, 13);
+  assert.match(sizes, /\{ 373, 314 \}/, 'the owner’s Pixel 7 at 4x2, where build 24 left 150 dp of nothing');
+  // 2026-11-12: a drawing fails, not just a layout the widget can't hold: a
+  // part past the bottom edge, or a band of nothing inside the widget.
+  assert.match(t, /String cut = cutOff\(v, d\);\s*if \(cut != null\) wrong\.add/);
+  assert.match(t, /String gap = emptyBand\(b, d\);\s*if \(gap != null\) wrong\.add/);
+  assert.match(t, /float allowed = Math\.max\(48 \* d, h \/ 5f\);/, 'at most 48 dp or a fifth of the widget');
+  assert.match(t, /if \(!wrong\.isEmpty\(\)\) throw new AssertionError/, 'and a wrong drawing fails the test');
   assert.ok(!existsSync('android/app/src/androidTest/java/com/getcapacitor/myapp/ExampleInstrumentedTest.java'), 'the template test (wrong package) is gone');
   const y = readFileSync('../.github/workflows/build-app-apk.yml', 'utf8');
   assert.match(y, /assembleSideloadDebugAndroidTest/);
-  assert.match(y, /am instrument -w -e class \$PKG\.WidgetRenderTest[^\n]*\n\s*grep -q "\^OK \(1 test\)" instrument\.txt/, 'a failed drawing fails the job');
+  assert.match(y, /am instrument -w -e class \$PKG\.WidgetRenderTest[^\n]*\n(?:[^\n]*\n){1,4}\s*grep -q "\^OK \(1 test\)" instrument\.txt/, 'a failed drawing fails the job');
+  assert.ok(y.indexOf('tar -xf - -C widget-shots') < y.indexOf('grep -q "^OK (1 test)"'), 'after its drawings are kept, so they can be looked at');
   assert.match(y, /name: widget-drawings/);
   assert.match(y, /publish:\s*\n\s*needs: update/, 'and nothing is released until it passes');
+});
+
+check('coins look like coins, lit or not: a milled edge, a face and a raised rim, the same in the app and on the widget', async () => {
+  // 2026-11-12, the owner, of build 24's widget and Today's hero at 0 in 10:
+  // "does that look like coins to you?" Unlit coins were empty rings, which read
+  // as radio buttons; a lit one was a gold dot. A coin is now one drawing: a
+  // milled edge, the face, a raised rim, gold when lit and quiet when not.
+  const { readFileSync } = await import('node:fs');
+  const { coinsXml, GOLD } = await import('./widget-coins.mjs');
+  const off = coinsXml(0), on = coinsXml(10);
+  for (const part of ['widget_coin_off_edge', 'widget_coin_off_mill', 'widget_coin_off_face', 'widget_coin_off_ring'])
+    assert.equal([...off.matchAll(new RegExp(`@color/${part}"`, 'g'))].length, 10, `an unlit coin has its ${part.slice(16)}`);
+  assert.equal([...on.matchAll(/android:type="radial"/g)].length, 10, 'a lit coin has a gold face');
+  assert.equal([...on.matchAll(new RegExp(`strokeColor="${GOLD.mill}"`, 'g'))].length, 10, 'and a milled edge');
+  for (const f of ['values/widget.xml', 'values-night/widget.xml']) {
+    const x = readFileSync(`android/app/src/main/res/${f}`, 'utf8');
+    for (const part of ['edge', 'mill', 'face', 'ring']) assert.match(x, new RegExp(`<color name="widget_coin_off_${part}">#`), `${f}: the unlit ${part}`);
+  }
+  const css = readFileSync('src/app.css', 'utf8');
+  const coin = css.match(/^\.coin\{[^}]*\}/m)?.[0] ?? '';
+  assert.match(coin, /border:[^;]*solid var\(--coin-edge/, 'the edge');
+  assert.match(coin, /background:var\(--coin-face/, 'a face, lit or not: never an empty ring');
+  assert.match(css, /^\.coin::before\{[^}]*repeating-conic-gradient\(var\(--coin-mill/m, 'milled');
+  assert.match(css, /^\.coin::after\{[^}]*border:[^;]*var\(--coin-ring/m, 'the raised rim');
+  const lit = css.match(/^\.coin\.on\{[^}]*\}/m)?.[0] ?? '';
+  for (const c of [GOLD.edge, GOLD.mill, GOLD.light, GOLD.face, GOLD.deep]) assert.ok(lit.includes(c), `the app's gold coin has ${c}, as the widget's does`);
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(GOLD.ring.slice(i, i + 2), 16));
+  assert.ok(lit.includes(`rgba(${r},${g},${b},.75)`), 'and the same rim');
+  const hero = readFileSync('src/routes/+page.svelte', 'utf8');
+  assert.match(hero, /<div class="hero-coins" aria-hidden="true">\{#each Array\(10\) as _, i\}<i class="coin" class:on=\{i < shown\}><\/i>/);
+  assert.doesNotMatch(hero, /\.hero-coins i\{[^}]*border-radius:50%/, 'no ring of its own');
+  const readout = readFileSync('src/lib/components/Readout.svelte', 'utf8');
+  assert.match(readout, /<i class="coin" class:on=\{i < coins\}>/);
+  assert.doesNotMatch(readout, /\.ro-coins i\{/, 'nor here');
+});
+
+check('a tall widget fills its height: what turns the chance, the food as bars, the week, and tomorrow after midnight', async () => {
+  // 2026-11-12: the owner's 4x2 is 373x314 dp; build 24 showed coins and one
+  // sentence over 150 dp of nothing. Taller sizes now carry what turns the
+  // chance, today's food and protein as bars, and the week's days, and any
+  // spare height is shared between the gaps.
+  const { readFileSync } = await import('node:fs');
+  const { chanceHint, oddsOf } = await import('../src/lib/body/pulse.ts');
+  assert.equal(chanceHint(oddsOf(0.2, 'x'), true), 'A week inside your budget turns it.');
+  assert.equal(chanceHint(oddsOf(0.6, 'x'), true), null, 'only when the chance is low');
+  assert.equal(chanceHint(oddsOf(0.2, 'x'), false), null, 'and of slimming');
+  assert.equal(chanceHint(null, true), null);
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /const turnIt = \$derived\(chanceHint\(p\.odds, losing\)\);/, 'the hero says the same');
+  const { weekDays } = await import('../src/lib/nutrition/week.ts');
+  const intake = new Map([['2026-11-09', { kcal: 1900 }], ['2026-11-10', { kcal: 2400 }], ['2026-11-12', { kcal: 900 }], ['2026-11-13', { kcal: 500 }]]);
+  assert.deepEqual(weekDays(intake, '2026-11-09', '2026-11-12', 2000), [95, 120, -1, 45, -1, -1, -1], 'nothing logged is unknown, and tomorrow hasn’t happened');
+  assert.deepEqual(weekDays(new Map([['2026-11-09', { kcal: 5000 }]]), '2026-11-09', '2026-11-09', 2000)[0], 150, 'a bar tops out at half again the target');
+  assert.deepEqual(weekDays(intake, '2026-11-09', '2026-11-12', 0), Array(7).fill(-1), 'no target, no bars');
+  const stores = readFileSync('src/lib/stores/moments.ts', 'utf8');
+  assert.match(stores, /hint: chanceHint\(\$p\.odds, losing\) \?\? '',/);
+  assert.match(stores, /next: \$b\.tomorrow \? \{ date: tomorrow, \.\.\.day\(0, 0, \$b\.tomorrow\.share\), week: weekOf\(\$b\.tomorrow\.start\) \} : null,/, 'tomorrow from stores/body, nothing eaten yet');
+  const w = readFileSync('android/app/src/main/java/com/toxicminds/recompos/SlimWidget.java', 'utf8');
+  assert.match(w, /JSONObject day = fresh \? w : next != null && today\.equals\(next\.optString\("date"\)\) \? next : null;/, 'after midnight, tomorrow’s line; yesterday’s food is never today’s');
+  for (const more of ['1', '2']) assert.match(w, new RegExp(`sizes\\.put\\(new SizeF\\(300f, \\d+f\\), look\\.full\\(true, true, false, ${more}\\)\\);`));
+  assert.match(w, /v\.setInt\(DAYS\[i\], "setSecondaryProgress", pct < 0 \? 0 : Math\.min\(pct, 150\)\);/, 'past the target in amber');
+  const x = readFileSync('android/app/src/main/res/layout/widget_today.xml', 'utf8');
+  const gaps = [...x.matchAll(/<FrameLayout[^>]*android:layout_weight="1"/g)].length;
+  assert.ok(gaps >= 5, `spare height is shared between ${gaps} gaps, not left in one band`);
+  for (const id of ['widget_hint', 'widget_bars', 'widget_kcal_bar', 'widget_protein_bar', 'widget_week', ...Array.from({ length: 7 }, (_, i) => `widget_day${i}`)])
+    assert.match(x, new RegExp(`android:id="@\\+id/${id}"`), id);
+  assert.doesNotMatch(readFileSync('android/app/src/main/res/values/widget.xml', 'utf8'), /#(?:E03131|FA5252|C92A2A|FF0000)/i, 'past the target is amber, never red');
 });
 
 check('an error report says which build it came from', async () => {
@@ -5134,13 +5211,16 @@ check('the home-screen widget shows the chance and a weigh-in, never a weight, a
   // One sentence, said in one place, for Today and the widget.
   const stores = readFileSync('src/lib/stores/moments.ts', 'utf8');
   assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /chanceSentence\(p\.odds, losing\)/);
-  assert.match(stores, /title: chanceSentence\(\$p\.odds, slimming\(/);
+  assert.match(stores, /const losing = slimming\(\$b\.goalKg, \$b\.currentKg, \$b\.keepSince\);[\s\S]*?title: chanceSentence\(\$p\.odds, losing\),/);
   for (const f of ['src/routes/+page.svelte', 'src/lib/stores/moments.ts']) {
     assert.ok(!/coin toss\. Every morning/.test(readFileSync(f, 'utf8')), `${f} says it through chanceSentence`);
   }
   // No weight leaves for the widget.
   const lines = stores.match(/export const widgetLines[\s\S]*?\n\}\);/)[0];
-  assert.deepEqual([...lines.matchAll(/^ {4}(\w+):/gm)].map((m) => m[1]), ['date', 'title', 'weighed', 'unit', 'lit', 'food', 'protein']);
+  // 2026-11-12: a day's food (also tomorrow's) and the week's days joined the
+  // list: food numbers against targets, still never a weight.
+  assert.deepEqual([...lines.matchAll(/^ {4}(\w+):/gm)].map((m) => m[1]), ['food', 'protein', 'date', 'title', 'hint', 'weighed', 'unit', 'lit', 'week', 'next']);
+  assert.match(lines, /^ {4}kcal, share, proteinG: protein, proteinTarget: \$b\.proteinTargetG,$/m);
   assert.doesNotMatch(lines, /wtNum|wtShort|dwt|unitWord|trendKg|latestKg|\.kg\b/, 'no weight is formatted for it');
   const dir = 'android/app/src/main/java/com/toxicminds/recompos/';
   const w = readFileSync(dir + 'SlimWidget.java', 'utf8');
@@ -5171,7 +5251,7 @@ check('the odds coins flip in and land as they light, and the themes are Deep an
   // The owner, 2026-11-03: George's motion, "coins flipping and landing on the
   // trend", and "the app colours are too dull".
   const { readFileSync } = await import('node:fs');
-  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins i\.on\{[^}]*animation:ro-flip/);
+  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins \.coin\.on\{[^}]*animation:ro-flip/);
   const css = readFileSync('src/app.css', 'utf8');
   // Black and gold was tried and reverted the same day; navy and brass gave
   // way on 2026-11-10 to Deep (dark) and Daylight (light), picked on the phone.

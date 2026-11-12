@@ -1,7 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!-- The home-screen widget at two rows and up (SlimWidget): the name, the chance
      as ten coins, today's food, the sentence when there is room, and the
-     actions. SlimWidget hides parts by size; the defaults here are the preview. -->
+     actions; taller, a word on what turns the chance, today's food as bars and
+     the week's days. Spare height goes to the gaps between them (the spacers),
+     never to one band of nothing: build 24 left 150 dp of it on the owner's
+     4x2. SlimWidget hides parts by size; the defaults here are the preview. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:layout_width="match_parent"
@@ -50,15 +53,27 @@
             android:visibility="gone" />
     </LinearLayout>
 
+    <!-- Spacers are FrameLayouts: a widget may hold only the views RemoteViews
+         allows, and a plain View isn't one. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
     <ImageView
         android:id="@+id/widget_coins"
         android:layout_width="match_parent"
-        android:layout_height="20dp"
+        android:layout_height="24dp"
         android:layout_marginTop="8dp"
         android:adjustViewBounds="true"
-        android:contentDescription="6 of 10 coins lit"
+        android:contentDescription="3 of 10 coins lit"
         android:scaleType="fitStart"
-        android:src="@drawable/coins_6" />
+        android:src="@drawable/coins_3" />
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
 
     <TextView
         android:id="@+id/widget_food"
@@ -78,12 +93,322 @@
         android:layout_marginTop="6dp"
         android:ellipsize="end"
         android:maxLines="2"
-        android:text="Your chance of slimming is a coin toss. Every morning sharpens it."
+        android:text="Your chance of slimming is low right now."
         android:textColor="@color/widget_text"
         android:textSize="15sp" />
 
-    <!-- A spacer: a FrameLayout, since a widget may hold only the views
-         RemoteViews allows, and a plain View isn't one. -->
+    <TextView
+        android:id="@+id/widget_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="A week inside your budget turns it."
+        android:textColor="@color/widget_muted"
+        android:textSize="13sp"
+        android:visibility="gone" />
+
+    <FrameLayout
+        android:id="@+id/widget_gap_bars"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <!-- Today's food as two bars: kcal against today's share, protein against
+         its target. -->
+    <LinearLayout
+        android:id="@+id/widget_bars"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:layout_marginEnd="4dp"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/widget_kcal_col"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_kcal_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="1,580 of 2,100 kcal"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+
+            <ProgressBar
+                android:id="@+id/widget_kcal_bar"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="4dp"
+                android:max="100"
+                android:progress="75"
+                android:progressDrawable="@drawable/widget_bar" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/widget_protein_col"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/widget_protein_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:ellipsize="end"
+                android:maxLines="1"
+                android:text="62 of 160 g protein"
+                android:textColor="@color/widget_muted"
+                android:textSize="12sp" />
+
+            <ProgressBar
+                android:id="@+id/widget_protein_bar"
+                style="@android:style/Widget.ProgressBar.Horizontal"
+                android:layout_width="match_parent"
+                android:layout_height="6dp"
+                android:layout_marginTop="4dp"
+                android:max="100"
+                android:progress="39"
+                android:progressDrawable="@drawable/widget_bar" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/widget_gap_week"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:visibility="gone" />
+
+    <!-- The week, Monday first: each day's food against the day's target, past
+         it in amber; a day with nothing logged is an empty bar, never a zero. -->
+    <LinearLayout
+        android:id="@+id/widget_week"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="bottom"
+        android:orientation="horizontal"
+        android:visibility="gone">
+
+        <TextView
+            android:layout_width="64dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="1dp"
+            android:maxLines="1"
+            android:text="This week"
+            android:textColor="@color/widget_muted"
+            android:textSize="12sp" />
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day0"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="95"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="95" />
+
+                <TextView
+                    android:id="@+id/widget_dl0"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="M"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day1"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="100"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="120" />
+
+                <TextView
+                    android:id="@+id/widget_dl1"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="T"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day2"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="88"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="88" />
+
+                <TextView
+                    android:id="@+id/widget_dl2"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="W"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day3"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="0" />
+
+                <TextView
+                    android:id="@+id/widget_dl3"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="T"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day4"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="0" />
+
+                <TextView
+                    android:id="@+id/widget_dl4"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="F"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day5"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="0" />
+
+                <TextView
+                    android:id="@+id/widget_dl5"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="S"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:gravity="center_horizontal"
+                android:orientation="vertical">
+
+                <ProgressBar
+                    android:id="@+id/widget_day6"
+                    style="@android:style/Widget.ProgressBar.Horizontal"
+                    android:layout_width="12dp"
+                    android:layout_height="26dp"
+                    android:max="150"
+                    android:progress="0"
+                    android:progressDrawable="@drawable/widget_day"
+                    android:secondaryProgress="0" />
+
+                <TextView
+                    android:id="@+id/widget_dl6"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:maxLines="1"
+                    android:text="S"
+                    android:textColor="@color/widget_muted"
+                    android:textSize="10sp" />
+            </LinearLayout>
+    </LinearLayout>
+
     <FrameLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"

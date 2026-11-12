@@ -12,12 +12,12 @@ import { userId } from './user';
 import { composeBriefing, type Briefing, type DayForecast } from '$lib/moments';
 import { composeHold, holdAfter, HOLD_UNTIL } from '$lib/moments';
 import { cleanPlans, sportOf } from '$lib/moments';
-import { usualBreakfast, type QuickFood } from '$lib/nutrition';
+import { usualBreakfast, weekDays, type QuickFood } from '$lib/nutrition';
 import { shiftYmd } from '$lib/date';
 import { lastMonth, monthLetter } from '$lib/moments';
 import { forecastHere } from '$lib/moments/weather';
 import type { WidgetLines } from '$lib/moments/nativeAlarms';
-import { OFF_TREND_KG, chanceSentence, slimming, coinsLit } from '$lib/body';
+import { OFF_TREND_KG, chanceSentence, chanceHint, slimming, coinsLit } from '$lib/body';
 import { toUnit, weightUnit, type WeightUnit } from '$lib/units';
 import { eveningFrom } from '$lib/coach';
 import { brainToday } from './brain';
@@ -140,20 +140,30 @@ export async function saveMoments(s: MomentSetting): Promise<void> {
 }
 
 /** The home-screen widget (Android, build 22+; SlimWidget.java): Today's
- *  coins and sentence on the chance, whether today is weighed, and the day's
- *  food and protein against the week's budget (the briefing's number, from
- *  stores/body). Never a weight. */
+ *  coins and sentence on the chance and what turns it, whether today is
+ *  weighed, the day's food and protein against the week's budget (the
+ *  briefing's number, from stores/body), and the week's days; tomorrow's food
+ *  line too, which the widget shows after midnight until the app writes again
+ *  (build 25+). Never a weight. */
 export const widgetLines: Readable<WidgetLines> = derived([todayPulse, body, liveWeights()], ([$p, $b, $w]) => {
+  const losing = slimming($b.goalKg, $b.currentKg, $b.keepSince);
+  const weekOf = (start: string) => weekDays($b.intake, start, $b.today, $b.week ? $b.week.budget / 7 : 0);
+  const day = (kcal: number, protein: number, share: number | null) => ({
+    food: share ? `${kcal.toLocaleString()} of ${share.toLocaleString()} kcal` : kcal ? `${kcal.toLocaleString()} kcal` : 'Nothing logged yet',
+    protein: `${protein} of ${$b.proteinTargetG} g protein`,
+    kcal, share, proteinG: protein, proteinTarget: $b.proteinTargetG,
+  });
   const eaten = $b.intake.get($b.today);
-  const kcal = Math.round(eaten?.kcal ?? 0);
-  const share = $b.week?.share ?? null;
+  const tomorrow = shiftYmd(1, new Date(`${$b.today}T12:00:00`));
   return {
     date: $b.today,
-    title: chanceSentence($p.odds, slimming($b.goalKg, $b.currentKg, $b.keepSince)),
+    title: chanceSentence($p.odds, losing),
+    hint: chanceHint($p.odds, losing) ?? '',
     weighed: (($w as any[]) ?? []).some((x) => x?.date === $b.today && x.weight != null),
     unit: weightUnit(),
     lit: coinsLit($p.odds, $b.weight?.n ?? 0),
-    food: share ? `${kcal.toLocaleString()} of ${share.toLocaleString()} kcal` : kcal ? `${kcal.toLocaleString()} kcal` : 'Nothing logged yet',
-    protein: `${Math.round(eaten?.protein ?? 0)} of ${$b.proteinTargetG} g protein`,
+    ...day(Math.round(eaten?.kcal ?? 0), Math.round(eaten?.protein ?? 0), $b.week?.share ?? null),
+    week: $b.week ? weekOf($b.week.start) : null,
+    next: $b.tomorrow ? { date: tomorrow, ...day(0, 0, $b.tomorrow.share), week: weekOf($b.tomorrow.start) } : null,
   };
 });

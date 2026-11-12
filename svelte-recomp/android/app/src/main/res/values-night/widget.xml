@@ -6,6 +6,9 @@
     <color name="widget_muted">#A9A5CF</color>
     <color name="widget_brass">#FCC419</color>
     <color name="widget_tonal">#2C2858</color>
-    <color name="widget_coin_edge">#FCC419</color>
-    <color name="widget_coin_dim">#4A4680</color>
+    <color name="widget_coin_off_edge">#3A3670</color>
+    <color name="widget_coin_off_mill">#4E4A88</color>
+    <color name="widget_coin_off_face">#26224E</color>
+    <color name="widget_coin_off_ring">#4E4A88</color>
+    <color name="widget_bar">#FCC419</color>
 </resources>

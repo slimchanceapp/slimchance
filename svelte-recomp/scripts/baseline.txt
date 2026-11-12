@@ -87,6 +87,7 @@ a stall with falling steps names moving less, from the same steps trend as the w
 a steady gain reads as progress when the goal is to gain
 a surplus is fine when the goal is to GAIN
 a table pull pages past the server’s 1000-row cap
+a tall widget fills its height: what turns the chance, the food as bars, the week, and tomorrow after midnight
 a thin week omits sections instead of padding them with blanks
 a training day you have not trained on gets one reminder, before the evening goes
 a trial gets a smaller AI allowance, keeps no photos, and is deleted after 30 idle days
@@ -132,6 +133,7 @@ calories are pro-rated by overlap, not double-counted
 canWrite is exact — a read grant is never mistaken for a write grant
 celebrate is a distinct multi-beat crescendo
 choosing the next stop keeps the one reached, for the journal
+coins look like coins, lit or not: a milled edge, a face and a raised rim, the same in the app and on the widget
 comfortable, adhered, and the scale did not move -> trim
 composition refuses a window too short to beat measurement noise
 consent is asked at sign-up and records the privacy page it was given to

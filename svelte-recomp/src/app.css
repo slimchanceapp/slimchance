@@ -123,6 +123,15 @@ body::before{
 .page-hd{font-family:var(--font-display);font-size:2.25rem;font-weight:700;margin-bottom:2px;letter-spacing:0;line-height:1.05;color:var(--text)}
 .page-sub{font-size:0.8125rem;color:var(--muted);margin-bottom:18px}
 
+/* A coin: the chance and nothing else (the coin rule), drawn the same wherever
+   it shows and on the home-screen widget (scripts/widget-coins.mjs): a milled
+   edge, the face and a raised rim. Unlit, the same coin in quiet colours, which
+   a container may set (--coin-edge, -mill, -face, -ring): ten empty rings didn't
+   read as coins (the owner, 2026-11-12). Size: --coin. */
+.coin{position:relative;display:block;flex:none;box-sizing:border-box;width:var(--coin,24px);height:var(--coin,24px);border-radius:50%;border:calc(var(--coin,24px)*.085) solid var(--coin-edge,var(--border));background:var(--coin-face,var(--bg3));background-clip:padding-box}
+.coin::before{content:'';position:absolute;inset:calc(var(--coin,24px)*-.085);border-radius:50%;background:repeating-conic-gradient(var(--coin-mill,var(--border2)) 0 4deg,transparent 0 12.857deg);-webkit-mask:radial-gradient(closest-side,transparent 86%,#000 88%,#000 95%,transparent 97%);mask:radial-gradient(closest-side,transparent 86%,#000 88%,#000 95%,transparent 97%)}
+.coin::after{content:'';position:absolute;inset:calc(var(--coin,24px)*.105);border-radius:50%;border:calc(var(--coin,24px)*.048) solid var(--coin-ring,var(--border2))}
+.coin.on{--coin-edge:#C27C0E;--coin-mill:#E8A317;--coin-face:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#F08C00);--coin-ring:rgba(208,138,10,.75)}
 .card{
   background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);
   padding:16px;margin-bottom:12px;transition:border-color .2s,transform .2s var(--ease);

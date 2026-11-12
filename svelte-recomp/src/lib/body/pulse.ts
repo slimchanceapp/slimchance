@@ -90,6 +90,11 @@ export const coinsLit = (odds: Odds | null, mornings: number): number => odds?.l
 /** The one sentence on the chance: Today's hero and the home-screen widget.
  *  Said of the chance, never of the body: "Slim, for now" read as "you're
  *  slim" next to a weight (the owner, 2026-11-03). */
+/** What turns a low chance of slimming, said under it: Today's hero and the
+ *  home-screen widget. null when the chance isn't low, or isn't of slimming. */
+export const chanceHint = (odds: Odds | null, losing: boolean): string | null =>
+  losing && odds && odds.lit <= 3 ? 'A week inside your budget turns it.' : null;
+
 export function chanceSentence(odds: Odds | null, losing: boolean): string {
   return !odds ? 'Each morning on the scale lights a coin.'
     : !losing ? odds.text

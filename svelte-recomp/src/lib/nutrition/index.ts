@@ -6,7 +6,7 @@
 // into any area but Body's door. Pure: everything here is data in, data out.
 export { cleanName, estimateLocally, historyFoods, scale, searchLocal, sourceOf, sum, times, validGtin } from './food.ts';
 export type { Candidate, Macros, NewFood } from './food.ts';
-export { weekBudget, weekShape } from './week.ts';
+export { weekBudget, weekDays, weekShape } from './week.ts';
 export type { WeekBudget, WeekShape } from './week.ts';
 export { weeklyMaintenance } from './adaptiveTdee.ts';
 export type { AdaptiveTdee } from './adaptiveTdee.ts';

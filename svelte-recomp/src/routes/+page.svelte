@@ -16,7 +16,7 @@
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { cardNav } from '$lib/actions/cardNav';
-  import { morningsThisWeek, slimming, chanceSentence, coinsLit } from '$lib/body';
+  import { morningsThisWeek, slimming, chanceSentence, chanceHint, coinsLit } from '$lib/body';
   import { saveWeighIn, NeedsConfirm } from '$lib/body/weighIn';
   import { body, stall, line, scaleUp, todayPulse } from '$lib/stores/body';
   import { dayOne } from '$lib/stores/dayOne';
@@ -139,7 +139,7 @@
   });
   const losing = $derived(slimming($body.goalKg, currentKg, $body.keepSince));
   const chanceLine = $derived(chanceSentence(p.odds, losing));
-  const turnIt = $derived(losing && p.odds && p.odds.lit <= 3 ? 'A week inside your budget turns it.' : null);
+  const turnIt = $derived(chanceHint(p.odds, losing));
   const overCeiling = $derived(!!$line && !$line.misdrawn && $line.zone !== 'under');
   // A kind word, only when it's earned by showing up (src/lib/kind.ts).
   const kind = $derived(kindWord(($_weights as any[]).map((w) => w.date), today, mornings));
@@ -294,7 +294,7 @@
   {:else}
     <div class="hero-big"><b>{$body.weight?.weighInsNeeded ?? 7}</b><span>more mornings to your first chance</span></div>
   {/if}
-  <div class="hero-coins" aria-hidden="true">{#each Array(10) as _, i}<i class:on={i < shown}></i>{/each}</div>
+  <div class="hero-coins" aria-hidden="true">{#each Array(10) as _, i}<i class="coin" class:on={i < shown}></i>{/each}</div>
   <p class="hero-line">{chanceLine}</p>
   {#if p.odds}<p class="hero-sub">{p.story}{#if turnIt}{' '}{turnIt}{/if}</p>{:else if story}<p class="hero-sub">{story}</p>{/if}
   <p class="hero-foot">{#if currentKg != null}{$body.weight?.trendKg != null ? 'Trend' : 'Average so far'} <b>{wtNum(currentKg)}</b> {unitWord()}{/if}{#if todayWeighIn}{' · '}this morning <b>{wtNum(+todayWeighIn.weight)}</b> ✓{/if}</p>
@@ -485,9 +485,9 @@
   .hero-big{display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 10px;margin:2px 0 10px}
   .hero-big b{font-family:var(--font-display);font-stretch:72%;font-size:5rem;line-height:.9;font-weight:800;font-variant-numeric:tabular-nums}
   .hero-big span{font-size:1.125rem;font-weight:800;opacity:.92}
-  .hero-coins{display:flex;gap:6px;perspective:300px;margin-bottom:12px}
-  .hero-coins i{width:24px;height:24px;border-radius:50%;border:2px solid rgba(255,255,255,.35)}
-  .hero-coins i.on{background:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#E67700);border-color:#FFE066;box-shadow:0 2px 6px rgba(0,0,0,.25);animation:hero-flip .5s var(--ease) both}
+  /* Unlit coins are the same coin, pale on the card's colour (.coin in app.css). */
+  .hero-coins{display:flex;gap:6px;perspective:300px;margin-bottom:12px;--coin:24px;--coin-edge:rgba(255,255,255,.28);--coin-mill:rgba(255,255,255,.42);--coin-face:rgba(255,255,255,.12);--coin-ring:rgba(255,255,255,.42)}
+  .hero-coins .coin.on{box-shadow:0 2px 6px rgba(0,0,0,.25);animation:hero-flip .5s var(--ease) both}
   @keyframes hero-flip{0%{transform:translateY(-18px) rotateY(180deg);opacity:0}60%{transform:translateY(3px) rotateY(15deg);opacity:1}100%{transform:none}}
   .hero-line{font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1.1;margin:0}
   .hero-sub{font-size:0.875rem;line-height:1.45;margin:4px 0 0;opacity:.92}

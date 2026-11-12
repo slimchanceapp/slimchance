@@ -272,12 +272,24 @@ export async function armMoments(moments: MomentPayload[]): Promise<void> {
 }
 
 /** What the home-screen widget shows (src/lib/stores/moments.ts, widgetLines). */
-export interface WidgetLines {
+export interface WidgetLines extends Partial<WidgetDay> {
   date: string; title: string; weighed: boolean; unit: string;
+  /** What turns a low chance (chanceHint), or ''. */
+  hint?: string;
   /** Coins lit, of ten. */
   lit?: number;
+  /** Tomorrow's food line, shown after midnight until the app writes again. */
+  next?: (WidgetDay & { date: string }) | null;
+}
+
+/** One day's food on the widget. */
+export interface WidgetDay {
   /** "1,580 of 2,100 kcal" and "62 of 160 g protein". */
-  food?: string; protein?: string;
+  food: string; protein: string;
+  kcal: number; share: number | null; proteinG: number; proteinTarget: number;
+  /** Monday first: each day's kcal as a percentage of the day's target (to
+   *  150), -1 for a day with nothing logged or still to come. */
+  week: number[] | null;
 }
 
 let widgetWith = '';

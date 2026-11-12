@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- One day of the week on the widget (SlimWidget), filling upward: up to the
+     day's target in the accent, the part past it (secondary progress) in amber.
+     The bar's top is half again the target. -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="3dp" />
+            <solid android:color="@color/widget_tonal" />
+        </shape>
+    </item>
+    <item android:id="@android:id/secondaryProgress">
+        <scale android:scaleGravity="bottom" android:scaleHeight="100%">
+            <shape>
+                <corners android:radius="3dp" />
+                <solid android:color="@color/widget_over" />
+            </shape>
+        </scale>
+    </item>
+    <item android:id="@android:id/progress">
+        <scale android:scaleGravity="bottom" android:scaleHeight="100%">
+            <shape>
+                <corners android:radius="3dp" />
+                <solid android:color="@color/widget_bar" />
+            </shape>
+        </scale>
+    </item>
+</layer-list>

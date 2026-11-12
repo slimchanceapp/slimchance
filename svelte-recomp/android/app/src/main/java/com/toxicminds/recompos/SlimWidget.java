@@ -8,13 +8,18 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.text.SpannableString;
+import android.text.style.StyleSpan;
 import android.util.SizeF;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.RemoteViews;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.time.LocalDate;
@@ -26,11 +31,13 @@ import java.util.Map;
  * The home-screen widget: the chance as ten coins, today's food and protein, the
  * sentence when there is room, and one tap to weigh in (the number pad over the home
  * screen), scan a barcode or photograph a meal (the app opens at the food logger).
- * Laid out per size, from coins alone at 2x1 to everything at 4x2 (Android's widget
- * quality guidelines: rearrange as it grows, never scale up). The app writes what it
- * shows whenever it's open (MomentsPlugin.setWidget, from src/lib/stores/moments.ts);
- * the widget works out only whether today is weighed and whether its food line is
- * still today's. No weight on it: a home screen is seen by whoever is near the phone.
+ * Taller, it adds what turns the chance, today's food as bars and the week's days.
+ * Laid out per size, from coins alone at 2x1 to everything at 4x2 on tall cells and
+ * 4x3 (Android's widget quality guidelines: rearrange as it grows, never scale up).
+ * The app writes what it shows whenever it's open (MomentsPlugin.setWidget, from
+ * src/lib/stores/moments.ts), tomorrow's food line too; the widget works out only
+ * whether today is weighed and which day's food is today's. No weight on it: a home
+ * screen is seen by whoever is near the phone.
  */
 public class SlimWidget extends AppWidgetProvider {
     static final String ACTION_DAY = "com.toxicminds.recompos.WIDGET_DAY";
@@ -43,6 +50,14 @@ public class SlimWidget extends AppWidgetProvider {
         R.drawable.coins_0, R.drawable.coins_1, R.drawable.coins_2, R.drawable.coins_3,
         R.drawable.coins_4, R.drawable.coins_5, R.drawable.coins_6, R.drawable.coins_7,
         R.drawable.coins_8, R.drawable.coins_9, R.drawable.coins_10,
+    };
+    private static final int[] DAYS = {
+        R.id.widget_day0, R.id.widget_day1, R.id.widget_day2, R.id.widget_day3,
+        R.id.widget_day4, R.id.widget_day5, R.id.widget_day6,
+    };
+    private static final int[] LETTERS = {
+        R.id.widget_dl0, R.id.widget_dl1, R.id.widget_dl2, R.id.widget_dl3,
+        R.id.widget_dl4, R.id.widget_dl5, R.id.widget_dl6,
     };
 
     @Override
@@ -80,7 +95,7 @@ public class SlimWidget extends AppWidgetProvider {
             Look look = new Look(ctx);
             for (int id : ids) {
                 int h = mgr.getAppWidgetOptions(id).getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 110);
-                mgr.updateAppWidget(id, h < 100 ? look.small(true, true) : look.full(true, h >= 170, false));
+                mgr.updateAppWidget(id, h < 100 ? look.small(true, true) : look.full(true, h >= 170, false, h >= 290 ? 2 : h >= 230 ? 1 : 0));
             }
         }
 
@@ -101,11 +116,18 @@ public class SlimWidget extends AppWidgetProvider {
         sizes.put(new SizeF(110f, 40f), look.small(false, false));
         sizes.put(new SizeF(200f, 40f), look.small(false, true));
         sizes.put(new SizeF(300f, 40f), look.small(true, true));
-        sizes.put(new SizeF(110f, 100f), look.full(false, false, true));
-        sizes.put(new SizeF(220f, 100f), look.full(false, false, false));
-        sizes.put(new SizeF(300f, 100f), look.full(true, false, false));
-        sizes.put(new SizeF(220f, 170f), look.full(false, true, false));
-        sizes.put(new SizeF(300f, 170f), look.full(true, true, false));
+        sizes.put(new SizeF(110f, 100f), look.full(false, false, true, 0));
+        sizes.put(new SizeF(220f, 100f), look.full(false, false, false, 0));
+        sizes.put(new SizeF(300f, 100f), look.full(true, false, false, 0));
+        sizes.put(new SizeF(220f, 170f), look.full(false, true, false, 0));
+        sizes.put(new SizeF(300f, 170f), look.full(true, true, false, 0));
+        // Taller (4x2 on tall cells, as on the owner's Pixel 7, and 4x3): what
+        // turns the chance and the food as bars, then the week's days too, so
+        // the height carries something instead of a band of nothing.
+        sizes.put(new SizeF(220f, 230f), look.full(false, true, false, 1));
+        sizes.put(new SizeF(300f, 230f), look.full(true, true, false, 1));
+        sizes.put(new SizeF(220f, 290f), look.full(false, true, false, 2));
+        sizes.put(new SizeF(300f, 290f), look.full(true, true, false, 2));
         return sizes;
     }
 
@@ -118,8 +140,11 @@ public class SlimWidget extends AppWidgetProvider {
     private static final class Look {
         final Context ctx;
         final boolean has, weighed;
-        final String title, food, protein;
-        final int lit;
+        final String title, hint, food, protein;
+        final int lit, kcal, share, proteinG, proteinTarget;
+        /** The week, Monday first: each day's food as a percentage of the day's
+         *  target, -1 for a day with nothing logged or still to come. */
+        final int[] week;
         final PendingIntent open, weigh, scan, photo;
 
         Look(Context ctx) {
@@ -139,11 +164,25 @@ public class SlimWidget extends AppWidgetProvider {
             weighed = (fresh && w.optBoolean("weighed")) || MomentReceiver.weighedFrom(p, today);
             String t = w.optString("title", "");
             title = t.isEmpty() ? FIRST_LINE : t;
+            hint = w.optString("hint", "");
             lit = w.isNull("lit") ? 0 : Math.max(0, Math.min(10, w.optInt("lit", 0)));
-            // Food is the day's: after midnight, until the app writes again, a new day.
-            // Nothing written yet: the sentence says what to do, once.
-            food = !has ? "" : fresh ? w.optString("food", "") : "New day: nothing logged yet";
-            protein = has && fresh ? w.optString("protein", "") : "";
+            // Food is the day's. After midnight, until the app writes again, the
+            // day the app wrote as tomorrow (nothing eaten, the week's share for
+            // it); without one, a new day with nothing known. Nothing written
+            // yet: the sentence says what to do, once.
+            JSONObject next = w.optJSONObject("next");
+            JSONObject day = fresh ? w : next != null && today.equals(next.optString("date")) ? next : null;
+            food = !has ? "" : day != null ? day.optString("food", "") : "New day: nothing logged yet";
+            protein = has && day != null ? day.optString("protein", "") : "";
+            kcal = day != null ? Math.max(0, day.optInt("kcal", 0)) : 0;
+            share = day != null ? Math.max(0, day.optInt("share", 0)) : 0;
+            proteinG = day != null ? Math.max(0, day.optInt("proteinG", 0)) : 0;
+            proteinTarget = day != null ? Math.max(0, day.optInt("proteinTarget", 0)) : 0;
+            JSONArray days = day != null ? day.optJSONArray("week") : null;
+            if (days != null && days.length() == 7) {
+                week = new int[7];
+                for (int i = 0; i < 7; i++) week[i] = days.optInt(i, -1);
+            } else week = null;
 
             String unit = p.getString("widget_unit", "kg");
             Intent launch = ctx.getPackageManager().getLaunchIntentForPackage(ctx.getPackageName());
@@ -172,16 +211,33 @@ public class SlimWidget extends AppWidgetProvider {
         }
 
         /** Two rows and up. Narrow: one thing at a time (Weigh in until it's
-         *  done, then Scan and Photo); labels when wide; the sentence when tall. */
-        RemoteViews full(boolean labels, boolean sentence, boolean narrow) {
+         *  done, then Scan and Photo); labels when wide; the sentence when tall.
+         *  more = 1 adds what turns the chance and today's food as bars, 2 the
+         *  week's days as well. */
+        RemoteViews full(boolean labels, boolean sentence, boolean narrow, int more) {
             RemoteViews v = new RemoteViews(ctx.getPackageName(), R.layout.widget_today);
             coins(v);
             v.setViewVisibility(R.id.widget_done, weighed ? View.VISIBLE : View.GONE);
+            boolean bars = more >= 1 && share > 0;
             // Narrow: protein on its own line rather than broken mid-phrase.
             v.setTextViewText(R.id.widget_food, protein.isEmpty() ? food : food + (narrow ? "\n" : " · ") + protein);
-            v.setViewVisibility(R.id.widget_food, food.isEmpty() ? View.GONE : View.VISIBLE);
+            v.setViewVisibility(R.id.widget_food, food.isEmpty() || bars ? View.GONE : View.VISIBLE);
             v.setTextViewText(R.id.widget_title, title);
             v.setViewVisibility(R.id.widget_title, sentence || !has ? View.VISIBLE : View.GONE);
+            if (more >= 1) v.setTextViewTextSize(R.id.widget_title, TypedValue.COMPLEX_UNIT_SP, 17);
+            v.setTextViewText(R.id.widget_hint, hint);
+            v.setViewVisibility(R.id.widget_hint, more >= 1 && !hint.isEmpty() ? View.VISIBLE : View.GONE);
+            show(v, bars, R.id.widget_gap_bars, R.id.widget_bars);
+            if (bars) {
+                v.setTextViewText(R.id.widget_kcal_text, food);
+                v.setProgressBar(R.id.widget_kcal_bar, share, Math.min(kcal, share), false);
+                v.setViewVisibility(R.id.widget_protein_col, proteinTarget > 0 ? View.VISIBLE : View.INVISIBLE);
+                v.setTextViewText(R.id.widget_protein_text, protein);
+                v.setProgressBar(R.id.widget_protein_bar, Math.max(1, proteinTarget), Math.min(proteinG, proteinTarget), false);
+            }
+            boolean days = more >= 2 && week != null;
+            show(v, days, R.id.widget_gap_week, R.id.widget_week);
+            if (days) week(v);
             v.setViewVisibility(R.id.widget_weigh, weighed ? View.GONE : View.VISIBLE);
             boolean tools = !narrow || weighed;
             v.setViewVisibility(R.id.widget_scan, tools ? View.VISIBLE : View.GONE);
@@ -195,6 +251,27 @@ public class SlimWidget extends AppWidgetProvider {
             click(v, R.id.widget_photo, photo);
             click(v, android.R.id.background, open);
             return v;
+        }
+
+        /** The week, Monday first: up to the day's target in the accent, past it
+         *  in amber, to half again the target at the top; today's letter bold. */
+        private void week(RemoteViews v) {
+            int today = LocalDate.now().getDayOfWeek().getValue() - 1;
+            for (int i = 0; i < 7; i++) {
+                int pct = week[i];
+                v.setProgressBar(DAYS[i], 150, pct < 0 ? 0 : Math.min(pct, 100), false);
+                v.setInt(DAYS[i], "setSecondaryProgress", pct < 0 ? 0 : Math.min(pct, 150));
+                SpannableString l = new SpannableString("MTWTFSS".substring(i, i + 1));
+                if (i == today) {
+                    l.setSpan(new StyleSpan(Typeface.BOLD), 0, 1, 0);
+                    if (Build.VERSION.SDK_INT >= 31) v.setColorStateList(LETTERS[i], "setTextColor", R.color.widget_text);
+                }
+                v.setTextViewText(LETTERS[i], l);
+            }
+        }
+
+        private static void show(RemoteViews v, boolean on, int... ids) {
+            for (int id : ids) v.setViewVisibility(id, on ? View.VISIBLE : View.GONE);
         }
 
         private void coins(RemoteViews v) {

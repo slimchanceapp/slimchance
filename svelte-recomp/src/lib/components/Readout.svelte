@@ -68,7 +68,7 @@
     </span>
   </div>
   {#if odds}
-    <div class="ro-coins">{#each COINS as i}<i class:on={i < coins}></i>{/each}</div>
+    <div class="ro-coins">{#each COINS as i}<i class="coin" class:on={i < coins}></i>{/each}</div>
     <p class="ro-odds">{odds.text}</p>
   {:else if pct != null}
     <div class="ro-rule">{#each CELLS as i}<i class:on={i < lit}></i>{/each}</div>
@@ -88,14 +88,13 @@
   .ro-rule i{justify-self:center;width:2px;height:7px;border-radius:1px 1px 0 0;background:var(--border2)}
   .ro-rule i:nth-child(5n){height:13px}
   .ro-rule i.on{background:var(--band)}
-  .ro-coins{display:flex;justify-content:space-between;margin-top:14px;max-width:320px}
-  .ro-coins i{width:18px;height:18px;border-radius:50%;border:1.5px solid var(--border2);transition:background .2s,border-color .2s}
+  .ro-coins{display:flex;justify-content:space-between;margin-top:14px;max-width:320px;--coin:18px}
   .ro-coins{perspective:300px}
   /* Each coin flips in and lands as it lights (2026-11-03, the owner: "coins
      flipping and landing"): on opening, and again when a weigh-in moves them. */
   /* Coins mean the chance and nothing else, and look the same wherever it
      shows: the gold coin of Today's hero (2026-11-10, the coin rule). */
-  .ro-coins i.on{background:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#E67700);border-color:#FFE066;animation:ro-flip .55s var(--ease) both}
+  .ro-coins .coin.on{animation:ro-flip .55s var(--ease) both}
   @keyframes ro-flip{0%{transform:translateY(-10px) rotateY(180deg);opacity:.2}60%{transform:translateY(2px) rotateY(20deg);opacity:1}100%{transform:none}}
   .ro-odds{font-size:0.875rem;font-weight:700;line-height:1.35;color:var(--text);margin:8px 0 0}
 </style>
