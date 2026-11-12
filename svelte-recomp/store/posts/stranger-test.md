@@ -3,9 +3,10 @@
 For people who don't know us, to post on Thu 12 Nov. Each link carries its own
 tag, so the Numbers page shows each post as its own group ("By the link they
 came by"). Post where self-made apps are welcome (r/SideProject,
-r/androidapps, indie-maker forums, a Discord you're in); r/loseit and
-r/fitness ban promotion, so not there. If a place needs a different tag, any
-lowercase word works: `?from=<word>`.
+r/droidappshowcase, indie-maker forums, a Discord you're in); r/androidapps,
+r/loseit, r/CICO and r/fitness ban promotion, so not there. Where and when for
+each community, checked 12 Nov 2026: reddit-tester-posts.md. If a place needs a
+different tag, any lowercase word works: `?from=<word>`.
 
 Post from a "Slim Chance" account (made with hello@slimchance.app), so nothing
 ties to you. The testers' group link assumes the address
