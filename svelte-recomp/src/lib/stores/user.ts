@@ -96,12 +96,15 @@ export async function deleteAccount(): Promise<void> {
   db.close();
   await db.delete().catch(() => {});
   try { localStorage.clear(); } catch { /* storage disabled */ }
-  await supabase.auth.signOut().catch(() => {});
+  await supabase.auth.signOut({ scope: 'local' }).catch(() => {});
   location.replace('/');
 }
 
+/** Signs out THIS device only. The library's default is scope 'global', which
+ *  revokes every session of the account: signing out of a phone's browser
+ *  signed the owner out of the app on every device (2026-11-12). */
 export async function signOut() {
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: 'local' });
 }
 
 export async function getUserId(): Promise<string> {

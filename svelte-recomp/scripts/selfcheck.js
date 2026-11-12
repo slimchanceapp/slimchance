@@ -1478,7 +1478,7 @@ check('deleting an account takes everything, and only the caller’s', async () 
   assert.match(fn, /confirm !== 'delete'/);
   assert.ok(fn.indexOf('/storage/v1/object/') < fn.indexOf('/auth/v1/admin/users/'), 'files first: they do not cascade');
   const client = readFileSync('src/lib/stores/user.ts', 'utf8');
-  for (const step of ['disarmMoments()', "setWidget({ date: '', title: ''", 'scheduleNativeAlarms([])', 'scheduleNudges([])', 'db.delete()', 'localStorage.clear()', 'auth.signOut()']) {
+  for (const step of ['disarmMoments()', "setWidget({ date: '', title: ''", 'scheduleNativeAlarms([])', 'scheduleNudges([])', 'db.delete()', 'localStorage.clear()', "auth.signOut({ scope: 'local' })"]) {
     assert.ok(client.includes(step), `after deletion, this device: ${step}`);
   }
 });
@@ -3482,6 +3482,17 @@ const srcFiles = async () => {
     ...readdirSync('src/routes', { recursive: true }).map((f) => `src/routes/${f}`),
   ].filter((f) => /\.(ts|svelte)$/.test(f));
 };
+
+check('signing out on one device leaves your other devices signed in (local scope, never the library default)', async () => {
+  // 2026-11-12: the owner signed out in his phone's browser and every device
+  // using that account was signed out too. supabase.auth.signOut() with no
+  // options is scope 'global': it revokes every session of the account.
+  const { readFileSync } = await import('node:fs');
+  const calls = [];
+  for (const f of await srcFiles()) for (const m of readFileSync(f, 'utf8').matchAll(/auth\.signOut\(([^)]*)\)/g)) calls.push([f, m[1].trim()]);
+  assert.ok(calls.length >= 1, 'found the sign-out calls');
+  for (const [f, args] of calls) assert.match(args, /scope:\s*'local'/, `${f}: signOut(${args}) must be { scope: 'local' }`);
+});
 
 check('rows that belong together are written in one request (all or nothing)', async () => {
   const { readFileSync } = await import('node:fs');

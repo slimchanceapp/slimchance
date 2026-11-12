@@ -289,6 +289,7 @@ settings come in six named groups, and the morning briefing is one tap from them
 setup help degrades gracefully for an unknown or missing brand
 sharing adds no table, no policy and no cross-account read
 shiftYmd crosses month boundaries correctly
+signing out on one device leaves your other devices signed in (local scope, never the library default)
 sleep↔performance: more volume after good sleep reads as a real link
 someone already at goal is told to hold, not to lose 0 kg
 source labels distinguish watch from phone
