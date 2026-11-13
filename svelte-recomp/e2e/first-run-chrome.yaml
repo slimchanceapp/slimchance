@@ -26,3 +26,9 @@ appId: com.android.chrome
     visible: "Where you are.*"
     timeout: 60000
 - takeScreenshot: proof/chrome-signed-in
+# Leave the way a person can: the trial is deleted, so no test account stays.
+- tapOn: "Leave setup"
+- tapOn: "Leave and delete"
+- extendedWaitUntil:
+    visible: "The odds, every morning."
+    timeout: 60000

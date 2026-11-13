@@ -1,0 +1,12 @@
+# The Android shell starts and shows the live site's door (the first screen a
+# stranger sees). Gating on its own since 13 Nov: past "Start now" the shell's
+# run stalls on the emulator (known since 12 Nov; first-run.yaml still runs,
+# reported, not gating), while the same first minute passes in Chrome.
+appId: com.toxicminds.recompos
+---
+- launchApp:
+    clearState: true
+- extendedWaitUntil:
+    visible: "The odds, every morning."
+    timeout: 90000
+- takeScreenshot: proof/door
