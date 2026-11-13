@@ -277,16 +277,16 @@
       onkeydown={(e) => { if (e.key === 'Enter') { e.preventDefault(); describe(); } }}
       autocomplete="off" enterkeyhint="send" aria-label="What did you eat?"
     />
-    <button class="lg-icon" onclick={() => { notice = ''; scanning = true; }} aria-label="Scan a barcode" title="Scan a barcode">
+    <button class="lg-icon" data-tap="food-scan" onclick={() => { notice = ''; scanning = true; }} aria-label="Scan a barcode" title="Scan a barcode">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 7V4h3M21 7V4h-3M3 17v3h3M21 17v3h-3M7 8v8M10 8v8M13 8v8M16 8v8"/></svg>
     </button>
-    <button class="lg-icon" onclick={() => photo('meal')} aria-label="Photo of a meal" title="Photo of a meal">
+    <button class="lg-icon" data-tap="food-photo" onclick={() => photo('meal')} aria-label="Photo of a meal" title="Photo of a meal">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
     </button>
   </div>
   <input bind:this={fileInput} type="file" accept="image/*" capture="environment" onchange={onPhoto} hidden>
   {#if photoAsk}
-    <button class="btn bp lg-ask" onclick={() => { photoAsk = false; photo('meal'); }}>Take a photo of your meal</button>
+    <button class="btn bp lg-ask" data-tap="food-photo-ask" onclick={() => { photoAsk = false; photo('meal'); }}>Take a photo of your meal</button>
   {/if}
 
   {#if snap && !working}
@@ -306,7 +306,7 @@
   {/if}
   {#if missBarcode && !pending}
     <div class="lg-miss">
-      <button class="btn bp" onclick={() => photo('label')}>Snap its nutrition table</button>
+      <button class="btn bp" data-tap="food-label" onclick={() => photo('label')}>Snap its nutrition table</button>
       <span>It's saved with the barcode, so the next scan finds it instantly.</span>
     </div>
   {/if}
@@ -377,18 +377,18 @@
       {#if result.kcal === 0 && pending.kind !== 'manual'}<div class="lg-warn">0 kcal — check the amount before logging.</div>{/if}
       <div class="lg-actions">
         <button class="btn bg_" onclick={reset} disabled={saving}>Cancel</button>
-        <button class="btn bp" onclick={logPending} disabled={saving || (pending.kind === 'manual' && !pending.name.trim())}>{saving ? 'Logging…' : 'Log it'}</button>
+        <button class="btn bp" data-tap="food-log" onclick={logPending} disabled={saving || (pending.kind === 'manual' && !pending.name.trim())}>{saving ? 'Logging…' : 'Log it'}</button>
       </div>
     </div>
   {:else if hasQuery}
     <div class="lg-results">
-      <button class="lg-row lg-ai" onclick={describe} disabled={!!working}>
+      <button class="lg-row lg-ai" data-tap="food-describe" onclick={describe} disabled={!!working}>
         <span>✨ Estimate “{query.trim()}”</span><em>AI · understands whole meals</em>
       </button>
       {#if local.mine.length}
         <div class="lg-sec">Yours</div>
         {#each local.mine as c (c.key)}
-          <button class="lg-row" onclick={() => pick(c)}>
+          <button class="lg-row" data-tap="food-pick" onclick={() => pick(c)}>
             <span>{c.name}</span><em>{c.portion ? `${Math.round(c.portion.kcal)} kcal · ${Math.round(c.portion.protein_g)} P` : ''} · {c.count}×</em>
           </button>
         {/each}
@@ -396,7 +396,7 @@
       {#if local.basics.length}
         <div class="lg-sec">Basics</div>
         {#each local.basics as c (c.key)}
-          <button class="lg-row" onclick={() => pick(c)}>
+          <button class="lg-row" data-tap="food-pick" onclick={() => pick(c)}>
             <span>{c.name}</span><em>{c.per100?.kcal} kcal · {c.per100?.protein_g} P /100 {unit(c)}</em>
           </button>
         {/each}
@@ -406,7 +406,7 @@
         <div class="lg-empty">Product search is unreachable — basics and ✨ still work.</div>
       {:else if products.length}
         {#each products as c (c.key)}
-          <button class="lg-row" onclick={() => pick(c)}>
+          <button class="lg-row" data-tap="food-pick" onclick={() => pick(c)}>
             <span>{displayName(c)}{#if c.local}<b class="lg-flag">SK/CZ</b>{/if}</span>
             <em>{c.per100 ? `${c.per100.kcal} kcal · ${c.per100.protein_g} P /100 ${unit(c)}` : 'no nutrition data'}</em>
           </button>
@@ -414,7 +414,7 @@
       {:else if productState === 'idle'}
         <div class="lg-empty">No packaged products match.</div>
       {/if}
-      <button class="lg-row lg-manual-row" onclick={manual}><span>✎ Enter the numbers myself</span></button>
+      <button class="lg-row lg-manual-row" data-tap="food-manual" onclick={manual}><span>✎ Enter the numbers myself</span></button>
     </div>
   {:else if fillers.length || staples.length || yesterdayLeft.length || meals.length || usuals.length}
     <!-- Empty box: the taps that replace typing, all from your own history. -->
@@ -425,7 +425,7 @@
         <div class="lg-protein"><b>Fastest protein</b> from your usuals</div>
         <div class="lg-chips">
           {#each fillers as f (f.name)}
-            <button class="lg-chip lg-chip-p" disabled={saving} onclick={() => quick([f], f.name)}>
+            <button class="lg-chip lg-chip-p" data-tap="food-quick" disabled={saving} onclick={() => quick([f], f.name)}>
               <b>{f.name}</b><em>{Math.round(f.protein_g)} P · {Math.round(f.kcal)} kcal</em>
             </button>
           {/each}
@@ -434,7 +434,7 @@
       {#if staples.length}
         <div class="lg-chips">
           {#each staples as f (f.name)}
-            <button class="lg-chip" disabled={saving} onclick={() => quick([f], f.name)}>
+            <button class="lg-chip" data-tap="food-quick" disabled={saving} onclick={() => quick([f], f.name)}>
               <b>{f.name}</b><em>{Math.round(f.kcal)} kcal · {Math.round(f.protein_g)} P</em>
             </button>
           {/each}

@@ -374,6 +374,7 @@ the suite runs on one clock, so GitHub and the laptop agree
 the summary describes what was actually built
 the summary reads like a message, and carries the real numbers
 the surplus stays lean rather than sprinting
+the tap map counts named buttons per screen and day, with nothing that says who and never what a button shows
 the text-size setting is wired end to end
 the theme switch turns light on at once, not after a restart
 the training reminder comes at the session's own time, and not once you have trained

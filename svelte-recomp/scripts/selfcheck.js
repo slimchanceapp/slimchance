@@ -5699,6 +5699,35 @@ check('our own robots are marked when they sign up and are never counted as peop
   assert.match(readFileSync('scripts/usage.sql', 'utf8'), /raw_user_meta_data ->> 'automated'/, 'and the usage read leaves them out');
 });
 
+check('the tap map counts named buttons per screen and day, with nothing that says who and never what a button shows', async () => {
+  // 2026-11-13 (Pact m32): his question was heatmaps. Screen recordings of a
+  // weight-loss app capture health data, and a button's own words can be
+  // someone's food ("Remove {it.name}"), so only elements named in code
+  // (data-tap) count, by screen and day, and our robots don't count at all.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const ev = readFileSync('src/lib/metrics/events.ts', 'utf8');
+  assert.match(ev, /closest\?\.\('\[data-tap\]'\)/, 'only named elements');
+  assert.doesNotMatch(ev, /textContent|innerText|aria-label|getAttribute\('aria/, 'never what a button shows');
+  assert.match(ev, /supabase\.rpc\('note_taps', \{ p_taps: list \}\)/);
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  assert.match(layout, /isRobot\(\) \? undefined : countTaps\(\)/, 'counted for people, never for our robots');
+  assert.match(layout, /afterNavigate\(\(\) => \{ if \(!isRobot\(\)\) noteTap\(location\.pathname, 'view'\); \}\)/, 'and which screens are seen');
+  const names = [];
+  for (const f of readdirSync('src', { recursive: true }).filter((f) => f.endsWith('.svelte'))) {
+    for (const m of readFileSync(`src/${f}`, 'utf8').matchAll(/data-tap=(?:"([^"]+)"|\{([^}]+)\})/g)) names.push(m[1] ?? m[2]);
+  }
+  assert.ok(names.length >= 10, `key buttons are named (${names.length})`);
+  for (const n of names.filter((n) => !n.includes("'"))) assert.match(n, /^[a-z0-9-]{1,40}$/, `${n}: a plain name the database accepts`);
+  const sql = readFileSync('../supabase/migrations/20261113140000_app_taps.sql', 'utf8');
+  assert.match(sql, /alter table public\.app_taps enable row level security;/);
+  assert.doesNotMatch(sql, /create policy/i, 'nobody reads or writes it directly');
+  assert.doesNotMatch(sql, /user_id/, 'no column that says who');
+  assert.match(sql, /v_screen !~ '\^\/\[a-z0-9\/_-\]\{0,40\}\$'/);
+  assert.match(sql, /v_name !~ '\^\[a-z0-9_-\]\{1,40\}\$'/);
+  assert.match(sql, />= 2000 then/, 'a flood folds into one row a day');
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /Which named buttons get pressed on which screen/);
+});
+
 check('the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import', async () => {
   // 2026-11-10 (book chapter 5): units.ts read browser storage when imported,
   // so 15 pure modules secretly depended on it, the MCP server (which runs

@@ -302,7 +302,7 @@
     <label class="mw-lbl" for="ql-weight">This morning’s weight</label>
     <div class="mw-row">
       <WeightInput id="ql-weight" bind:kg={weightKg} hint={currentKg} label="This morning’s weight" onenter={() => saveEntry('weight')} />
-      <button class="btn bp" onclick={() => saveEntry('weight')} disabled={saving || weightKg == null}>{saving ? 'Saving…' : 'Save'}</button>
+      <button class="btn bp" data-tap="weigh-in-save" onclick={() => saveEntry('weight')} disabled={saving || weightKg == null}>{saving ? 'Saving…' : 'Save'}</button>
     </div>
     {#if saveMsg}<div class="mw-err">{saveMsg}</div>{/if}
     <p class="mw-hint">{#if lastWeighLabel}Last reading {lastWeighLabel}.{' '}{/if}Same time, before food or drink.</p>

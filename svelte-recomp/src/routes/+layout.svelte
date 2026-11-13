@@ -5,7 +5,7 @@
   import { navigating } from '$app/state';
   import AuthGate from '$lib/components/AuthGate.svelte';
   import { syncStatus } from '$lib/stores/sync';
-  import { user, authReady, initAuth, signOut, deleteAccount, isTrial } from '$lib/stores/user';
+  import { user, authReady, initAuth, signOut, deleteAccount, isTrial, isRobot } from '$lib/stores/user';
   import SaveAccount from '$lib/components/SaveAccount.svelte';
   import { saveAccountOpen, importOpen } from '$lib/stores/notices';
   import ImportWeights from '$lib/components/ImportWeights.svelte';
@@ -25,14 +25,17 @@
   import { syncHealthConnect } from '$lib/health/healthConnect';
   import { pullToRefresh } from '$lib/actions/pullToRefresh';
   import { refreshAll, refreshing, refreshError, lastRefresh, startClock, stopClock, nowTick } from '$lib/stores/refresh';
-  import { noteEvent, noteOrigin } from '$lib/metrics/events';
+  import { noteEvent, noteOrigin, countTaps, noteTap } from '$lib/metrics/events';
   import Onboarding from '$lib/components/Onboarding.svelte';
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
   import { trainedDates } from '$lib/training';
   import { shiftYmd } from '$lib/date';
   import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, setWidget, type AlarmRow } from '$lib/moments/nativeAlarms';
   import { isAndroidApp } from '$lib/platform';
-  import { goto } from '$app/navigation';
+  import { goto, afterNavigate } from '$app/navigation';
+  // The tap map: named buttons and screens seen, per day, no one attached.
+  $effect(() => (isRobot() ? undefined : countTaps()));
+  afterNavigate(() => { if (!isRobot()) noteTap(location.pathname, 'view'); });
   import { moments, momentSetting, refreshForecast, widgetLines } from '$lib/stores/moments';
   import { saveMomentInputs, confirmWeight, answerWeight, nativeKg, type MomentContext } from '$lib/moments/momentActions';
   import { onMomentsInput } from '$lib/moments/nativeAlarms';

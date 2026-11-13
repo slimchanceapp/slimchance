@@ -392,11 +392,11 @@
   {#if error}<div class="ob-err">{error}</div>{/if}
 
   <div class="ob-nav">
-    {#if step > 0}<button class="btn bg_ bfl" onclick={() => step--}>Back</button>{/if}
+    {#if step > 0}<button class="btn bg_ bfl" data-tap="setup-back" onclick={() => step--}>Back</button>{/if}
     {#if step < STEPS - 1}
-      <button class="btn bp bfl" disabled={!canNext} onclick={() => step++}>Continue</button>
+      <button class="btn bp bfl" data-tap="setup-continue" disabled={!canNext} onclick={() => step++}>Continue</button>
     {:else}
-      <button class="btn bp bfl" disabled={!canNext || saving} onclick={finish}>
+      <button class="btn bp bfl" data-tap="setup-finish" disabled={!canNext || saving} onclick={finish}>
         {saving ? 'Saving…' : returning ? 'Save and continue' : planCue && planText.trim() ? 'Start' : 'Skip and start'}
       </button>
     {/if}

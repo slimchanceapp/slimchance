@@ -26,7 +26,7 @@
 
 <nav id="bottom-nav">
   {#each tabs as tab}
-    <a href={base + tab.id} class="nb" class:active={currentPath === base + tab.id} onclick={() => toTop(tab.id)}>
+    <a href={base + tab.id} data-tap={'tab-' + tab.label.toLowerCase()} class="nb" class:active={currentPath === base + tab.id} onclick={() => toTop(tab.id)}>
       <svg viewBox="0 0 24 24"><path d={tab.icon}/></svg>
       {tab.label}
     </a>

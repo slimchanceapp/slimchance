@@ -35,3 +35,42 @@ export function noteEvent(event: AppEvent): void {
     if (error) console.warn('[events] not counted:', error.message);
   });
 }
+
+// The tap map (2026-11-13, Pact m32): which named buttons get pressed on which
+// screen, per day, with nothing that says who (migration 20261113140000_app_taps).
+// Only elements named in code with data-tap count, never what a button shows:
+// its words can be someone's food. Batched: one call every 30 s at most, and
+// when the app goes to the background.
+const taps = new Map<string, number>();
+
+export function noteTap(screen: string, name: string): void {
+  const k = `${screen}|${name}`;
+  taps.set(k, (taps.get(k) ?? 0) + 1);
+}
+
+function flushTaps(): void {
+  if (!taps.size) return;
+  const list = [...taps].map(([k, n]) => ({ screen: k.slice(0, k.indexOf('|')), name: k.slice(k.indexOf('|') + 1), n }));
+  taps.clear();
+  void supabase.rpc('note_taps', { p_taps: list }).then(({ error }) => {
+    if (error) console.warn('[events] taps not counted:', error.message);
+  });
+}
+
+/** One listener for the whole app; returns the way to stop it. */
+export function countTaps(): () => void {
+  const onClick = (e: Event) => {
+    const el = (e.target as Element | null)?.closest?.('[data-tap]') as HTMLElement | null;
+    if (el?.dataset.tap) noteTap(location.pathname, el.dataset.tap);
+  };
+  const onHide = () => { if (document.visibilityState === 'hidden') flushTaps(); };
+  document.addEventListener('click', onClick, true);
+  document.addEventListener('visibilitychange', onHide);
+  const every = setInterval(flushTaps, 30_000);
+  return () => {
+    document.removeEventListener('click', onClick, true);
+    document.removeEventListener('visibilitychange', onHide);
+    clearInterval(every);
+    flushTaps();
+  };
+}

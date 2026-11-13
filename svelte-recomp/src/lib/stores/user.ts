@@ -53,6 +53,9 @@ function robot(): { automated?: true } {
   return isAutomated({ webdriver: navigator.webdriver === true, userAgent: navigator.userAgent, iosShell: isIOSApp(), cameFrom }) ? { automated: true } : {};
 }
 
+/** This session is one of our robots: nothing it does is counted. */
+export const isRobot = (): boolean => !!robot().automated;
+
 /** The version of the privacy page a consent was given to (static/privacy.html). */
 export const PRIVACY_VERSION = '2026-11-13';
 
