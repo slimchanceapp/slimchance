@@ -157,15 +157,13 @@ jobs:
           # (12 Nov) the emulator itself dies right after "Start now", and
           # the log read after the flow was empty because the device was gone.
           adb logcat -v time > proof/logcat-live.txt 2>&1 &
-          # What the phone shows and what eats its CPU, every 2 s, until it
-          # stops answering (guest rendering didn't stop the 12 Nov stall).
-          ( while adb get-state > /dev/null 2>&1; do t=$(date +%H%M%S); adb exec-out screencap -p > proof/live-$t.png 2> /dev/null; adb shell top -b -n 1 -m 8 > proof/top-$t.txt 2> /dev/null; sleep 2; done ) &
-          # A stalled phone ends the flow in 10 minutes, not at the job's 40.
+          # A stalled phone ends the flow in 10 minutes, not at the job's 40,
+          # and nothing after it waits forever for a phone that's gone.
           timeout 600 maestro test e2e/first-run.yaml || status=$?
-          adb exec-out screencap -p > proof/android-screen.png || true
-          adb shell uiautomator dump /sdcard/ui.xml > /dev/null && adb pull /sdcard/ui.xml proof/android-ui.xml || true
+          timeout 30 adb exec-out screencap -p > proof/android-screen.png || true
+          timeout 30 adb shell uiautomator dump /sdcard/ui.xml > /dev/null && timeout 30 adb pull /sdcard/ui.xml proof/android-ui.xml || true
           cp -r "$HOME/.maestro/tests" proof/maestro-debug || true
-          adb logcat -d -s Capacitor/Console Capacitor > proof/android-console.txt || true
+          timeout 30 adb logcat -d -s Capacitor/Console Capacitor > proof/android-console.txt || true
           echo "The app's web console:"; tail -60 proof/android-console.txt
           exit ${status:-0}
           EOF
@@ -177,6 +175,11 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
+          # Since 12 Nov the phone stalled at "Starting…": 2.5 GB with 71 MB
+          # free, half a gigabyte swapped and both CPUs full, mostly Google's
+          # services busy after boot (top, every 2 s, 13 Nov). Room for both.
+          ram-size: 4096M
+          cores: 4
           script: sh android-proof.sh
 
       - name: Keep the proof
