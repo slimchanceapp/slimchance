@@ -170,6 +170,7 @@ summary::-webkit-details-marker{display:none}
 summary::after{content:"+";color:var(--brass);font-size:1.4rem;line-height:1}
 details[open] summary::after{content:"–"}
 details p{margin:10px 0 0;color:var(--muted)}
+details code{overflow-wrap:anywhere}
 
 .guides{padding-block:56px;border-top:1px solid var(--rule)}
 .guides h2{font-size:clamp(2rem,4.2vw,2.9rem);margin-bottom:16px}
@@ -394,6 +395,7 @@ footer a{color:var(--muted)}
   <details><summary>Do I need an account?</summary><p>No. Start in one tap. Save it with an email and a password when you want it on another device, or to keep it if you lose your phone.</p></details>
   <details id="android"><summary>Can I try the Android app?</summary><p>Yes, it's in Google Play's closed test. Three steps, in this order: join the <a href="https://groups.google.com/g/slimchance-testers">testers' group</a>, <a href="https://play.google.com/apps/testing/app.slimchance">opt in</a>, then <a href="https://play.google.com/store/apps/details?id=app.slimchance">install it from Google Play</a>. Google lists the app for everyone once twelve testers have had it for fourteen days.</p></details>
   <details><summary>Does it work on iPhone?</summary><p>Yes, in Safari: start at slimchance.app, and the morning reminder comes as a daily event in your own calendar. An App Store version comes later.</p></details>
+  <details id="ai"><summary>Can my AI assistant use Slim Chance?</summary><p>Yes, in any language it speaks. Slim Chance is also a tool for AI assistants (an MCP server), no account needed. Add this address wherever your assistant takes MCP servers or custom connectors: <code>https://slimchance.app/mcp</code>. In Gemini CLI, run <code>gemini extensions install https://github.com/slimchanceapp/slimchance</code>. Then paste your morning weights and ask whether your weight is really coming off: it answers with your trend and the chance in ten. Slim Chance keeps nothing you send.</p></details>
   <details><summary>Can I use pounds or stone?</summary><p>Yes. Kilograms, pounds, or stones and pounds, and you can switch at any time.</p></details>
   <details><summary>Can I bring my weigh-ins from another app?</summary><p>Yes. Import a file from Apple Health, Libra, Happy Scale, MyFitnessPal, Withings, Fitbit, Google Fit, Samsung Health or a spreadsheet, and your trend starts on day one. The file is read on your phone; only one reading a day is saved, and an import can be undone.</p></details>
   <details><summary>What happens when I reach my goal?</summary><p>Slim Chance asks whether to keep it there or aim a little lower. Keeping it, your budget becomes what you maintain on, a ceiling sits a kilo above your goal, and Today counts the days your trend stays inside that range.</p></details>

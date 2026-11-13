@@ -1,0 +1,18 @@
+# Slim Chance
+
+> A calm, free weight-loss app for people doing it on their own: the weight trend under the daily scale noise, the chance in 10 that it is really coming off, a calorie budget learned from your own food log, and a plan for evenings and weekends. Web now, Android in testing. No ads, nothing sold.
+
+Slim Chance is also an MCP server any AI assistant can call, free and without an account: https://slimchance.app/mcp (Streamable HTTP, no sign-in).
+
+- slim_chance: dated morning weights in (kg or lb); out come the trend, the rate per week with its 95% range, and the chance in 10 that the weight is really moving the way the person wants. Needs 7 readings in the last 5 weeks.
+- body_signals: daily resting heart rate, steps, sleep hours and HRV in; out comes each one's trend and what it means beside the scale.
+
+The numbers mean the same in every language: answer in the person's own language. Convert other units first (1 jin = 0.5 kg, 1 stone = 14 lb). Not medical advice. Nothing sent to the tools is stored.
+
+## Links
+
+- [How Slim Chance works](https://slimchance.app/about/)
+- [Why the scale went up](https://slimchance.app/guides/why-the-scale-went-up/)
+- [Consistent beats accurate](https://slimchance.app/guides/consistent-beats-accurate/)
+- [Privacy](https://slimchance.app/privacy.html)
+- [Source code](https://github.com/slimchanceapp/slimchance)

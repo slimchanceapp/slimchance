@@ -57,6 +57,21 @@ Made-up data. More at [slimchance.app/about](https://slimchance.app/about/).
   MyFitnessPal, Withings, Fitbit, Google Fit, Samsung Health or any CSV, so the trend
   starts on day one. Read on the device; one reading a day; undoable.
 
+## Use it from an AI assistant
+
+Slim Chance is also an MCP server, free and without an account: `https://slimchance.app/mcp`
+(Streamable HTTP). Add it wherever your assistant takes MCP servers or custom connectors, or in
+Gemini CLI: `gemini extensions install https://github.com/slimchanceapp/slimchance`. Then paste
+dated morning weights and ask whether the weight is really moving; the assistant answers in your
+language.
+
+- `slim_chance`: the trend, the rate per week with its 95% range, and the chance in 10 that the
+  weight is really moving the way you want. Needs 7 readings in 5 weeks.
+- `body_signals`: resting heart rate, steps, sleep and HRV, each with its own trend and what it
+  means beside the scale.
+
+Nothing sent to the tools is stored; calls are counted per day by tool, assistant name and country.
+
 ## Principles
 
 - Measured against yourself, never against an average person's day.

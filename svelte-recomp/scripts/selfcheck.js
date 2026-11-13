@@ -5546,7 +5546,8 @@ check('MCP calls are counted by day and tool, never what anyone sent, and counti
   // 2026-11-10: is the public listing doing anything? A count per day and tool.
   const { readFileSync } = await import('node:fs');
   const route = readFileSync('src/routes/mcp/+server.ts', 'utf8');
-  assert.match(route, /body: JSON\.stringify\(\{ p_tool: tool \}\)/, 'only the tool name leaves');
+  // 2026-11-13: plus a label for who called and a country (next check), still nothing anyone sent in the arguments.
+  assert.match(route, /body: JSON\.stringify\(\{ p_tool: tool, p_client: client, p_country: country \}\)/, 'only the tool, a label and a country leave');
   assert.match(route, /signal: AbortSignal\.timeout\(800\)/);
   assert.match(route, /catch \{ \/\* counting is never worth a failed answer \*\/ \}/);
   const sql = readFileSync('../supabase/migrations/20261110130000_mcp_calls.sql', 'utf8');
@@ -5554,6 +5555,71 @@ check('MCP calls are counted by day and tool, never what anyone sent, and counti
   assert.doesNotMatch(sql, /create policy/i, 'nobody reads or writes the table directly');
   assert.match(sql, /if p_tool not in \('initialize', 'tools\/list', 'slim_chance', 'body_signals'\) then/);
   assert.doesNotMatch(readFileSync('src/lib/mcp.ts', 'utf8'), /Nothing is stored\./, 'the tools say what is true: calls are counted');
+});
+
+check('MCP calls are also counted by assistant and country, as short labels nobody can flood', async () => {
+  // 2026-11-13: since the 11-10 listing, about 1,000 connections and 6 real
+  // tool calls. Which assistants (a directory's robot, or someone's ChatGPT)
+  // and which countries decides where to work next; the count said only
+  // "initialize 546". The label is the client's own name or its User-Agent's
+  // first word; the country is Vercel's two letters. Nothing from the arguments.
+  const { readFileSync } = await import('node:fs');
+  const { clientLabel } = await import('../src/lib/mcp.ts');
+  assert.equal(clientLabel({ params: { clientInfo: { name: 'Gemini CLI <b>' } } }, 'node'), 'gemini cli b', 'its own name, plain letters only');
+  assert.equal(clientLabel({ method: 'tools/call', params: { name: 'slim_chance' } }, 'openai-mcp/1.0.0 (+https://openai.com/bot)'), 'openai-mcp', 'else the first word of its User-Agent');
+  assert.equal(clientLabel({}, null), 'unknown');
+  assert.equal(clientLabel({ params: { clientInfo: { name: 'x'.repeat(99) } } }, null).length, 40);
+  const route = readFileSync('src/routes/mcp/+server.ts', 'utf8');
+  assert.match(route, /clientLabel\(msg, request\.headers\.get\('user-agent'\)\)/);
+  assert.match(route, /request\.headers\.get\('x-vercel-ip-country'\)/);
+  const sql = readFileSync('../supabase/migrations/20261113090000_mcp_calls_by_client.sql', 'utf8');
+  assert.match(sql, /primary key \(day, tool, client, country\)/);
+  assert.match(sql, /regexp_replace\(lower\(coalesce\(p_client, ''\)\), '\[\^a-z0-9 \._-\]', '', 'g'\)/, 'the database cleans the label too: anyone can call it');
+  assert.match(sql, /p_country ~ '\^\[A-Z\]\{2\}\$'/);
+  assert.match(sql, />= 500 then/, 'a flood of made-up names folds into one row a day');
+  assert.doesNotMatch(sql, /create policy/i);
+  assert.match(sql, /grant execute on function public\.note_mcp_call\(text, text, text\) to anon, authenticated;/);
+});
+
+check('assistants are told when to call Slim Chance, which units to send, and to answer in the person\'s own language', async () => {
+  // 2026-11-13: an assistant picks a tool by its description (the ChatGPT
+  // directory asks for purpose, when to use it and limits, and explicit
+  // read-only, destructive and open-world booleans), and the people this is
+  // for in India, Korea or Taiwan ask in their own language and units.
+  const { handleMcp } = await import('../src/lib/mcp.ts');
+  const { instructions } = handleMcp({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-11-25' } }).body.result;
+  assert.match(instructions, /the person's own language/);
+  assert.match(instructions, /1 jin \(斤\) = 0\.5 kg/);
+  assert.match(instructions, /1 stone = 14 lb/);
+  assert.match(instructions, /the assistant's name and country/, 'says what is counted');
+  for (const t of handleMcp({ jsonrpc: '2.0', id: 2, method: 'tools/list' }).body.result.tools) {
+    assert.match(t.description, /^Use when /, `${t.name} starts with when to use it`);
+    assert.match(t.description, /Only send what the person shared and asked about\./, `${t.name}: their own data, at their request`);
+    for (const k of ['readOnlyHint', 'destructiveHint', 'openWorldHint']) assert.equal(typeof t.annotations[k], 'boolean', `${t.name}.${k}`);
+  }
+});
+
+check('people and their assistants can find the MCP server: llms.txt, the landing page, the privacy page, the README and the Gemini extension give the address the registry lists', async () => {
+  // 2026-11-13: listed in the registry, found by directory robots, used by
+  // almost no one. Every door names the same address, read from server.json.
+  const { readFileSync } = await import('node:fs');
+  const url = JSON.parse(readFileSync('../server.json', 'utf8')).remotes[0].url;
+  assert.equal(url, 'https://slimchance.app/mcp');
+  const llms = readFileSync('static/llms.txt', 'utf8');
+  assert.match(llms, /^# Slim Chance\n\n> /, 'llmstxt.org shape: a title, then a one-paragraph summary');
+  for (const t of ['slim_chance', 'body_signals', url, 'https://slimchance.app/privacy.html']) assert.ok(llms.includes(t), `llms.txt names ${t}`);
+  const about = readFileSync('static/about/index.html', 'utf8');
+  assert.match(about, /<details id="ai"><summary>Can my AI assistant use Slim Chance\?<\/summary>/);
+  assert.ok(about.includes(`<code>${url}</code>`), 'the landing page gives the address to paste');
+  assert.match(about, /gemini extensions install https:\/\/github\.com\/slimchanceapp\/slimchance/);
+  const policy = readFileSync('static/privacy.html', 'utf8');
+  assert.match(policy, /<h2 id="assistants">If your AI assistant uses Slim Chance<\/h2>/);
+  assert.match(policy, /keeps nothing you sent/);
+  assert.match(policy, /by country/);
+  assert.ok(readFileSync('../README.md', 'utf8').includes(url), 'the README gives it too');
+  const ext = JSON.parse(readFileSync('../gemini-extension.json', 'utf8'));
+  assert.equal(ext.name, 'slim-chance');
+  assert.equal(ext.mcpServers['slim-chance'].httpUrl, url, 'Gemini CLI: Streamable HTTP is httpUrl');
 });
 
 check('the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import', async () => {

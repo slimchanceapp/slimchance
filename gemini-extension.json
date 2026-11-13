@@ -1,0 +1,10 @@
+{
+  "name": "slim-chance",
+  "version": "1.1.0",
+  "description": "Is my weight really moving? The trend under the daily scale noise and the chance in 10, from dated morning weights, plus what a watch says beside the scale. Nothing stored.",
+  "mcpServers": {
+    "slim-chance": {
+      "httpUrl": "https://slimchance.app/mcp"
+    }
+  }
+}

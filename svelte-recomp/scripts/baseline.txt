@@ -11,6 +11,7 @@ Gemini only where Google allows it, Gemma for everyone, the free text services o
 HRV below personal baseline lowers readiness
 Katch-McArdle: a body-fat % switches BMR to lean mass
 Kotlin modules follow their own Java target, not a hardcoded one
+MCP calls are also counted by assistant and country, as short labels nobody can flood
 MCP calls are counted by day and tool, never what anyone sent, and counting can never fail an answer
 Mifflin-St Jeor matches the published formula
 OFF products keep kJ-only energy and names in any language
@@ -121,6 +122,7 @@ an unknown template id falls back rather than producing a broken week
 an unlogged workout still counts, and sport always counts
 an upstream error never carries a Gemini key back to the app, old format or new
 any AI assistant can ask Slim Chance for the trend and the chance over MCP, and nothing is stored
+assistants are told when to call Slim Chance, which units to send, and to answer in the person's own language
 badminton loads the muscles it actually works
 being short on protein at midday earns a nudge with the real number in it
 bestE1RM ignores incomplete sets
@@ -250,6 +252,7 @@ only user-entered types are ever written back
 overlapping active-calorie records are not double-counted (302≠604)
 p05 ignores the single lowest outlier the old code used
 pace is judged against the plan, only where the interval allows
+people and their assistants can find the MCP server: llms.txt, the landing page, the privacy page, the README and the Gemini extension give the address the registry lists
 people are asked once, a few days in, whether Slim Chance is for them and what is in the way
 percentile handles empty and single-value input
 period-aware weight learns the person’s own swing, and says only that it’s learning before three cycles

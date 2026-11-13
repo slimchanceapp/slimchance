@@ -29,11 +29,13 @@ const TOOL = {
   name: 'slim_chance',
   title: 'Slim Chance: is my weight really moving?',
   description:
+    'Use when someone shares dated scale readings, or asks whether their weight loss (or gain) is really ' +
+    'working, has stalled, or is just water. ' +
     'Turns dated morning scale readings into an honest trend: where the weight really is under the daily ' +
     'water noise, the rate per week with its 95% range, and the chance in 10 that it is truly moving the ' +
     'way the person wants. It reads the last 5 weeks up to the latest reading; it describes the recent ' +
     'past, it is not a forecast. Needs at least 7 readings in those 5 weeks for a verdict; with fewer it ' +
-    'says how many more mornings it needs. Nothing you send is stored.',
+    'says how many more mornings it needs. Only send what the person shared and asked about. Nothing you send is stored.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -82,12 +84,14 @@ const SIGNALS_TOOL = {
   name: 'body_signals',
   title: 'Slim Chance: what the watch says beside the scale',
   description:
-    'For people with a watch or fitness tracker: gives each daily signal its own honest trend over the last ' +
+    'Use when someone with a watch or fitness tracker asks what their resting heart rate, steps, sleep or HRV ' +
+    'say, or why the scale stalled while they trained. ' +
+    'Gives each daily signal its own honest trend over the last ' +
     '5 weeks (rising, falling, steady, or too noisy to call), with a plain meaning: resting heart rate ' +
     '(falling usually means fitness improving), daily steps (falling is a common hidden reason weight loss ' +
     'slows), sleep hours and HRV. With morning weights too, it also gives the weight trend and says when the ' +
     'watch explains the scale. Separate signals, not a health score; not medical advice. Needs 7 days of a ' +
-    'signal for its trend. Nothing you send is stored.',
+    'signal for its trend. Only send what the person shared and asked about. Nothing you send is stored.',
   inputSchema: {
     type: 'object',
     properties: {
@@ -211,6 +215,16 @@ export function slimChance(args: any): { content: { type: 'text'; text: string }
   return { content: [{ type: 'text', text }], structuredContent: out };
 }
 
+/** Who is calling, for the daily count: the client's own name when it
+ *  introduces itself (initialize), else the first word of its User-Agent.
+ *  Plain lowercase letters, digits, space, dot, dash and underscore, at most
+ *  40. Never anything from a tool's arguments. */
+export function clientLabel(msg: any, userAgent: string | null): string {
+  const own = msg?.params?.clientInfo?.name;
+  const raw = typeof own === 'string' && own ? own : (userAgent ?? '').split(/[/\s]/)[0];
+  return raw.toLowerCase().replace(/[^a-z0-9 ._-]/g, '').trim().slice(0, 40) || 'unknown';
+}
+
 export interface McpReply { status: number; body: unknown | null }
 
 /** One HTTP POST: a JSON-RPC message in, a status and a JSON body (or none) out. */
@@ -232,7 +246,7 @@ export function handleMcp(msg: any, headers: { protocolVersion?: string | null }
         protocolVersion: SUPPORTED.includes(want) ? want : SUPPORTED[0],
         capabilities: { tools: {} },
         serverInfo: { name: 'slim-chance', title: 'Slim Chance', version: '1.0.0', websiteUrl: 'https://slimchance.app' },
-        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Nothing anyone sends is stored; calls are counted per day.',
+        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Weights go in kg or lb: convert others first (1 jin (斤) = 0.5 kg, 1 stone = 14 lb). The numbers mean the same in every language, so answer in the person\'s own language. Not medical advice. Nothing anyone sends is stored; calls are counted per day, with the assistant\'s name and country.',
       });
     }
     case 'ping': return ok({});
