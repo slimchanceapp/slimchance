@@ -153,6 +153,10 @@ jobs:
           adb install moderly.apk
           adb logcat -c
           cd svelte-recomp
+          # The whole log, streamed to a file as it happens: since build 25
+          # (12 Nov) the emulator itself dies right after "Start now", and
+          # the log read after the flow was empty because the device was gone.
+          adb logcat -v time > proof/logcat-live.txt 2>&1 &
           maestro test e2e/first-run.yaml || status=$?
           adb exec-out screencap -p > proof/android-screen.png || true
           adb shell uiautomator dump /sdcard/ui.xml > /dev/null && adb pull /sdcard/ui.xml proof/android-ui.xml || true
