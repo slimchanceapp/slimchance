@@ -25,7 +25,12 @@ on:
       - "svelte-recomp/e2e/**"
       - "svelte-recomp/scripts/iphone-proof.mjs"
       - ".github/workflows/phone-proof.yml"
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      apk_run:
+        description: "Test an older Android build: the id of the build run whose moderly-apks to install (empty: the current release)"
+        required: false
+        default: ""
   # Every night against the live site, so a break in either shell's first
   # minute shows up the next morning, not at the next native change.
   schedule:
@@ -33,6 +38,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   iphone:
@@ -143,8 +149,15 @@ jobs:
           sudo udevadm trigger --name-match=kvm
 
       - name: The APK people have now, and Maestro
+        env:
+          GH_TOKEN: ${{ github.token }}
+          APK_RUN: ${{ github.event.inputs.apk_run }}
         run: |
-          curl -fsSL -o moderly.apk https://github.com/slimchanceapp/slimchance/releases/download/recompos-app-latest/recompos.apk
+          if [ -n "$APK_RUN" ]; then
+            gh run download "$APK_RUN" -R "$GITHUB_REPOSITORY" -n moderly-apks -D older && mv older/moderly.apk moderly.apk
+          else
+            curl -fsSL -o moderly.apk https://github.com/slimchanceapp/slimchance/releases/download/recompos-app-latest/recompos.apk
+          fi
           curl -fsSL "https://get.maestro.mobile.dev" | bash
           echo "$HOME/.maestro/bin" >> "$GITHUB_PATH"
           mkdir -p svelte-recomp/proof
