@@ -1,16 +1,16 @@
 {
   "_about": "Supabase's security advisor findings we have read and accept, each with why (ENGINEERING.md). scripts/advisors.mjs runs at every ship and fails on anything not listed. 'only' lists exact tables or functions; 'any' accepts the rule wherever it appears.",
   "rls_enabled_no_policy": {
-    "reason": "Deny-all on purpose: these are written and read only through the SECURITY DEFINER functions below (quota, events, origins, owners, MCP counts), never directly.",
-    "only": ["public.ai_usage", "public.ai_usage_global", "public.app_events", "public.app_origins", "public.app_owners", "public.mcp_calls"]
+    "reason": "Deny-all on purpose: these are written and read only through the SECURITY DEFINER functions below (quota, events, origins, owners, MCP counts, the tap map), never directly.",
+    "only": ["public.ai_usage", "public.ai_usage_global", "public.app_events", "public.app_origins", "public.app_owners", "public.app_taps", "public.mcp_calls"]
   },
   "anon_security_definer_function_executable": {
     "reason": "note_mcp_call is how the public MCP server counts calls with the publishable key; it only adds one to a day's count for four known tool names, and stores nothing anyone sent.",
     "only": ["public.note_mcp_call"]
   },
   "authenticated_security_definer_function_executable": {
-    "reason": "Each acts only on the caller's own row or a count, with search_path pinned (selfcheck): ai_take (the daily AI quota), note_event and note_origin (outcome counts), note_mcp_call (as above); owner_metrics raises 'not allowed' for anyone not in app_owners (checked in the migrations and live on 2026-11-11).",
-    "only": ["public.ai_take", "public.note_event", "public.note_mcp_call", "public.note_origin", "public.owner_metrics"]
+    "reason": "Each acts only on the caller's own row or a count, with search_path pinned (selfcheck): ai_take (the daily AI quota), note_event and note_origin (outcome counts), note_mcp_call (as above); note_taps only adds counts for plain button and screen names, at most 50 a call and 2000 rows a day, with nothing that says who; owner_metrics raises 'not allowed' for anyone not in app_owners (checked in the migrations and live on 2026-11-11).",
+    "only": ["public.ai_take", "public.note_event", "public.note_mcp_call", "public.note_origin", "public.note_taps", "public.owner_metrics"]
   },
   "auth_allow_anonymous_sign_ins": {
     "reason": "Trials are anonymous accounts by design ('Start now', no email); every policy they meet is own-rows, so a trial reads and writes only its own data (audited with a second account, 2026-07-28).",
