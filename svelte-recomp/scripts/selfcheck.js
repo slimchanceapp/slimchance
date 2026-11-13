@@ -3872,7 +3872,7 @@ check('a phone\'s first sync reads a month back, so day one has a heart answer',
   const { readFileSync } = await import('node:fs');
   const hc = readFileSync('src/lib/health/healthConnect.ts', 'utf8');
   assert.match(hc, /const HISTORY_DAYS = 30;/);
-  assert.match(hc, /const histDays = Math\.max\(nDays, first \? HISTORY_DAYS : 0\);/);
+  assert.match(hc, /const histDays = Math\.max\(nDays, first \|\| repair \? HISTORY_DAYS : 0\);/);
   assert.match(hc, /read\('RestingHeartRate'\)/, 'resting rate over the whole history window');
   assert.match(hc, /read\('HeartRateSeries', samplesISO\)/, 'samples, the heavy read, stay at the normal window');
   assert.match(hc, /pushActivitySessions\(uid, activity, ymd\(startOfDaysAgo\(histDays\)\)\)/, 'workouts saved over the window they were read for');
@@ -4929,6 +4929,42 @@ check('a night broken by a long wake, or written in overlapping pieces, keeps al
 
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/health/healthConnect.ts', 'utf8'), /sleepNights\(sleeps, \{ originOf, spansOf: asleepSpans, dayOf: ymd \}\)/, 'the sync counts asleep stretches');
+});
+
+check('a night that began before a sync\'s window is read whole, and a sync never saves a cut-short night', async () => {
+  // 2026-11-13: Health Connect hands back a sleep session only if it starts
+  // inside the window asked for, and every window starts at midnight. So the
+  // night ending on a window's first day came back as its after-midnight
+  // pieces alone, and changedDays saved that over the whole night: 29 Oct read
+  // 2.3 of about 6.5 hours, written by the 12 Nov 06:26 sync whose two weeks
+  // began that day; 9 Nov read 3.4 the same way. A night in one session came
+  // back empty instead and kept its value, so only split nights showed it.
+  const { sleepNights, asleepSpans, sleepReadFrom } = await import('../src/lib/health/sleep.ts');
+  const windowStart = '2026-11-09T00:00:00Z';
+  const firstDay = '2026-11-09';
+  const pieces = [
+    { startTime: '2026-11-07T23:00:00Z', endTime: '2026-11-08T01:00:00Z', origin: 'watch' },
+    { startTime: '2026-11-08T02:00:00Z', endTime: '2026-11-08T06:00:00Z', origin: 'watch' },
+    { startTime: '2026-11-08T22:30:00Z', endTime: '2026-11-09T02:30:00Z', origin: 'watch' },
+    { startTime: '2026-11-09T03:30:00Z', endTime: '2026-11-09T07:00:00Z', origin: 'watch' },
+  ];
+  // Health Connect's rule, as the 29 Oct row shows it: only sessions that start inside the window.
+  const healthConnect = (from) => pieces.filter((p) => Date.parse(p.startTime) >= Date.parse(from));
+  const day = (t) => new Date(t).toISOString().slice(0, 10);
+  const nights = (from) => sleepNights(healthConnect(from), { originOf: (x) => x.origin, spansOf: asleepSpans, dayOf: day }).filter((n) => n.day >= firstDay);
+  assert.equal(nights(windowStart)[0].minutes, 210, 'read from midnight, the night shrinks to its last piece (the bug)');
+  const whole = nights(sleepReadFrom(windowStart));
+  assert.equal(whole.length, 1, 'the night before, itself cut by the earlier start, is not kept');
+  assert.equal(whole[0].day, firstDay);
+  assert.equal(whole[0].minutes, 240 + 210, 'read from a day earlier, both pieces count');
+  const { readFileSync } = await import('node:fs');
+  const hc = readFileSync('src/lib/health/healthConnect.ts', 'utf8');
+  assert.match(hc, /read\('SleepSession', sleepReadFrom\(startISO\)\)/, 'the sync reads sleep from a day before its window');
+  assert.match(hc, /sleepNights\(sleeps, \{ originOf, spansOf: asleepSpans, dayOf: ymd \}\)\.filter\(\(n\) => n\.day >= firstDay\)/, 'and keeps only nights that end inside it');
+  assert.match(hc, /aggregate\(steps, sleeps, hrSeries, restingHr, hrv, preferred, ymd\(startISO\)\)/);
+  // Nights already cut short (29 Oct) are put back by one deeper read, once.
+  assert.match(hc, /first \|\| repair \? HISTORY_DAYS : 0/);
+  assert.match(hc, /localStorage\.setItem\(REPAIR_KEY, now\)/);
 });
 
 check('a day with nothing logged is neither room nor debt in the week’s budget', async () => {

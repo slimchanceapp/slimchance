@@ -15,7 +15,7 @@ import db from '$lib/db/dexie';
 import { supabase } from '$lib/db/client';
 import { upsertRecords } from '$lib/stores/sync';
 import { buildActivitySessions } from '../training/index';
-import { sleepNights, asleepSpans } from './sleep';
+import { sleepNights, asleepSpans, sleepReadFrom } from './sleep';
 import { hasPlugin, isAndroidApp, isIOSApp } from '$lib/platform';
 import { type RecordType, READ_TYPES, READ_PERMISSION, WRITE_TYPES, canWrite, readTypesKey } from './permissions';
 import { pickOriginByDay, countOrigins, percentile, changedDays, sameSessions } from './dedupe';
@@ -194,7 +194,8 @@ function aggregate(
   hrSeries: any[],
   restingHr: any[],
   hrv: any[],
-  preferred: string | null
+  preferred: string | null,
+  firstDay: string
 ): Record<string, DayAgg> {
   // — Steps: one source per day, summed within that source only. —
   const stepPick = pickOriginByDay(steps, {
@@ -217,7 +218,9 @@ function aggregate(
   // take that source's LONGEST night for the day: summing every night would
   // fold afternoon naps into "last night's sleep", and summing across sources
   // counted the same night twice when both the watch and the phone recorded it. —
-  const nights = sleepNights(sleeps, { originOf, spansOf: asleepSpans, dayOf: ymd });
+  // Sleep was read from a day before the window (sleepReadFrom); a night that
+  // ends before the window's first day may be cut short by that, so it isn't kept.
+  const nights = sleepNights(sleeps, { originOf, spansOf: asleepSpans, dayOf: ymd }).filter((n) => n.day >= firstDay);
   const sleepPick = pickOriginByDay(nights, {
     dayOf: (n) => n.day,
     valueOf: (n) => n.minutes,
@@ -498,6 +501,7 @@ const RECENT_DAYS = 3;
  *  can answer on day one. */
 const HISTORY_DAYS = 30;
 const FULL_READ_KEY = 'hc-last-full-read';
+const REPAIR_KEY = 'hc-sleep-edge-repaired';
 function fullReadDue(): boolean {
   try {
     const at = Date.parse(localStorage.getItem(FULL_READ_KEY) ?? '');
@@ -547,7 +551,11 @@ export async function syncHealthConnect(
     const nDays = opts.days ?? (full ? FULL_DAYS : RECENT_DAYS);
     let first = false;
     try { first = !localStorage.getItem('hc-last-sync'); } catch { /* no storage: not a first sync */ }
-    const histDays = Math.max(nDays, first ? HISTORY_DAYS : 0);
+    // Nights a window cut short before sleepReadFrom (29 Oct read 2.3 hours)
+    // are put back by one month-deep read, once, after that fix (2026-11-13).
+    let repair = false;
+    try { repair = !localStorage.getItem(REPAIR_KEY); } catch { /* no storage: nothing to repair here */ }
+    const histDays = Math.max(nDays, first || repair ? HISTORY_DAYS : 0);
     const startISO = startOfDaysAgo(histDays).toISOString();
     // Heart-rate samples stay at nDays: they are the heavy read, and only fill
     // in a day that has no resting-rate record.
@@ -564,7 +572,7 @@ export async function syncHealthConnect(
     const [steps, sleeps, hrSeries, restingHr, hrv, exercises, activeCals, totalCals, distances] =
       await Promise.all([
         read('Steps'),
-        read('SleepSession'),
+        read('SleepSession', sleepReadFrom(startISO)),
         read('HeartRateSeries', samplesISO),
         read('RestingHeartRate'),
         read('HeartRateVariabilityRmssd'),
@@ -595,7 +603,7 @@ export async function syncHealthConnect(
       watchBrand: readBrand()
     }));
 
-    const byDay = aggregate(steps, sleeps, hrSeries, restingHr, hrv, preferred);
+    const byDay = aggregate(steps, sleeps, hrSeries, restingHr, hrv, preferred, ymd(startISO));
     const dates = Object.keys(byDay).sort();
     healthConnect.update((s) => ({ ...s, stepsToday: lastStepsToday }));
 
@@ -633,6 +641,7 @@ export async function syncHealthConnect(
     try {
       localStorage.setItem('hc-last-sync', now);
       if (nDays >= FULL_DAYS) localStorage.setItem(FULL_READ_KEY, now);
+      if (repair && saved.bio) localStorage.setItem(REPAIR_KEY, now);
     } catch {
       /* ignore */
     }

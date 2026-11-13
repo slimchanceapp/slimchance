@@ -22,6 +22,15 @@
 // nap within three hours of the night joins it.
 export const NIGHT_GAP_MIN = 180;
 
+/** Where a sync starts reading sleep: a day before its window. Health
+ *  Connect hands back a session only if it starts inside the window asked
+ *  for, and windows start at midnight, so the night ending on a window's first
+ *  day came back as its after-midnight pieces alone, and that partial night
+ *  replaced the whole one already saved (29 Oct 2026 read 2.3 of about 6.5
+ *  hours, written two weeks later). The caller keeps only the nights that end
+ *  inside its window: the night before may be cut by this earlier start. */
+export const sleepReadFrom = (windowStartIso: string): string => new Date(Date.parse(windowStartIso) - 24 * 3600_000).toISOString();
+
 /** A stretch of time, in epoch milliseconds: [start, end). */
 export type Span = [number, number];
 

@@ -66,6 +66,7 @@ a name is used only when there is one
 a next stop is reached when the trend stays there three days, not on one lucky morning
 a next stop knows what it means at this height
 a night broken by a long wake, or written in overlapping pieces, keeps all its sleep
+a night that began before a sync's window is read whole, and a sync never saves a cut-short night
 a night the watch split in two is one night, and a nap stays a nap
 a normal swing is told with the band it was judged by, measured from the trend
 a nudge only exists while the fact behind it is still true
