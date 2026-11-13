@@ -157,7 +157,11 @@ jobs:
           # (12 Nov) the emulator itself dies right after "Start now", and
           # the log read after the flow was empty because the device was gone.
           adb logcat -v time > proof/logcat-live.txt 2>&1 &
-          maestro test e2e/first-run.yaml || status=$?
+          # What the phone shows and what eats its CPU, every 2 s, until it
+          # stops answering (guest rendering didn't stop the 12 Nov stall).
+          ( while adb get-state > /dev/null 2>&1; do t=$(date +%H%M%S); adb exec-out screencap -p > proof/live-$t.png 2> /dev/null; adb shell top -b -n 1 -m 8 > proof/top-$t.txt 2> /dev/null; sleep 2; done ) &
+          # A stalled phone ends the flow in 10 minutes, not at the job's 40.
+          timeout 600 maestro test e2e/first-run.yaml || status=$?
           adb exec-out screencap -p > proof/android-screen.png || true
           adb shell uiautomator dump /sdcard/ui.xml > /dev/null && adb pull /sdcard/ui.xml proof/android-ui.xml || true
           cp -r "$HOME/.maestro/tests" proof/maestro-debug || true
@@ -173,11 +177,6 @@ jobs:
           target: google_apis
           arch: x86_64
           disable-animations: true
-          # Since 12 Nov the emulator process died within a second of "Start
-          # now", leaving no log inside Android: the host's software renderer
-          # (the default, swiftshader_indirect) under the new coins' masked
-          # conic gradients. Rendering inside the emulator instead.
-          emulator-options: -no-window -gpu guest -no-snapshot -noaudio -no-boot-anim
           script: sh android-proof.sh
 
       - name: Keep the proof
