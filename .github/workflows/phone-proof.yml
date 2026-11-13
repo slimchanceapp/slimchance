@@ -35,6 +35,10 @@ on:
         description: "Instead of the app, run the first minute in Chrome at this address (e.g. a preview deployment)"
         required: false
         default: ""
+      chrome_gpu:
+        description: "With chrome_site: make Chrome draw with the emulator's GPU, as the app's WebView does (yes/no)"
+        required: false
+        default: "no"
   # Every night against the live site, so a break in either shell's first
   # minute shows up the next morning, not at the next native change.
   schedule:
@@ -177,6 +181,10 @@ jobs:
           # A stalled phone ends the flow in 10 minutes, not at the job's 40,
           # and nothing after it waits forever for a phone that's gone.
           if [ -n "$CHROME_SITE" ]; then
+            if [ "$CHROME_GPU" = "yes" ]; then
+              adb root && sleep 3
+              adb shell 'echo "_ --enable-gpu-rasterization --ignore-gpu-blocklist" > /data/local/chrome-command-line && chmod 644 /data/local/chrome-command-line'
+            fi
             timeout 600 maestro test -e SITE="$CHROME_SITE" e2e/first-run-chrome.yaml || status=$?
           else
             timeout 600 maestro test e2e/first-run.yaml || status=$?
@@ -193,6 +201,7 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         env:
           CHROME_SITE: ${{ github.event.inputs.chrome_site }}
+          CHROME_GPU: ${{ github.event.inputs.chrome_gpu }}
         with:
           api-level: 34
           target: google_apis
