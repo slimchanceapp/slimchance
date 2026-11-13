@@ -250,6 +250,7 @@ one place says which phone this is, and Android-only parts ask for Android
 one step at a time: a cut never asks for more than 300 under the usual day
 one weigh-in path, one place the commitments are saved
 only user-entered types are ever written back
+our own robots are marked when they sign up and are never counted as people
 overlapping active-calorie records are not double-counted (302≠604)
 p05 ignores the single lowest outlier the old code used
 pace is judged against the plan, only where the interval allows
@@ -363,6 +364,7 @@ the odds are the verdict’s own interval, read against a loss that counts
 the odds coins flip in and land as they light, and the themes are Deep and Daylight, following the phone
 the offline estimate understands a Slovak breakfast
 the privacy page names every outside service the code talks to
+the public pages count visits with Vercel's cookieless counter, and the app itself never loads it
 the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import
 the same match written twice collapses to one
 the same watch workouts are not rewritten, whatever the timestamp spelling

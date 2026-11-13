@@ -5658,6 +5658,47 @@ check('people and their assistants can find the MCP server: llms.txt, the landin
   assert.equal(ext.mcpServers['slim-chance'].httpUrl, url, 'Gemini CLI: Streamable HTTP is httpUrl');
 });
 
+check('the public pages count visits with Vercel\'s cookieless counter, and the app itself never loads it', async () => {
+  // 2026-11-13: posts went out and no tagged stranger signed up, but nothing
+  // said whether anyone even visited. Vercel's Web Analytics counts page,
+  // referrer, country and device with no cookie and nothing that says who;
+  // only on the public pages (the app keeps its own first-party counts), and
+  // the privacy page says so.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const pages = ['static/about/index.html', 'static/privacy.html', ...readdirSync('static/guides', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `static/guides/${d.name}/index.html`)];
+  for (const f of pages) assert.match(readFileSync(f, 'utf8'), /<script defer src="\/_vercel\/insights\/script\.js"><\/script>/, `${f} counts its visits`);
+  assert.doesNotMatch(readFileSync('src/app.html', 'utf8'), /_vercel\/insights/, 'never inside the app');
+  const policy = readFileSync('static/privacy.html', 'utf8');
+  assert.match(policy, /<strong>Visits to the public pages<\/strong>/);
+  assert.doesNotMatch(policy, /no analytics or tracking scripts/, 'the old blanket claim is gone');
+});
+
+check('our own robots are marked when they sign up and are never counted as people', async () => {
+  // 2026-11-13: the counts said 68 people opened the app in 30 days and none
+  // came back. Most were ours: the nightly phone tests (Android emulator,
+  // iPhone simulator), the Safari-engine proof and my stranger-run audits each
+  // start a trial on the live site, and a run cancelled before its delete step
+  // (12 Nov) leaves the account behind, counted as a stranger.
+  const { readFileSync } = await import('node:fs');
+  const { isAutomated } = await import('../src/lib/metrics/index.ts');
+  const ua = { pixel: 'Mozilla/5.0 (Linux; Android 14; Pixel 7) AppleWebKit/537.36 Chrome/131.0 Mobile Safari/537.36', emulator: 'Mozilla/5.0 (Linux; Android 14; sdk_gphone64_x86_64 Build/UE1A.230829.050) AppleWebKit/537.36', iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15' };
+  assert.equal(isAutomated({ webdriver: true, userAgent: ua.pixel, iosShell: false, cameFrom: null }), true, 'Playwright and WebDriver say so');
+  assert.equal(isAutomated({ webdriver: false, userAgent: ua.emulator, iosShell: false, cameFrom: null }), true, 'the Android emulator');
+  assert.equal(isAutomated({ webdriver: false, userAgent: ua.iphone, iosShell: true, cameFrom: null }), true, 'the iPhone shell: only our tests run it before the App Store');
+  assert.equal(isAutomated({ webdriver: false, userAgent: ua.pixel, iosShell: false, cameFrom: 'test' }), true, 'a link tagged test');
+  assert.equal(isAutomated({ webdriver: false, userAgent: ua.pixel, iosShell: false, cameFrom: 'reddit-tester' }), false, 'a person on a Pixel');
+  assert.equal(isAutomated({ webdriver: false, userAgent: ua.iphone, iosShell: false, cameFrom: null }), false, 'a person in Safari');
+  const u = readFileSync('src/lib/stores/user.ts', 'utf8');
+  assert.equal((u.match(/consent: \{ health: true, privacy: PRIVACY_VERSION, at: new Date\(\)\.toISOString\(\) \}, \.\.\.robot\(\)/g) || []).length, 2, 'both sign-ups, trial and account, carry the mark');
+  const sql = readFileSync('../supabase/migrations/20261113120000_automated_signups.sql', 'utf8');
+  assert.match(sql, /create or replace function public\.owner_metrics/);
+  assert.match(sql, /coalesce\(u\.raw_user_meta_data ->> 'automated', ''\) <> 'true'/, 'the Numbers leave robots out');
+  assert.match(sql, /if not exists \(select 1 from public\.app_owners where user_id = auth\.uid\(\)\) then/, 'and still answer only the owner');
+  assert.match(sql, /create or replace function public\.health_signups/, 'the daily digest too');
+  assert.match(readFileSync('scripts/iphone-proof.mjs', 'utf8'), /SITE \+ '\/\?from=test'/, 'the Safari proof says what it is');
+  assert.match(readFileSync('scripts/usage.sql', 'utf8'), /raw_user_meta_data ->> 'automated'/, 'and the usage read leaves them out');
+});
+
 check('the pure core stays pure: no listed module reaches storage, network, browser, database or stores, even through an import', async () => {
   // 2026-11-10 (book chapter 5): units.ts read browser storage when imported,
   // so 15 pure modules secretly depended on it, the MCP server (which runs

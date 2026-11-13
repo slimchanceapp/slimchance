@@ -1,6 +1,8 @@
 import { derived, writable } from 'svelte/store';
 import { supabase } from '$lib/db/client';
 import type { User } from '@supabase/supabase-js';
+import { isAutomated } from '$lib/metrics';
+import { isIOSApp } from '$lib/platform';
 
 export const user = writable<User | null>(null);
 export const userId = writable<string>('');
@@ -43,6 +45,14 @@ export async function signIn(email: string, password: string) {
   if (error) throw error;
 }
 
+/** Our own robots (phone tests, audits) say so on the account, so no count
+ *  takes them for people ($lib/metrics/automated.ts). */
+function robot(): { automated?: true } {
+  let cameFrom: string | null = null;
+  try { cameFrom = localStorage.getItem('recompos.cameFrom'); } catch { /* storage off */ }
+  return isAutomated({ webdriver: navigator.webdriver === true, userAgent: navigator.userAgent, iosShell: isIOSApp(), cameFrom }) ? { automated: true } : {};
+}
+
 /** The version of the privacy page a consent was given to (static/privacy.html). */
 export const PRIVACY_VERSION = '2026-11-13';
 
@@ -52,7 +62,7 @@ export async function signUp(email: string, password: string, consent: boolean) 
   if (!consent) throw new Error('Tick the box to agree, or Slim Chance can’t keep your data.');
   const { error } = await supabase.auth.signUp({
     email, password,
-    options: { data: { consent: { health: true, privacy: PRIVACY_VERSION, at: new Date().toISOString() } } },
+    options: { data: { consent: { health: true, privacy: PRIVACY_VERSION, at: new Date().toISOString() }, ...robot() } },
   });
   if (error) throw error;
 }
@@ -62,7 +72,7 @@ export async function signUp(email: string, password: string, consent: boolean) 
 export async function startTrial(consent: boolean) {
   if (!consent) throw new Error('Tick the box to agree, or Slim Chance can’t keep your data.');
   const { error } = await supabase.auth.signInAnonymously({
-    options: { data: { consent: { health: true, privacy: PRIVACY_VERSION, at: new Date().toISOString() } } },
+    options: { data: { consent: { health: true, privacy: PRIVACY_VERSION, at: new Date().toISOString() }, ...robot() } },
   });
   if (error) throw error;
 }

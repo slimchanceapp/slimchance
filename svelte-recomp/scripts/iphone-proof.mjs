@@ -20,7 +20,7 @@ page.on('console', (m) => { if (m.type() === 'error') console.log('  console err
 
 let session = null;
 try {
-  await page.goto(SITE + '/', { waitUntil: 'networkidle', timeout: 60_000 });
+  await page.goto(SITE + '/?from=test', { waitUntil: 'networkidle', timeout: 60_000 });
   await page.screenshot({ path: `${out}/web-1-door.png` });
   await page.locator('input[type=checkbox]').first().check();
   await page.locator('button:has-text("Start now")').click();

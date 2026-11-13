@@ -3,3 +3,4 @@
 // ./events.ts (note_event: one row per person, event and day, no trackers);
 // a check fails if a file outside src/lib/metrics reaches past either. Pure.
 export { FIT_ANSWERS, FIT_REASONS, fitAskDue } from './fit.ts';
+export { isAutomated } from './automated.ts';
