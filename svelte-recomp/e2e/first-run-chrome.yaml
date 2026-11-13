@@ -1,0 +1,28 @@
+# The same first minute in Chrome on the Android emulator, with no app shell:
+# tells the web code apart from the shell when the shell flow stalls (since 12
+# Nov the emulator dies right after "Start now"). The address comes from the
+# workflow (SITE, default the live site, tagged test so no count takes it).
+appId: com.android.chrome
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    text: "Use without an account"
+    optional: true
+- tapOn:
+    text: "No thanks"
+    optional: true
+- openLink: ${SITE}
+- extendedWaitUntil:
+    visible: "The odds, every morning."
+    timeout: 90000
+- scrollUntilVisible:
+    element:
+      text: "Start now"
+    direction: DOWN
+- tapOn: "I agree that Slim Chance.*"
+- tapOn: "Start now"
+- extendedWaitUntil:
+    visible: "Where you are.*"
+    timeout: 60000
+- takeScreenshot: proof/chrome-signed-in

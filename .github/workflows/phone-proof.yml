@@ -31,6 +31,10 @@ on:
         description: "Test an older Android build: the id of the build run whose moderly-apks to install (empty: the current release)"
         required: false
         default: ""
+      chrome_site:
+        description: "Instead of the app, run the first minute in Chrome at this address (e.g. a preview deployment)"
+        required: false
+        default: ""
   # Every night against the live site, so a break in either shell's first
   # minute shows up the next morning, not at the next native change.
   schedule:
@@ -172,7 +176,11 @@ jobs:
           adb logcat -v time > proof/logcat-live.txt 2>&1 &
           # A stalled phone ends the flow in 10 minutes, not at the job's 40,
           # and nothing after it waits forever for a phone that's gone.
-          timeout 600 maestro test e2e/first-run.yaml || status=$?
+          if [ -n "$CHROME_SITE" ]; then
+            timeout 600 maestro test -e SITE="$CHROME_SITE" e2e/first-run-chrome.yaml || status=$?
+          else
+            timeout 600 maestro test e2e/first-run.yaml || status=$?
+          fi
           timeout 30 adb exec-out screencap -p > proof/android-screen.png || true
           timeout 30 adb shell uiautomator dump /sdcard/ui.xml > /dev/null && timeout 30 adb pull /sdcard/ui.xml proof/android-ui.xml || true
           cp -r "$HOME/.maestro/tests" proof/maestro-debug || true
@@ -183,6 +191,8 @@ jobs:
 
       - name: The first-run flow on an emulator (Android 14)
         uses: reactivecircus/android-emulator-runner@v2
+        env:
+          CHROME_SITE: ${{ github.event.inputs.chrome_site }}
         with:
           api-level: 34
           target: google_apis
