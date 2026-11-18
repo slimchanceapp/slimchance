@@ -3087,6 +3087,21 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('Google’s tester count is kept in the database and shown on Numbers, so it is there with the laptop off', async () => {
+  // 2026-11-18, his question: the morning count came only while the chat ran.
+  // The laptop saves Google's count each morning, or at the next login when it
+  // was off (~/.local/share/slimchance/play/count.mjs --save, a systemd timer
+  // with Persistent=true); the phone reads it any time.
+  const { readFileSync } = await import('node:fs');
+  const sql = readFileSync('../supabase/migrations/20261118210000_play_status.sql', 'utf8');
+  assert.match(sql, /alter table public\.play_status enable row level security;/);
+  assert.doesNotMatch(sql, /create policy/i, 'nobody reads or writes it through the API');
+  assert.match(sql, /if not exists \(select 1 from public\.app_owners where user_id = auth\.uid\(\)\) then/, 'still owner only');
+  assert.match(sql, /'google', \(select google_opted_in from public\.play_status where id = 1\)/);
+  const numbers = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
+  assert.match(numbers, /play\.google != null/, 'Numbers shows Google’s count with when it was checked');
+});
+
 check('watch data and the morning note can always be found again: one tap in the menu, and Not now says where', async () => {
   // 2026-11-18, the owner on his own phone: "now that I have refused the watch
   // connection - how I can bring it back - and I am the author of this app."

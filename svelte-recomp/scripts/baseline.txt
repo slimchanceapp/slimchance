@@ -9,6 +9,7 @@ Food leads with the calories left today
 Food, Train and Progress open on the same scoreboard hero; Today on the weigh-in
 Friday is the stronger signal: the weekend named, the plan, the reason, and the same line every week
 Gemini only where Google allows it, Gemma for everyone, the free text services only for typed food
+Google’s tester count is kept in the database and shown on Numbers, so it is there with the laptop off
 HRV below personal baseline lowers readiness
 Katch-McArdle: a body-fat % switches BMR to lean mass
 Kotlin modules follow their own Java target, not a hardcoded one

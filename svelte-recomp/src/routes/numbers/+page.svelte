@@ -32,7 +32,7 @@
   let m = $state<Metrics | null>(null);
   // The Play closed test (2026-11-18): what testers do, as totals. Google's
   // count of who opted in is in Play Console, not here.
-  type PlayTest = { opened: number; setup: number; weighed: number; back: number; week: number; since: string | null; health_yes: number; health_later: number };
+  type PlayTest = { opened: number; setup: number; weighed: number; back: number; week: number; since: string | null; health_yes: number; health_later: number; google: number | null; google_at: string | null };
   let play = $state<PlayTest | null>(null);
   $effect(() => { supabase.rpc('owner_play_test').then(({ data }) => { play = (data as PlayTest) ?? null; }); });
   let failed = $state('');
@@ -73,12 +73,15 @@
   {#if play}
     <section class="card" aria-label="Your testers on Google Play">
       <div class="card-lbl">Your testers on Google Play{play.since ? ` · since ${play.since}` : ''}</div>
+      {#if play.google != null}
+        <div class="nb-pair"><span>In the test, says Google</span><b>{play.google} of 12</b></div>
+      {/if}
       <div class="nb-pair"><span>Installed it and opened it</span><b>{play.opened}</b></div>
       <div class="nb-pair"><span>Set it up</span><b>{play.setup}</b></div>
       <div class="nb-pair"><span>Weighed in</span><b>{play.weighed}</b></div>
       <div class="nb-pair"><span>Came back another day</span><b>{play.back}</b></div>
       <div class="nb-pair"><span>Used it this week</span><b>{play.week}</b></div>
-      <p class="nb-foot">People who got Slim Chance from Google Play, not counting you. Google lets everyone install it once 12 testers have had it for 14 days and used it. Watch data: {play.health_yes} connected, {play.health_later} said not now.</p>
+      <p class="nb-foot">People who got Slim Chance from Google Play, not counting you. Google lets everyone install it once 12 testers have had it for 14 days and used it. Watch data: {play.health_yes} connected, {play.health_later} said not now.{#if play.google_at} Google's count checked {new Date(play.google_at).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}, by the laptop each morning or when it next starts.{/if}</p>
     </section>
   {/if}
   <!-- Decision 0003: the measure is people still weighing in at week 4 and
