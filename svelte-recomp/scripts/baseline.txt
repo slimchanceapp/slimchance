@@ -424,6 +424,7 @@ unknown activity types degrade to no claim rather than a wrong one
 unlogged days are excluded, not averaged in as near-fasts
 watch agreement counts corroboration without demanding a type match
 watch agreement is silent when there is no watch at all
+watch data and the morning note can always be found again: one tap in the menu, and Not now says where
 water target scales with bodyweight inside sane bounds
 weekend evenings: a slip is one meal, not the weekend
 weight GAIN implies maintenance below intake

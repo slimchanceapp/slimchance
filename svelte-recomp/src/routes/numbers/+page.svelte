@@ -71,14 +71,14 @@
   <div class="card nb-note">{loading ? 'Counting…' : ''}</div>
 {:else}
   {#if play}
-    <section class="card" aria-label="Play test">
-      <div class="card-lbl">Play test{play.since ? ` · since ${play.since}` : ''}</div>
-      <div class="nb-pair"><span>Opened the Play app</span><b>{play.opened}</b></div>
-      <div class="nb-pair"><span>Finished setup</span><b>{play.setup}</b></div>
+    <section class="card" aria-label="Your testers on Google Play">
+      <div class="card-lbl">Your testers on Google Play{play.since ? ` · since ${play.since}` : ''}</div>
+      <div class="nb-pair"><span>Installed it and opened it</span><b>{play.opened}</b></div>
+      <div class="nb-pair"><span>Set it up</span><b>{play.setup}</b></div>
       <div class="nb-pair"><span>Weighed in</span><b>{play.weighed}</b></div>
-      <div class="nb-pair"><span>Came back on another day</span><b>{play.back}</b></div>
-      <div class="nb-pair"><span>Opened it in the last 7 days</span><b>{play.week}</b></div>
-      <p class="nb-foot">Testers other than you, as totals. Who opted in is Google's count, in Play Console; Play opens 14 days after 12 are in, if they use it. Watch data: {play.health_yes} connected, {play.health_later} chose not now.</p>
+      <div class="nb-pair"><span>Came back another day</span><b>{play.back}</b></div>
+      <div class="nb-pair"><span>Used it this week</span><b>{play.week}</b></div>
+      <p class="nb-foot">People who got Slim Chance from Google Play, not counting you. Google lets everyone install it once 12 testers have had it for 14 days and used it. Watch data: {play.health_yes} connected, {play.health_later} said not now.</p>
     </section>
   {/if}
   <!-- Decision 0003: the measure is people still weighing in at week 4 and

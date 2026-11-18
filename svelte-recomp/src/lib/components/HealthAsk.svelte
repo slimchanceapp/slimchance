@@ -12,6 +12,8 @@
   import { healthConnect, syncHealthConnect, openHealthConnectSettings } from '$lib/health/healthConnect';
   import { brandForPackage, setupHelp } from '$lib/health/watches';
   import { notesPermission } from '$lib/moments/nativeAlarms';
+  import { healthAskOpen } from '$lib/stores/notices';
+  import { speak } from '$lib/stores/toast';
 
   const KEY = 'recompos.healthAskLater';
   let later = $state((() => { try { return !!localStorage.getItem(KEY); } catch { return false; } })());
@@ -19,7 +21,17 @@
   const shared = $derived(($healthConnect.grantedPerms ?? []).length > 0);
   // Known to share nothing: a sync has checked and found no permission.
   const none = $derived($healthConnect.native && $healthConnect.available && $healthConnect.grantedPerms != null && !shared);
-  const show = $derived(isAndroidApp() && ((none && !later) || step !== 'ask'));
+  // Opened again from the menu (··· → Watch & phone data).
+  let reopened = $state(false);
+  $effect(() => {
+    if (!$healthAskOpen) return;
+    healthAskOpen.set(false);
+    later = false;
+    reopened = true;
+    step = 'ask';
+    try { localStorage.removeItem(KEY); } catch { /* nothing remembered */ }
+  });
+  const show = $derived(isAndroidApp() && (((none || reopened) && !shared && !later) || step !== 'ask'));
   const brands = $derived([...new Set($healthConnect.sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))]);
   const help = $derived(setupHelp('other'));
 
@@ -33,6 +45,10 @@
   async function allowNotes() {
     notes = await notesPermission(true);
     notesStep = notes === 'granted' ? 'on' : 'blocked';
+  }
+  function notesNotNow() {
+    speak('notes-later', 'Any time: ··· menu → Notifications', { force: true });
+    notesDone();
   }
   function notesDone() {
     notesLater = true;
@@ -50,7 +66,9 @@
   }
   function notNow() {
     noteEvent('health_later');
+    speak('health-later', 'Any time: ··· menu → Watch & phone data', { force: true });
     later = true;
+    reopened = false;
     try { localStorage.setItem(KEY, '1'); } catch { /* asked again on another visit */ }
   }
 </script>
@@ -62,7 +80,7 @@
       <p class="ha-b">One line at your first unlock after 6:00: where your weight really is and today's chance. No sound, never an alarm.</p>
       <div class="ha-row">
         <button class="ha-btn ha-yes" data-tap="notes-allow" onclick={allowNotes}>Allow</button>
-        <button class="ha-btn" data-tap="notes-later" onclick={notesDone}>Not now</button>
+        <button class="ha-btn" data-tap="notes-later" onclick={notesNotNow}>Not now</button>
       </div>
     {:else if notesStep === 'on'}
       <div class="ha-t">Morning note is on</div>

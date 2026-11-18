@@ -7,7 +7,7 @@
   import { syncStatus } from '$lib/stores/sync';
   import { user, authReady, initAuth, signOut, deleteAccount, isTrial, isRobot } from '$lib/stores/user';
   import SaveAccount from '$lib/components/SaveAccount.svelte';
-  import { saveAccountOpen, importOpen } from '$lib/stores/notices';
+  import { saveAccountOpen, importOpen, healthAskOpen } from '$lib/stores/notices';
   import ImportWeights from '$lib/components/ImportWeights.svelte';
   import { initSync, destroySync, upsertRecord } from '$lib/stores/sync';
   import { subscribeWebPush } from '$lib/push';
@@ -22,7 +22,8 @@
   import { resetSpoken } from '$lib/stores/toast';
   import Modal from '$lib/components/Modal.svelte';
   import { base } from '$app/paths';
-  import { syncHealthConnect } from '$lib/health/healthConnect';
+  import { syncHealthConnect, healthConnect, openHealthConnectSettings } from '$lib/health/healthConnect';
+  import { brandForPackage } from '$lib/health/watches';
   import { pullToRefresh } from '$lib/actions/pullToRefresh';
   import { refreshAll, refreshing, refreshError, lastRefresh, startClock, stopClock, nowTick } from '$lib/stores/refresh';
   import { noteEvent, noteOrigin, countTaps, noteTap } from '$lib/metrics/events';
@@ -56,6 +57,14 @@
   let { children }: { children: import('svelte').Snippet } = $props();
   let crashMsg = $state<string | null>(null);
   let menuOpen = $state(false);
+  // Watch data, findable again after Not now: off brings the question back on
+  // Today; on names the app and opens Health Connect to change what's shared.
+  const watchShared = $derived(($healthConnect.grantedPerms ?? []).length > 0);
+  const watchApps = $derived([...new Set($healthConnect.sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))].join(', '));
+  function watchMenu() {
+    menuOpen = false;
+    if (watchShared) openHealthConnectSettings(); else { healthAskOpen.set(true); goto(base + '/'); }
+  }
   let deleteOpen = $state(false);
   let leaveOpen = $state(false);
   let deleteText = $state('');
@@ -642,6 +651,11 @@
     <a class="menu-item" href="{base}/alarms" onclick={() => (menuOpen = false)}>
       <span>Notifications</span><span class="menu-val">Morning briefing, evening note</span>
     </a>
+    {#if isAndroidApp()}
+      <button class="menu-item" onclick={watchMenu}>
+        <span>Watch & phone data</span><span class="menu-val">{watchShared ? `On${watchApps ? ` · ${watchApps}` : ''}` : 'Off'}</span>
+      </button>
+    {/if}
     <div class="menu-sec">Display</div>
     <button class="menu-item" onclick={toggleTheme}>
       <span>Theme</span><span class="menu-val">☀️ / 🌙</span>

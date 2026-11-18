@@ -26,7 +26,7 @@
         "shortDescription": "Is your weight really moving?",
         "longDescription": "Share your dated morning weigh-ins and Slim Chance shows where your weight really is under the daily water swings: the trend, the rate per week with its range, and the chance in 10 that it is truly moving the way you want. Ask whether a plateau is real, whether a bad week was just water, or how long your goal takes at this pace.\n\nWith a watch or fitness tracker, it also reads resting heart rate, steps, sleep and HRV beside the scale, each with its own trend and what it means for your weight.\n\nIt works in kg or lb and answers in your language. About a week of readings gives the first answer. Nothing you send is stored. Slim Chance describes your own numbers; it is not medical advice.",
         "developerName": "Nikhil Shanbhag",
-        "category": "Health & Fitness",
+        "category": "Productivity",
         "capabilities": [
           "Weight trend from dated weigh-ins",
           "The chance in 10 the weight is really moving",

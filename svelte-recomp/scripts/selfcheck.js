@@ -3087,6 +3087,22 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('watch data and the morning note can always be found again: one tap in the menu, and Not now says where', async () => {
+  // 2026-11-18, the owner on his own phone: "now that I have refused the watch
+  // connection - how I can bring it back - and I am the author of this app."
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('src/lib/stores/notices.ts', 'utf8'), /export const healthAskOpen = writable\(false\);/);
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  assert.match(layout, /<span>Watch & phone data<\/span>/, 'a menu entry, named as the card names it');
+  assert.match(layout, /if \(watchShared\) openHealthConnectSettings\(\); else \{ healthAskOpen\.set\(true\); goto\(base \+ '\/'\); \}/, 'off: the question again; on: Health Connect, to change it');
+  const ask = readFileSync('src/lib/components/HealthAsk.svelte', 'utf8');
+  assert.match(ask, /Any time: ··· menu → Watch & phone data/, 'Not now says where it lives');
+  assert.match(ask, /Any time: ··· menu → Notifications/);
+  const numbers = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
+  assert.match(numbers, /Your testers on Google Play/, 'the Numbers section in plain words');
+  assert.doesNotMatch(numbers, />Play test</, 'not a name only its maker understands');
+});
+
 check('the morning note is asked for in plain sight on Android, after the watch question, and never by a background reminder', async () => {
   // 2026-11-18: Android's "allow notifications?" popped up by itself at first
   // launch (the nudges scheduling in the background). A tester who said no,
@@ -3116,7 +3132,7 @@ check('the Numbers page shows the Play test as totals: opened, set up, weighed i
   assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /jsonb_agg|array_agg|string_agg/, 'totals, never a list of people');
   const page = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
   assert.match(page, /supabase\.rpc\('owner_play_test'\)/);
-  assert.match(page, /aria-label="Play test"/);
+  assert.match(page, /aria-label="Your testers on Google Play"/);
 });
 
 check('the Android app asks for watch and phone data in plain sight, takes no for an answer, and names where the data comes from', async () => {
@@ -6453,10 +6469,11 @@ check('the ChatGPT directory pack follows the directory’s rules', async () => 
   const plugin = JSON.parse(readFileSync(`${dir}/plugin.json`, 'utf8'));
   const mcpCfg = JSON.parse(readFileSync(`${dir}/mcp.json`, 'utf8'));
   assert.match(plugin.name, /^[a-z0-9]+(-[a-z0-9]+)*$/);
-  // 18 Nov: the dashboard refused "Lifestyle" ("Select a valid category").
-  // A calorie app's accepted pack in the same format uses this title
-  // (github.com/ReceiptCal/receiptcal-plugin, 14 Nov).
-  assert.equal(plugin.extensions['com.openai'].interface.category, 'Health & Fitness', 'a category title the dashboard lists');
+  // 18 Nov: the dashboard refused "Lifestyle", then "Health & Fitness"
+  // ("Select a valid category"). Of 100 ChatGPT directory packs on GitHub
+  // with review cases, 41 use Productivity and none a health category; it is
+  // also the example in OpenAI's own submission docs.
+  assert.equal(plugin.extensions['com.openai'].interface.category, 'Productivity', 'a category title the dashboard lists');
   assert.ok(plugin.name.length <= 64);
   assert.match(plugin.version, /^\d+\.\d+\.\d+$/);
   const servers = Object.values(mcpCfg.mcpServers);
