@@ -68,11 +68,12 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Install, build the web bundle, sync the iPhone project
+      - name: Install, build the app into the iPhone project
         run: |
           npm ci
-          npm run build
+          BUILD_TARGET=capacitor npm run build
           npx cap sync ios
+          node scripts/ios-bundled.mjs
 
       - name: Boot an iPhone simulator
         id: sim
@@ -110,6 +111,15 @@ jobs:
             -derivedDataPath build-ios CODE_SIGNING_ALLOWED=NO build > proof/xcodebuild.txt 2>&1 \
             || { tail -40 proof/xcodebuild.txt; exit 1; }
           tail -3 proof/xcodebuild.txt
+
+      # Apple 4.2: the app must stand on its own. From here the live site is
+      # unreachable, so the launch and the first run prove the app inside the
+      # iPhone app does it all (the database stays reachable, as on a phone).
+      - name: "app: block the live site"
+        run: |
+          echo "0.0.0.0 svelte-recomp.vercel.app slimchance.app moderly.vercel.app" | sudo tee -a /etc/hosts
+          sudo dscacheutil -flushcache; sudo killall -HUP mDNSResponder || true
+          curl -s -m 5 -o /dev/null https://slimchance.app/ && { echo "live site still reachable"; exit 1; } || echo "live site blocked"
 
       - name: "app: launch with its web console, screenshot"
         run: |

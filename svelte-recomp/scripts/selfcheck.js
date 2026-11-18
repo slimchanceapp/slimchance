@@ -3087,6 +3087,20 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the iPhone app carries the app inside it (Apple 4.2), and its proof runs with the live site blocked', async () => {
+  // 2026-11-18, Apple prep (Pact m27): Apple rejects "a website in a wrapper",
+  // and the iPhone shell loaded the live site, so it also showed an error in
+  // airplane mode. Android keeps loading the live site (updates land at once).
+  const { readFileSync } = await import('node:fs');
+  const strip = readFileSync('scripts/ios-bundled.mjs', 'utf8');
+  assert.match(strip, /delete c\.server;/, 'no server.url in the iPhone config');
+  assert.match(strip, /ios\/App\/App\/public\/index\.html/, 'and the app really is inside');
+  const wf = readFileSync('../.github/workflows/phone-proof.yml', 'utf8');
+  assert.match(wf, /BUILD_TARGET=capacitor npm run build\n\s+npx cap sync ios\n\s+node scripts\/ios-bundled\.mjs/, 'the iPhone proof builds the bundled app');
+  assert.match(wf, /0\.0\.0\.0 svelte-recomp\.vercel\.app slimchance\.app moderly\.vercel\.app/, 'and runs it with the live site unreachable');
+  assert.match(JSON.parse(readFileSync('capacitor.config.json', 'utf8')).server.url, /^https:\/\/svelte-recomp\.vercel\.app$/, 'Android unchanged');
+});
+
 check('OpenAI can prove the domain is ours: its challenge token is served as plain text', async () => {
   // 2026-11-18: the ChatGPT directory's domain verification asks
   // slimchance.app/.well-known/openai-apps-challenge for the token its
