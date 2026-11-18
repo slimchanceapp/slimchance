@@ -330,7 +330,7 @@
             {:else if pending.c.source === 'history'}Yours · logged {pending.c.count}×
             {:else if pending.c.source === 'builtin'}Basic food · per 100 {unit(pending.c)}: {macroLine(pending.c.per100!)}
             {:else if pending.c.source === 'usda'}USDA FoodData Central{#if pending.c.per100}{' · '}per 100 {unit(pending.c)}: {macroLine(pending.c.per100)}{/if}
-            {:else}Open Food Facts{pending.c.local ? ' · sold in SK/CZ' : ''}{#if pending.c.per100}{' · '}per 100 {unit(pending.c)}: {macroLine(pending.c.per100)}{/if}{/if}
+            {:else}Open Food Facts{pending.c.local ? ` · sold in ${pending.c.local}` : ''}{#if pending.c.per100}{' · '}per 100 {unit(pending.c)}: {macroLine(pending.c.per100)}{/if}{/if}
           </div>
           {#if pending.c.per100 && pending.grams != null}
             <div class="lg-portions">
@@ -407,7 +407,7 @@
       {:else if products.length}
         {#each products as c (c.key)}
           <button class="lg-row" data-tap="food-pick" onclick={() => pick(c)}>
-            <span>{displayName(c)}{#if c.local}<b class="lg-flag">SK/CZ</b>{/if}</span>
+            <span>{displayName(c)}{#if c.local}<b class="lg-flag">{c.local}</b>{/if}</span>
             <em>{c.per100 ? `${c.per100.kcal} kcal · ${c.per100.protein_g} P /100 ${unit(c)}` : 'no nutrition data'}</em>
           </button>
         {/each}

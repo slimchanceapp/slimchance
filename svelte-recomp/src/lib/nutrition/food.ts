@@ -28,7 +28,8 @@ export interface Candidate {
   ai?: boolean;
   barcode?: string | null;
   /** OFF: sold in Slovakia or Czechia. */
-  local?: boolean;
+  /** Sold where you are: the market's label ("IN", "SK/CZ"). */
+  local?: string;
 }
 
 /** What the logger hands the page to save — one food_logs row minus ids/dates. */
@@ -47,8 +48,13 @@ const num = (v: unknown): number => {
 };
 const r1 = (x: number) => Math.round(x * 10) / 10;
 
-export const fold = (s: string): string => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase();
-const words = (s: string): string[] => fold(s).split(/[^\p{L}\p{N}%]+/u).filter(Boolean);
+// NFC again after stripping accents, so a Korean syllable stays one letter.
+export const fold = (s: string): string => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').normalize('NFC').toLowerCase();
+// Marks are part of a word: Hindi vowel signs are marks (2026-11-18).
+const words = (s: string): string[] => fold(s).split(/[^\p{L}\p{M}\p{N}%]+/u).filter(Boolean);
+// Chinese, Japanese and Korean pack whole words into two characters, and
+// Chinese and Japanese write no spaces: a two-letter word may sit inside a name.
+const DENSE = /[\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}]/u;
 // Longest first. Deliberately not "-ok"/"-ka": "rozok" must not stem to "roz" and find raisins.
 const CASE_ENDINGS = ['ami', 'ach', 'ou', 'om', 'ov', 'mi', 'ia', 'ie', 'e', 'y', 'i', 'u', 'a'];
 
@@ -89,7 +95,7 @@ export function matchScore(q: string[], text: string): number {
     for (const h of hay) {
       if (h === w) { best = 3; break; }
       if (h.startsWith(w)) best = Math.max(best, 2);
-      else if (w.length >= 3 && h.includes(w)) best = Math.max(best, 1);
+      else if (w.length >= (DENSE.test(w) ? 2 : 3) && h.includes(w)) best = Math.max(best, 1);
     }
     // Inflected forms: "s maslom", "so šunkou", "s ryžou" must still find
     // maslo, šunka, ryža — strip a Slovak/Czech case ending and try the stem.
@@ -190,9 +196,12 @@ export function searchLocal(query: string, history: Candidate[], limits = { mine
  *  required energy-kcal_100g and silently dropped every EU product that only
  *  printed kJ, and named products "Barcode 590…" when product_name was empty
  *  even though product_name_pl/_de/_cs held the name. */
-export function offCandidate(p: Record<string, any>): Candidate | null {
-  const name = [p.product_name_sk, p.product_name_cs, p.product_name, p.product_name_en, p.product_name_de,
-    p.product_name_pl, p.product_name_hu, p.generic_name].find((s) => typeof s === 'string' && s.trim());
+export type Market = { tags: string[]; label: string };
+export function offCandidate(p: Record<string, any>, { lang, market }: { lang?: string; market?: Market | null } = {}): Candidate | null {
+  // Their language first, then the product's own name, then any other.
+  const name = [lang && p[`product_name_${lang}`], p.product_name, p.product_name_en, p.product_name_sk, p.product_name_cs,
+    p.product_name_de, p.product_name_pl, p.product_name_hu, p.product_name_hi, p.product_name_ko, p.product_name_zh,
+    p.product_name_ja, p.generic_name].find((s) => typeof s === 'string' && s.trim());
   if (!name || !p.code) return null;
   const nm = p.nutriments ?? {};
   const has = (k: string) => nm[k] != null && Number.isFinite(Number(nm[k]));
@@ -210,7 +219,7 @@ export function offCandidate(p: Record<string, any>): Candidate | null {
     barcode: String(p.code),
     per100: kcal != null && kcal <= 950 ? { kcal: Math.round(kcal), protein_g: r1(p100), carbs_g: r1(c100), fat_g: r1(f100) } : null,
     servings,
-    local: /en:(slovakia|czech-republic)/.test(JSON.stringify(p.countries_tags ?? '')),
+    local: market?.tags.some((t) => (p.countries_tags ?? []).includes(t)) ? market.label : undefined,
   };
 }
 
@@ -233,19 +242,20 @@ export function usdaCandidate(f: Record<string, any>): Candidate | null {
     key: `u:${code}`, source: 'usda', name: desc.charAt(0) + desc.slice(1).toLowerCase(),
     brand: String(f.brandName || f.brandOwner || '').trim(), barcode: code,
     per100: kcal != null && kcal <= 950 ? { kcal: Math.round(kcal), protein_g: r1(n.get('203') ?? 0), carbs_g: r1(n.get('205') ?? 0), fat_g: r1(n.get('204') ?? 0) } : null,
-    servings, ml, local: false,
+    servings, ml,
   };
 }
 
 /** OFF's own ranking is poor ("excelent protein" filtered to Slovakia ranked
  *  smoked tofu first), so results are re-ranked: every word should match,
- *  local products and ones with real nutrition rise, popularity breaks ties. */
-export function rankProducts(hits: Record<string, any>[], query: string, limit = 12): Candidate[] {
+ *  products sold in the searcher's market and ones with real nutrition rise,
+ *  popularity breaks ties. */
+export function rankProducts(hits: Record<string, any>[], query: string, limit = 12, market?: Market | null, lang?: string): Candidate[] {
   const q = words(query);
   const seen = new Set<string>();
   const scored: Array<{ c: Candidate; s: number }> = [];
   for (const h of hits) {
-    const c = offCandidate(h);
+    const c = offCandidate(h, { lang, market });
     if (!c || seen.has(c.key)) continue;
     seen.add(c.key);
     const m = matchScore(q, `${c.name} ${c.brand ?? ''}`);

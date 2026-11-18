@@ -3084,7 +3084,51 @@ check('product ranking puts matching local products first', () => {
     { code: '2', product_name: 'Excelent Protein Bar', brands: 'Nutrend', countries_tags: ['en:czech-republic'], nutriments: { 'energy-kcal_100g': 424 } },
     { code: '3', product_name: 'Excelent protein', brands: 'Nobody', countries_tags: ['en:germany'], nutriments: {} },
   ];
-  assert.deepEqual(food.rankProducts(hits, 'excelent protein').map((c) => c.key), ['o:2', 'o:3']);
+  assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
+});
+
+check('food search knows where you shop: your country first, names in your language, words in any script', async () => {
+  // 2026-11-18 (Pact m30): search was Slovakia/Czechia plus the world, so
+  // "amul butter" in India ranked US-tagged rows first and every chip said
+  // SK/CZ; Hindi words were cut at each vowel sign ("दाल" matched "दूध
+  // लस्सी"), and a two-character Chinese word never matched inside a name.
+  const india = { tags: ['en:india'], label: 'IN' };
+  const hits = [
+    { code: '1', product_name: 'amul butter', countries_tags: ['en:united-states'], nutriments: { 'energy-kcal_100g': 720 }, unique_scans_n: 40 },
+    { code: '2', product_name: 'Amul pasteurised butter', countries_tags: ['en:india'], nutriments: { 'energy-kcal_100g': 722 } },
+  ];
+  const ranked = food.rankProducts(hits, 'amul butter', 12, india);
+  assert.deepEqual(ranked.map((c) => c.key), ['o:2', 'o:1'], 'sold where you are comes first');
+  assert.equal(ranked[0].local, 'IN', 'and says where');
+  assert.ok(!ranked[1].local);
+  const amul = { code: '3', product_name: 'Amul Butter', product_name_hi: 'अमूल मक्खन', nutriments: {} };
+  assert.equal(food.offCandidate(amul, { lang: 'hi' }).name, 'अमूल मक्खन', 'their language first');
+  assert.equal(food.offCandidate(amul).name, 'Amul Butter', 'else the product’s own name');
+  const found = (query, names) => food.searchLocal(query, names.map((name, i) => ({ key: `m:${i}`, source: 'mine', name, per100: null, servings: [] }))).mine.map((c) => c.name);
+  assert.deepEqual(found('दाल', ['दाल मखनी', 'दूध लस्सी']), ['दाल मखनी'], 'Hindi words keep their vowel signs');
+  assert.deepEqual(found('豆漿', ['有機豆漿', '豆奶']), ['有機豆漿'], 'a two-character Chinese word inside a longer name');
+  assert.deepEqual(found('가슴살', ['맛있는 닭가슴살', '닭다리']), ['맛있는 닭가슴살'], 'Korean compounds');
+  assert.deepEqual(found('다', ['닭다리']), [], 'a Korean syllable is not a letter');
+
+  const { market } = await import('../../supabase/functions/food-search/market.ts');
+  assert.deepEqual(market('IN'), india);
+  assert.deepEqual(market('SK'), { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }, 'Slovakia and Czechia are one market');
+  assert.deepEqual(market('CZ').tags, ['en:czech-republic', 'en:slovakia']);
+  for (const [iso, tag] of [['KR', 'en:south-korea'], ['TW', 'en:taiwan'], ['US', 'en:united-states'], ['GB', 'en:united-kingdom'], ['HK', 'en:hong-kong'], ['DE', 'en:germany']]) {
+    assert.deepEqual(market(iso).tags, [tag], iso);
+  }
+  for (const nobody of ['XX', 'ZZ', 'in', '', undefined, 'IND']) assert.equal(market(nobody), null, String(nobody));
+
+  const { readFileSync } = await import('node:fs');
+  const fn = readFileSync('../supabase/functions/food-search/index.ts', 'utf8');
+  assert.doesNotMatch(fn, /en:slovakia|en:czech-republic/, 'no country is built into the search');
+  assert.match(fn, /const where = market\(body\?\.country\)/);
+  assert.match(fn, /json\(\{ hits, market: where \}\)/, 'the app is told which market was searched');
+  const src = readFileSync('src/lib/nutrition/foodSources.ts', 'utf8');
+  assert.match(src, /body: \{ q, country: await myCountry\(\), lang \}/, 'the app says where it is and what language it reads');
+  assert.match(src, /rankProducts\(data\?\.hits \?\? \[\], q, 12, data\?\.market, lang\)/);
+  assert.match(readFileSync('src/routes/where/+server.ts', 'utf8'), /request\.headers\.get\('x-vercel-ip-country'\)/, 'the country comes from where the request came from');
+  assert.doesNotMatch(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /SK\/CZ/, 'no country is built into the labels');
 });
 
 check('a camera misread fails the GS1 check digit', () => {

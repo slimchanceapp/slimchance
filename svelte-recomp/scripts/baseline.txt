@@ -177,6 +177,7 @@ filenames sort by date and say what they are
 flat weight with rising strength is recomp
 food has exactly one way in
 food is saved in one place, so the notification logs it the way the app does
+food search knows where you shop: your country first, names in your language, words in any script
 free models’ replies parse even with reasoning and fences around the JSON
 gaining weight is reported as a negative rate, not ignored
 gaining without strength gains is called fat gain
