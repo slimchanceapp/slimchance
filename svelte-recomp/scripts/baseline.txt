@@ -167,6 +167,7 @@ every quick-log activity is a real Health Connect exercise type
 every synced table names its conflict key in one map
 every table the app syncs or exports is created by a migration, so the repo can rebuild its backend
 every template produces a full, valid week
+every tool schema uses one type per field, so single-type dialects (Gemini’s) accept it
 every verdict carries evidence the user can check
 every video id is a well-formed YouTube id
 every week keeps at least one real rest day

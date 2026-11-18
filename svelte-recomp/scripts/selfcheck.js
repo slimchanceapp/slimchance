@@ -6379,6 +6379,22 @@ check('the ChatGPT directory pack follows the directory’s rules', async () => 
   assert.doesNotMatch(JSON.stringify(plugin), /clientSecret|test_credentials|reviewer_instructions|"apps"|hooks/);
 });
 
+check('every tool schema uses one type per field, so single-type dialects (Gemini’s) accept it', async () => {
+  // 18 Nov: the MCP Inspector's portability check flagged 8 fields written as
+  // type: [x, 'null']; a client mapping schemas to one type per field (the
+  // OpenAPI subset Gemini uses) may reject the tool. Nullable is anyOf now.
+  const { handleMcp } = await import('../src/lib/mcp.ts');
+  const bad = [];
+  const walk = (node, path) => {
+    if (Array.isArray(node)) return node.forEach((x, i) => walk(x, `${path}[${i}]`));
+    if (!node || typeof node !== 'object') return;
+    if (Array.isArray(node.type)) bad.push(path);
+    for (const [k, v] of Object.entries(node)) walk(v, `${path}.${k}`);
+  };
+  for (const t of handleMcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' }).body.result.tools) walk({ inputSchema: t.inputSchema, outputSchema: t.outputSchema }, t.name);
+  assert.deepEqual(bad, []);
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

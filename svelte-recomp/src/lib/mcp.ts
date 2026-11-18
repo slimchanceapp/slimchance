@@ -25,6 +25,9 @@ export const SUPPORTED = ['2025-11-25', '2025-06-18'];
 const LB = 2.20462;
 const MAX_READINGS = 400;
 
+// Nullable, in the one spelling single-type dialects (Gemini's) accept.
+const orNull = (schema: Record<string, unknown>) => ({ anyOf: [schema, { type: 'null' }] });
+
 const TOOL = {
   name: 'get_weight_trend',
   title: 'Slim Chance: is my weight really moving?',
@@ -58,15 +61,15 @@ const TOOL = {
     type: 'object',
     properties: {
       state: { type: 'string', enum: ['not-enough', 'too-noisy', 'answerable'] },
-      chance_in_10: { type: ['integer', 'null'] },
-      chance: { type: ['string', 'null'] },
-      trend: { type: ['number', 'null'] },
-      rate_per_week: { type: ['number', 'null'], description: 'Positive = losing.' },
-      rate_range: { type: ['array', 'null'], items: { type: 'number' } },
-      scale_noise: { type: ['number', 'null'] },
+      chance_in_10: orNull({ type: 'integer' }),
+      chance: orNull({ type: 'string' }),
+      trend: orNull({ type: 'number' }),
+      rate_per_week: { ...orNull({ type: 'number' }), description: 'Positive = losing.' },
+      rate_range: orNull({ type: 'array', items: { type: 'number' } }),
+      scale_noise: orNull({ type: 'number' }),
       readings_used: { type: 'integer' },
-      more_mornings_needed: { type: ['integer', 'null'] },
-      weeks_to_goal: { type: ['integer', 'null'] },
+      more_mornings_needed: orNull({ type: 'integer' }),
+      weeks_to_goal: orNull({ type: 'integer' }),
       unit: { type: 'string' },
       as_of: { type: 'string' },
     },
