@@ -9,8 +9,8 @@
     "only": ["public.note_mcp_call"]
   },
   "authenticated_security_definer_function_executable": {
-    "reason": "Each acts only on the caller's own row or a count, with search_path pinned (selfcheck): ai_take (the daily AI quota), note_event and note_origin (outcome counts), note_mcp_call (as above); note_taps only adds counts for plain button and screen names, at most 50 a call and 2000 rows a day, with nothing that says who; owner_metrics raises 'not allowed' for anyone not in app_owners (checked in the migrations and live on 2026-11-11).",
-    "only": ["public.ai_take", "public.note_event", "public.note_mcp_call", "public.note_origin", "public.note_taps", "public.owner_metrics"]
+    "reason": "Each acts only on the caller's own row or a count, with search_path pinned (selfcheck): ai_take (the daily AI quota), note_event and note_origin (outcome counts), note_mcp_call (as above); note_taps only adds counts for plain button and screen names, at most 50 a call and 2000 rows a day, with nothing that says who; owner_metrics and owner_play_test raise 'not allowed' for anyone not in app_owners (checked in the migrations, live on 2026-11-11, and for owner_play_test on 2026-11-18: anon 'permission denied', a non-owner trial 'not allowed').",
+    "only": ["public.ai_take", "public.note_event", "public.note_mcp_call", "public.note_origin", "public.note_taps", "public.owner_metrics", "public.owner_play_test"]
   },
   "auth_allow_anonymous_sign_ins": {
     "reason": "Trials are anonymous accounts by design ('Start now', no email); every policy they meet is own-rows, so a trial reads and writes only its own data (audited with a second account, 2026-07-28).",
