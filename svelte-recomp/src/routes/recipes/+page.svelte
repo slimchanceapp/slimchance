@@ -374,8 +374,15 @@
     syncStatus.set('synced');
   }
 
-  // ── FUEL hero ── protein is the lever that decides whether a deficit costs
-  // fat or muscle, so it leads. The orb fills with today's protein vs target.
+  // ── FOOD hero ── the calories left today lead: that's what a person opening
+  // Food asks (12 Nov stranger run: they got a protein number first). Protein,
+  // the lever that decides whether a deficit costs fat or muscle, is the first
+  // number under it and the sentence. Without a plan to count against,
+  // protein leads as before.
+  const kcalLeft = $derived(week ? Math.round(week.share - todayTotals.kcal) : null);
+  // Plain digits: the readout counts up to a number and reads "1,610" as 1
+  // and ",610" (the caption says left or over).
+  const heroValue = $derived(kcalLeft == null ? `${Math.round(todayTotals.protein)}g` : String(Math.abs(kcalLeft)));
   const proteinPct = $derived(proteinTargetG ? Math.round((todayTotals.protein / proteinTargetG) * 100) : 0);
   const fuelPct = $derived(Math.min(100, proteinPct));
   // Praised when it's hit, never judged on the way: half a day's protein at
@@ -392,12 +399,12 @@
 </script>
 
 <PageHero title="Food" sub="Today so far"
-  tone={fuelTone} pct={fuelPct}
-  value={`${Math.round(todayTotals.protein)}g`}
-  caption={proteinTargetG ? `of ${proteinTargetG}g protein` : 'protein today'}
+  tone={week ? 'na' : fuelTone} pct={week ? Math.min(100, Math.round((todayTotals.kcal / Math.max(1, week.share)) * 100)) : fuelPct}
+  value={heroValue}
+  caption={week ? (kcalLeft! < 0 ? `kcal over today’s ${week.share.toLocaleString()}` : `kcal left of ${week.share.toLocaleString()} today`) : proteinTargetG ? `of ${proteinTargetG}g protein` : 'protein today'}
   story={fuelStory}
   stats={week ? [
-    { v: Math.round(todayTotals.kcal).toLocaleString(), l: `of ${week.share.toLocaleString()} today` },
+    { v: `${Math.round(todayTotals.protein)}g`, l: proteinTargetG ? `of ${proteinTargetG}g protein` : 'protein today' },
     { v: weekLeft != null && weekLeft < 0 ? `+${(-weekLeft).toLocaleString()}` : (weekLeft ?? 0).toLocaleString(), l: weekLeft != null && weekLeft < 0 ? 'over this week' : 'left this week' },
     { v: week.daysLeft, l: week.daysLeft === 1 ? 'day to go' : 'days to go' }
   ] : [

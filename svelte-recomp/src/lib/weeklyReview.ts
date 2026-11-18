@@ -147,7 +147,15 @@ export function weeklyReview(input: WeeklyReviewInput): WeeklyReview {
   if (tonnageDeltaPct != null && tonnageDeltaPct <= -10) {
     adjustments.push(`Training volume dropped ${Math.abs(tonnageDeltaPct)}%. In a deficit that risks muscle — aim to at least match last week's top sets.`);
   }
-  if (sessionDates.size < 2) {
+  // Training days are judged from Friday on, and only for someone who was here
+  // before the week began: on 12 Nov a stranger's Progress said "Only 0
+  // training days this week" an hour after setup.
+  const daysIn = Math.round((Date.parse(weekEnd) - Date.parse(weekStart)) / 864e5) + 1;
+  const firstSeen = [
+    ...input.weights.map((w) => w.date), ...input.intake.map((i) => i.date), ...input.trained,
+    ...input.workouts.map((w) => w.date), ...input.steps.map((s) => s.date), ...input.sleep.map((s) => s.date),
+  ].sort()[0];
+  if (daysIn >= 5 && firstSeen != null && firstSeen < weekStart && sessionDates.size < 2) {
     adjustments.push(`Only ${sessionDates.size} training day${sessionDates.size === 1 ? '' : 's'} this week. Resistance training is what tells your body to keep muscle while it burns fat.`);
   }
   if (avgSleep != null && avgSleep < 7) {

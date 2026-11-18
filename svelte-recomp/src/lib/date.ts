@@ -30,6 +30,14 @@ export function shiftYmd(days: number, from: Date = new Date()): string {
   return ymd(d);
 }
 
+/** "2026-11-04" -> "4 Nov", with the year only when it isn't this one. */
+export function dayLabel(ymdStr: string): string {
+  const [y, m, d] = ymdStr.split('-').map(Number);
+  if (!y || !m || !d) return ymdStr;
+  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return `${d} ${MONTHS[m - 1]}${y !== new Date().getFullYear() ? ` ${y}` : ''}`;
+}
+
 /** The Monday of the week containing `d` (weeks start Monday), as YYYY-MM-DD. */
 export function mondayOf(d: Date = new Date()): string {
   const day = d.getDay();

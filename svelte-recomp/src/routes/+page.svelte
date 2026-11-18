@@ -253,6 +253,10 @@
   // scale's own step is the card at the top).
   const plan = $derived($dayOne);
   const step = $derived(plan != null && $body.weight?.trendKg == null ? plan.steps.find((s) => !s.done && s.key !== 'weigh') ?? null : null);
+  // One ask a day (12 Nov stranger run: three on the first screen). Day one's
+  // is bringing history, the only ask that changes today (odds now instead of
+  // in six mornings); setup already offered the plan. The steps start tomorrow.
+  const firstDay = $derived(($_weights as any[]).length <= 1);
 
   // A celebration earned today (src/lib/cheer.ts), shown once, then put away.
   const CHEERS_KEY = 'recompos.cheers';
@@ -380,16 +384,17 @@
   <CommitmentAlerts moment={{ hour: nowHour, dow: dayIdx, sportDay }} />
   <!-- The AI coach's one pattern for today, when it's on and found one. -->
   <CoachNoticed />
-  {#if step && plan}
+  {#if plan && $body.weight?.trendKg == null && (firstDay || step)}
     <div class="card ns">
       <p class="ns-plan">{plan.headline}</p>
-      {#if step.key === 'plan'}
+      {#if firstDay}
+        <button type="button" class="ns-step" data-tap="import-history" onclick={() => importOpen.set(true)}><b>Weighed yourself in another app?</b><em>Bring your history and your first chance comes today.</em></button>
+      {:else if step?.key === 'plan'}
         <!-- The plans editor lives on this page: open it, don't navigate. -->
         <button type="button" class="ns-step" onclick={() => editing.set('plans')}><b>{step.label}</b><em>{step.hint}</em></button>
-      {:else}
+      {:else if step}
         <a class="ns-step" href={base + step.href}><b>{step.label}</b><em>{step.hint}</em></a>
       {/if}
-      <button type="button" class="ns-import" onclick={() => importOpen.set(true)}>Weighed yourself in another app? Bring your history and the trend starts today →</button>
     </div>
   {/if}
 </div>
@@ -461,7 +466,6 @@
   .ns-step:active{transform:scale(.985)}
   .ns-step b{font-size:0.9375rem;font-weight:800;color:var(--text)}
   .ns-step em{font-style:normal;font-size:0.8125rem;line-height:1.45;color:var(--muted)}
-  .ns-import{display:block;width:100%;text-align:left;background:none;border:none;padding:10px 2px 0;font:inherit;font-size:0.8125rem;font-weight:700;color:var(--amber);cursor:pointer}
   /* A lesson wears the brighter accent: it's a moment, not a warning. */
   .ls{padding:13px 14px;background:color-mix(in srgb,var(--led-good) 9%,var(--bg2))}
   .ls-coin{float:right;margin:0 0 4px 10px}

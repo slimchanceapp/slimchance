@@ -21,7 +21,7 @@
 // sets rewriteRelativeImportExtensions, so the build rewrites these normally.
 import { projectGoal, type ActivityLevel } from './nutrition/index.ts';
 import { ageFrom, type Profile } from './profile.ts';
-import { shiftYmd } from './date.ts';
+import { shiftYmd, dayLabel } from './date.ts';
 import { dwt } from './units.ts';
 
 /** Protein per kg of GOAL bodyweight — the muscle-retention lever in a deficit. */
@@ -156,9 +156,4 @@ function fmtKg(n: number): string {
 }
 
 /** "2026-11-04" -> "4 Nov". A date makes a goal real in a way "12 weeks" never does. */
-export function goalDateLabel(ymdStr: string): string {
-  const [y, m, d] = ymdStr.split('-').map(Number);
-  if (!y || !m || !d) return ymdStr;
-  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${d} ${MONTHS[m - 1]}${y !== new Date().getFullYear() ? ` ${y}` : ''}`;
-}
+export const goalDateLabel = dayLabel;

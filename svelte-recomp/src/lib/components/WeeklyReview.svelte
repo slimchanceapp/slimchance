@@ -7,6 +7,7 @@
   import { weeklyReview } from '$lib/weeklyReview';
   import { reviewInputs } from '$lib/stores/review';
   import { todayDate } from '$lib/stores/refresh';
+  import { dayLabel } from '$lib/date';
 
   const _profile = liveProfile();
   const today = $derived($todayDate);
@@ -42,7 +43,7 @@
          rows. Weight is opt-in and off by default. -->
     <button class="wr-share" onclick={share} disabled={sharing}>{sharing ? '…' : '↗ Share'}</button>
   </div>
-  <div class="wr-dates">{review.weekStart} → {review.weekEnd}</div>
+  <div class="wr-dates">{dayLabel(review.weekStart)}–{dayLabel(review.weekEnd)}</div>
   <div class="wr-headline">{review.headline}</div>
   {#if shareMsg}<div class="wr-share-msg">{shareMsg}</div>{/if}
 

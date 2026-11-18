@@ -14,6 +14,7 @@
 
 import type { WeeklyReview } from './weeklyReview.ts';
 import { dwt } from './units.ts';
+import { dayLabel } from './date.ts';
 
 export interface ShareOptions {
   /** Include the raw bodyweight. Off by default — a weight is the single most
@@ -22,12 +23,6 @@ export interface ShareOptions {
   /** What to call the sender; omitted entirely when blank. */
   name?: string | null;
 }
-
-const fmtDay = (ymd: string): string => {
-  const [, m, d] = ymd.split('-').map(Number);
-  const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return `${d} ${MONTHS[(m || 1) - 1]}`;
-};
 
 /**
  * The week as something a human would actually send a friend. Only lines the
@@ -38,7 +33,7 @@ const fmtDay = (ymd: string): string => {
 export function weeklySummaryText(review: WeeklyReview, opts: ShareOptions = {}): string {
   const lines: string[] = [];
   const who = opts.name?.trim() ? `${opts.name.trim()}'s week` : 'My week';
-  lines.push(`${who} · ${fmtDay(review.weekStart)}–${fmtDay(review.weekEnd)}`);
+  lines.push(`${who} · ${dayLabel(review.weekStart)}–${dayLabel(review.weekEnd)}`);
   lines.push('');
 
   if (review.weightChangeKg != null) {

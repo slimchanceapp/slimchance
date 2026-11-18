@@ -5,6 +5,7 @@ BMR falls with age and rises with mass
 CI fails loudly rather than shipping an unsignable APK
 Epley e1RM levels different rep ranges
 Food and Train answer their own question: no goal notes, no parked or load-balance cards
+Food leads with the calories left today
 Food, Train and Progress open on the same scoreboard hero; Today on the weigh-in
 Friday is the stronger signal: the weekend named, the plan, the reason, and the same line every week
 Gemini only where Google allows it, Gemma for everyone, the free text services only for typed food
@@ -19,6 +20,7 @@ Progress answers "am I getting there?" first, then fitter, this week, details, g
 RPE prefers real heart rate over the activity-type guess
 Samsung is recognised — the gap that broke the old regex
 Slim Chance offers no medical features: no medication log and no rehab program (Google Play)
+Today asks one thing on day one
 Today shows one next thing at a time, and today’s plan
 Today stays calm: one card for the day, no cards that said a little each
 Train opens on the week: how training is going waits in one closed row, and nothing there asks for logging
@@ -98,6 +100,7 @@ a watch always beats the phone
 a watch beside the scale: each signal its own honest trend, the scale explained by steps, and no health score
 a watch session that duplicates hand-logged sets is dropped
 a watch sync saves only the days that changed
+a week in progress, or a first week, is not judged on training days
 a week that already got away from you is never made harder
 a week with no gym is a walk a day, and says so
 a weight history comes in from any app, one morning a day, in kg
@@ -243,6 +246,7 @@ nothing in the weekly ritual assumes someone to send it to
 nothing is written for a permission that was not granted
 nothing promises a paid tier: Slim Chance is free, so no Plus label or subscription is announced anywhere
 nutrition patterns: low protein and a weekend blowout surface; the hour eaten is never judged
+old /track and /plan links open Food
 old phone browsers get the newer built-ins the app uses, and Health Connect is used only where its plugin is
 on Google Play the app is app.slimchance; the direct download keeps its id
 one definition of "trained today", and the watch counts
@@ -388,6 +392,7 @@ the way to the goal is a path, not coins: coins mean the chance, and the healthy
 the weather in words: the daytime odds outrank the day’s code
 the week is the budget: today’s share is what’s left, spread evenly
 the week under review is the one that just ended, on every asking day
+the weekly review prints dates people read
 the week’s maintenance is learned in the log’s units once the scale rules the formula out
 the week’s maintenance moves gently from Sunday to Sunday, and goes stale
 the week’s shape: weekday medians, the weekend gap, and the scale’s rhythm

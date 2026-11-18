@@ -2751,7 +2751,8 @@ check('a gym week recorded only on the watch counts as training in the weekly re
   const two = weeklyReview({ ...base, trained: new Set(['2026-10-26', '2026-10-28', '2026-10-19']) });
   assert.equal(two.sessions, 2, 'the week from Monday, last week left out');
   assert.ok(!two.adjustments.some((x) => /training day/.test(x)), 'two days trained, no nudge to train');
-  const one = weeklyReview({ ...base, trained: new Set(['2026-10-28']) });
+  // Here since before the week began: a first week is never judged (Pact m26).
+  const one = weeklyReview({ ...base, weights: [{ date: '2026-10-12', weight: 90 }], trained: new Set(['2026-10-28']) });
   assert.ok(one.adjustments.includes('Only 1 training day this week. Resistance training is what tells your body to keep muscle while it burns fat.'));
 });
 
@@ -6222,6 +6223,61 @@ check('the coach’s evening note never names a time or a session that will have
   assert.notEqual(factsDigest(make(new Date('2026-11-10T15:40:00'), null, 96)), factsDigest(make(new Date('2026-11-10T15:40:00'), null, 150)), 'a shake changes the day: the coach is asked again');
   const { readFileSync } = await import('node:fs');
   assert.match(readFileSync('src/lib/stores/brain.ts', 'utf8'), /if \(s0!\.reply\) keep\(\{ \.\.\.s0!, reply: null \}\);/, 'out of date and not askable yet: the app’s own words stand in');
+});
+
+// --- First-run fixes from the 12 Nov stranger run (Pact m26) -----------------
+
+check('a week in progress, or a first week, is not judged on training days', () => {
+  // 12 Nov: a stranger's Progress said "Only 0 training days this week" an
+  // hour after setup. Training is judged from Friday on, and only for someone
+  // who was here before the week began.
+  const base = { weights: [], intake: [], steps: [], sleep: [], workouts: [], trained: new Set(), learnedTdee: null, proteinTargetG: 160, goalKg: 80 };
+  const nudged = (r) => r.adjustments.some((x) => /training day/.test(x));
+  const before = [{ date: '2026-11-02', weight: 92 }];
+  assert.ok(!nudged(weeklyReview({ ...base, today: '2026-11-18', weights: [{ date: '2026-11-18', weight: 92.4 }] })), 'day one, a Wednesday');
+  assert.ok(!nudged(weeklyReview({ ...base, today: '2026-11-21', weights: [{ date: '2026-11-21', weight: 92.4 }] })), 'day one, a Saturday: a first week is never judged');
+  assert.ok(!nudged(weeklyReview({ ...base, today: '2026-11-18', weights: before })), 'Wednesday: the week is still going');
+  assert.ok(nudged(weeklyReview({ ...base, today: '2026-11-20', weights: before })), 'Friday, here for weeks, no training: say so');
+});
+
+check('the weekly review prints dates people read', async () => {
+  const { dayLabel } = await import('../src/lib/date.ts');
+  assert.equal(dayLabel('2026-11-16'), '16 Nov');
+  assert.equal(dayLabel('2027-01-09'), '9 Jan 2027', 'another year says so');
+  const { readFileSync } = await import('node:fs');
+  const wr = readFileSync('src/lib/components/WeeklyReview.svelte', 'utf8');
+  assert.doesNotMatch(wr, /\{review\.week(Start|End)\}/, 'no YYYY-MM-DD on screen');
+  assert.match(wr, /\{dayLabel\(review\.weekStart\)\}–\{dayLabel\(review\.weekEnd\)\}/);
+});
+
+check('Food leads with the calories left today', async () => {
+  // 12 Nov: a new person opened Food to see how much they could still eat and
+  // got a protein number first.
+  const { readFileSync } = await import('node:fs');
+  const food = readFileSync('src/routes/recipes/+page.svelte', 'utf8');
+  assert.match(food, /const kcalLeft = \$derived\(week \? Math\.round\(week\.share - todayTotals\.kcal\) : null\);/);
+  assert.match(food, /<PageHero title="Food"[\s\S]*?value=\{heroValue\}/);
+  assert.match(food, /const heroValue = \$derived\(kcalLeft == null \?/, 'protein leads only when there is no plan to count against');
+  assert.match(food, /: String\(Math\.abs\(kcalLeft\)\)\);/, 'plain digits: the readout split "1,610" into 1 and ",610" (seen on the after-screenshot)');
+});
+
+check('Today asks one thing on day one', async () => {
+  // 12 Nov: three asks on a stranger's first screen. The first day's one ask
+  // is bringing history (the only one that changes today: odds now, not in six
+  // mornings); the first-week steps start the next day.
+  const { readFileSync } = await import('node:fs');
+  const today = readFileSync('src/routes/+page.svelte', 'utf8');
+  assert.match(today, /const firstDay = \$derived\(\(\$_weights as any\[\]\)\.length <= 1\);/);
+  assert.equal((today.match(/importOpen\.set\(true\)/g) ?? []).length, 1, 'one way to the import on Today');
+  assert.match(today, /\{#if firstDay\}\s*<button type="button" class="ns-step" data-tap="import-history" onclick=\{\(\) => importOpen\.set\(true\)\}>/);
+  assert.doesNotMatch(today, /class="ns-import"/, 'no second ask under the step');
+});
+
+check('old /track and /plan links open Food', async () => {
+  const { readFileSync } = await import('node:fs');
+  for (const r of ['track', 'plan']) {
+    assert.match(readFileSync(`src/routes/${r}/+page.svelte`, 'utf8'), /goto\(base \+ '\/recipes', \{ replaceState: true \}\)/, `/${r}`);
+  }
 });
 
 // Nothing may be reported until the async checks have actually settled.
