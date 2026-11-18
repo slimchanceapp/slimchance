@@ -16,7 +16,8 @@ notifications (`Moments.swift`). Before the first submission:
   Capacitor config), so it opens with no connection. The iPhone proof
   (`.github/workflows/phone-proof.yml`) blocks the live site before launching it
   and runs the first-run flow. Android still loads the live site.
-- To do: a home-screen widget with the coins (WidgetKit), like Android's.
+- Done 19 Nov: the home-screen coins widget (WidgetKit, `ios/App/CoinsWidget`), small,
+  medium and large, fed by `Moments.setWidget` through the app group.
 - Each web change reaches iPhones with the next App Store update, not at once.
 
 Already met: account deletion inside the app (5.1.1(v)); no third-party login, so
@@ -27,7 +28,9 @@ Sign in with Apple is not required (4.8); nothing sold, so no in-app purchase ru
 1. Agreements: the free-apps agreement only (nothing is sold).
 2. Trader status for the EU (DSA): **non-trader** (decided 11 Nov 2026, as on Play).
 3. Certificates, Identifiers & Profiles: App ID `com.toxicminds.recompos` with the
-   HealthKit capability.
+   HealthKit and App Groups capabilities, the group `group.com.toxicminds.recompos`;
+   and a second App ID `com.toxicminds.recompos.CoinsWidget` (the home-screen widget)
+   with App Groups and the same group. Without the group the widget shows no coins.
 4. My Apps, New App: platform iOS, name **Slim Chance**, primary language English
    (U.K.), bundle id above, SKU `slimchance-ios`. Creating the record reserves the name
    (free on 12 Nov 2026; Apple's search API found no app with it).
