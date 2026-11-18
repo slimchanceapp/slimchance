@@ -23,8 +23,9 @@ export const POST: RequestHandler = async ({ request }) => {
   const r = msg === null
     ? { status: 400, body: { jsonrpc: '2.0', id: null, error: { code: -32700, message: 'Parse error' } } }
     : handleMcp(msg, { protocolVersion: request.headers.get('mcp-protocol-version') });
-  // The app's own agent (supabase/functions/ask) isn't someone using the server.
-  if (r.status === 200 && request.headers.get('x-slimchance-from') !== 'ask') {
+  // The app's own agent (supabase/functions/ask) and our own test runs aren't
+  // someone using the server.
+  if (r.status === 200 && !['ask', 'test'].includes(request.headers.get('x-slimchance-from') ?? '')) {
     const c = request.headers.get('x-vercel-ip-country') ?? '';
     await count(msg as { method?: string; params?: { name?: string } }, clientLabel(msg, request.headers.get('user-agent')), /^[A-Z]{2}$/.test(c) ? c : '');
   }

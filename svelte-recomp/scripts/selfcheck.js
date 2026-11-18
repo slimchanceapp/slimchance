@@ -5637,6 +5637,9 @@ check('MCP calls are counted by day and tool, never what anyone sent, and counti
   assert.doesNotMatch(sql, /create policy/i, 'nobody reads or writes the table directly');
   assert.match(sql, /if p_tool not in \('initialize', 'tools\/list', 'slim_chance', 'body_signals'\) then/);
   assert.doesNotMatch(readFileSync('src/lib/mcp.ts', 'utf8'), /Nothing is stored\./, 'the tools say what is true: calls are counted');
+  // 2026-11-18: our own test runs through GPT (the directory's review cases)
+  // must not read as people using ChatGPT, as the app's own agent doesn't.
+  assert.match(route, /if \(r\.status === 200 && !\['ask', 'test'\]\.includes\(request\.headers\.get\('x-slimchance-from'\) \?\? ''\)\) \{/, 'our own callers are never counted');
 });
 
 check('MCP calls are also counted by assistant and country, as short labels nobody can flood', async () => {
