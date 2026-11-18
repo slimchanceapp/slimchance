@@ -3087,6 +3087,15 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('OpenAI can prove the domain is ours: its challenge token is served as plain text', async () => {
+  // 2026-11-18: the ChatGPT directory's domain verification asks
+  // slimchance.app/.well-known/openai-apps-challenge for the token its
+  // dashboard shows; it got a 404 until this file existed.
+  const { readFileSync } = await import('node:fs');
+  const token = readFileSync('static/.well-known/openai-apps-challenge', 'utf8');
+  assert.match(token, /^[A-Za-z0-9_-]{32,64}$/, 'exactly the token: no newline, no HTML');
+});
+
 check('Google’s tester count is kept in the database and shown on Numbers, so it is there with the laptop off', async () => {
   // 2026-11-18, his question: the morning count came only while the chat ran.
   // The laptop saves Google's count each morning, or at the next login when it

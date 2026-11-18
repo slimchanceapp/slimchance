@@ -17,6 +17,7 @@ MCP calls are also counted by assistant and country, as short labels nobody can 
 MCP calls are counted by day and tool, never what anyone sent, and counting can never fail an answer
 Mifflin-St Jeor matches the published formula
 OFF products keep kJ-only energy and names in any language
+OpenAI can prove the domain is ours: its challenge token is served as plain text
 Progress answers "am I getting there?" first, then fitter, this week, details, goals
 RPE prefers real heart rate over the activity-type guess
 Samsung is recognised — the gap that broke the old regex
