@@ -3128,6 +3128,7 @@ check('food search knows where you shop: your country first, names in your langu
   assert.match(src, /body: \{ q, country: await myCountry\(\), lang \}/, 'the app says where it is and what language it reads');
   assert.match(src, /rankProducts\(data\?\.hits \?\? \[\], q, 12, data\?\.market, lang\)/);
   assert.match(readFileSync('src/routes/where/+server.ts', 'utf8'), /request\.headers\.get\('x-vercel-ip-country'\)/, 'the country comes from where the request came from');
+  assert.match(readFileSync('src/service-worker.ts', 'utf8'), /if \(url\.pathname === '\/where'\) return;/, 'the service worker never answers /where from its cache: a traveller is where they are now');
   assert.doesNotMatch(readFileSync('src/lib/components/FoodLogger.svelte', 'utf8'), /SK\/CZ/, 'no country is built into the labels');
 });
 

@@ -45,6 +45,8 @@ self.addEventListener('fetch', (event) => {
   // WILL otherwise try to intercept iframe navigations too, and substituting
   // our own offline fallback HTML into a video iframe breaks/crashes it.
   if (url.origin !== self.location.origin) return;
+  // Where the visitor is right now (food search's market): never a cached answer.
+  if (url.pathname === '/where') return;
 
   if (req.mode === 'navigate') {
     event.respondWith(
