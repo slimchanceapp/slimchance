@@ -1,5 +1,6 @@
 import Capacitor
 import UserNotifications
+import WidgetKit
 
 /// The morning briefing and the evening hold on the iPhone, with the same calls
 /// as MomentsPlugin.java on Android. An iPhone doesn't tell apps when it's
@@ -84,7 +85,17 @@ public class MomentsPlugin: CAPPlugin, CAPBridgedPlugin {
 
     // The home-screen widget is Android's for now (a WidgetKit extension waits
     // for the App Store): taken and set aside.
+    /// The coins widget (CoinsWidget) reads what this saves: the same lines
+    /// Android's widget gets (src/lib/moments/nativeAlarms.ts WidgetLines), in
+    /// the app group both share, then asks iOS to redraw it.
     @objc func setWidget(_ call: CAPPluginCall) {
+        var lines: [String: Any] = [:]
+        for (k, v) in call.options { if let key = k as? String { lines[key] = v } }
+        if let data = try? JSONSerialization.data(withJSONObject: lines),
+           let shared = UserDefaults(suiteName: "group.com.toxicminds.recompos") {
+            shared.set(data, forKey: "widget")
+            WidgetCenter.shared.reloadAllTimelines()
+        }
         call.resolve()
     }
 

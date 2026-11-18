@@ -112,6 +112,11 @@ jobs:
             || { tail -40 proof/xcodebuild.txt; exit 1; }
           tail -3 proof/xcodebuild.txt
 
+      - name: "widget: draw the coins widget at each size, light and dark"
+        run: |
+          swiftc -parse-as-library ios/App/CoinsWidget/CoinsViews.swift scripts/ios-widget-render.swift -o "$RUNNER_TEMP/widget-render"
+          "$RUNNER_TEMP/widget-render" proof
+
       # Apple 4.2: the app must stand on its own. From here the live site is
       # unreachable, so the launch and the first run prove the app inside the
       # iPhone app does it all (the database stays reachable, as on a phone).

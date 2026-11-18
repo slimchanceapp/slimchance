@@ -3087,6 +3087,31 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the iPhone has the coins widget: the app hands it the same lines as Android, and CI draws it at every size', async () => {
+  // 2026-11-19 (Pact m27, Apple 4.2): "the coins widget, I'm so badly waiting for it".
+  const { readFileSync } = await import('node:fs');
+  const pbx = readFileSync('ios/App/App.xcodeproj/project.pbxproj', 'utf8');
+  assert.match(pbx, /productType = "com\.apple\.product-type\.app-extension";/, 'a widget extension target');
+  assert.match(pbx, /PRODUCT_BUNDLE_IDENTIFIER = com\.toxicminds\.recompos\.CoinsWidget;/);
+  assert.match(pbx, /isa = PBXTargetDependency;/, 'built before the app');
+  assert.match(pbx, /dstSubfolderSpec = 13;/, 'and embedded in it');
+  assert.doesNotMatch(pbx, /= undefined;/, 'no half-written project entries');
+  const group = /<string>group\.com\.toxicminds\.recompos<\/string>/;
+  assert.match(readFileSync('ios/App/App/App.entitlements', 'utf8'), group, 'the app and the widget share one app group');
+  assert.match(readFileSync('ios/App/CoinsWidget/CoinsWidget.entitlements', 'utf8'), group);
+  const moments = readFileSync('ios/App/App/Moments.swift', 'utf8');
+  assert.match(moments, /UserDefaults\(suiteName: "group\.com\.toxicminds\.recompos"\)/, 'setWidget saves where the widget reads');
+  assert.match(moments, /WidgetCenter\.shared\.reloadAllTimelines\(\)/);
+  const views = readFileSync('ios/App/CoinsWidget/CoinsViews.swift', 'utf8');
+  for (const k of ['date', 'title', 'weighed', 'unit', 'hint', 'lit', 'food', 'protein', 'kcal', 'share', 'proteinG', 'proteinTarget', 'week']) {
+    assert.match(views, new RegExp(`public var ${k}:`), `the widget reads ${k}, as the app sends it`);
+  }
+  assert.match(readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8'), /export interface WidgetLines extends Partial<WidgetDay>/, 'the lines it is built on');
+  assert.match(views, /0xC27C0E/, 'the same gold coin as the app and Android');
+  const wf = readFileSync('../.github/workflows/phone-proof.yml', 'utf8');
+  assert.match(wf, /swiftc -parse-as-library ios\/App\/CoinsWidget\/CoinsViews\.swift scripts\/ios-widget-render\.swift/, 'CI draws the widget');
+});
+
 check('the coach reads the watch: each signal this week against the person’s own usual, with what the research says it means', async () => {
   // 2026-11-18, the owner: "disappointed that you aren't doing very much with
   // my watch data". The coach saw workout minutes only. Every number here is
