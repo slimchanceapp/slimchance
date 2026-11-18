@@ -4,12 +4,12 @@
   // works too); stone takes two, stones and pounds, as UK scales show it.
   import { fromStLb, parseWt, toStLb, unitWord, weightUnit, wtNum } from '$lib/units';
 
-  let { kg = $bindable(null), id = '', hint = null, label = 'Weight', autofocus = false, onenter, onblur, class: cls = '' } = $props<{
+  let { kg = $bindable(null), id = '', hint = null, label = 'Weight', autofocus = false, onenter, onblur, class: cls = '' }: {
     kg?: number | null; id?: string;
     /** A weight to show greyed in the empty box, in kg (the trend, say). */
     hint?: number | null;
     label?: string; autofocus?: boolean; onenter?: () => void; onblur?: () => void; class?: string;
-  }>();
+  } = $props();
 
   const u = weightUnit();
   let a = $state('');

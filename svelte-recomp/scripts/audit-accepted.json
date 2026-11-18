@@ -1,0 +1,13 @@
+{
+  "_about": "High or critical npm advisories we have read and accept, each with why and a date to look again (ENGINEERING.md). scripts/audit-gate.mjs runs at every ship and fails on anything not listed, or listed past its date. selfcheck guards each reason that can be checked.",
+  "GHSA-3r8g-jcqq-3p5j": {
+    "package": "@sveltejs/kit",
+    "reason": "DoS while parsing a remote functions form. Only affects apps with the experimental remote functions flag and form/query/command remote functions; this app has neither (selfcheck). Fixed only in SvelteKit 3.1.1, a major upgrade planned after the launch.",
+    "until": "2026-12-21"
+  },
+  "GHSA-fc5q-39xc-vjpf": {
+    "package": "picomatch",
+    "reason": "ReDoS on crafted glob patterns. No patched version exists. It is used only by build tools (vite, svelte-check, tinyglobby) on our own patterns at build time; nothing in the live app or the server routes passes a visitor's input to a glob.",
+    "until": "2026-12-21"
+  }
+}

@@ -6280,6 +6280,30 @@ check('old /track and /plan links open Food', async () => {
   }
 });
 
+check('ship stops on any high advisory nobody has read, and an accepted one holds only while its reason does', async () => {
+  // 18 Nov: SvelteKit's remote-functions DoS and picomatch's ReDoS (no fix
+  // exists) stopped every deploy, though neither can be reached here. Like
+  // the database advisor: each accepted with why, and only until a date.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  assert.match(readFileSync('scripts/ship.sh', 'utf8'), /node scripts\/audit-gate\.mjs \|\| fail/);
+  const acc = JSON.parse(readFileSync('scripts/audit-accepted.json', 'utf8'));
+  for (const [id, a] of Object.entries(acc).filter(([k]) => k.startsWith('GHSA-'))) {
+    assert.ok(a.reason?.length > 40 && /^\d{4}-\d{2}-\d{2}$/.test(a.until ?? ''), `${id}: a reason and a date to look again`);
+  }
+  if (acc['GHSA-3r8g-jcqq-3p5j']) {
+    assert.doesNotMatch(readFileSync('svelte.config.js', 'utf8'), /remoteFunctions/, 'the SvelteKit DoS is accepted because remote functions are off');
+    const walk = (d) => readdirSync(d, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(`${d}/${e.name}`) : [e.name]));
+    assert.ok(!walk('src').some((f) => /\.remote\.(ts|js)$/.test(f)), 'no remote function files');
+  }
+  const { gate } = await import('./audit-gate.mjs');
+  const audit = (sev, url) => ({ vulnerabilities: { x: { via: [{ url, severity: sev, name: 'x' }, 'y'] } } });
+  assert.deepEqual(gate(audit('high', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), {}, '2026-11-18').map((x) => x.id), ['GHSA-aaaa-bbbb-cccc'], 'a new high stops ship');
+  assert.equal(gate(audit('moderate', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), {}, '2026-11-18').length, 0, 'moderate and low are read on the backlog, not at ship');
+  const ok = { 'GHSA-aaaa-bbbb-cccc': { reason: 'x', until: '2026-12-21' } };
+  assert.equal(gate(audit('critical', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), ok, '2026-11-18').length, 0, 'accepted, in date');
+  assert.equal(gate(audit('high', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), ok, '2026-12-22').length, 1, 'past its date it stops ship again');
+});
+
 // Nothing may be reported until the async checks have actually settled.
 await Promise.all(pending);
 

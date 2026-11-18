@@ -8,10 +8,10 @@
   // ever means data; no verdict yet is the brand's brass.
   import type { Odds } from '$lib/body';
   type Tone = 'good' | 'ok' | 'warn' | 'bad' | 'na';
-  let { value = '', unit = '', caption = '', pct = null, tone = 'na', odds = null } = $props<{
+  let { value = '', unit = '', caption = '', pct = null, tone = 'na', odds = null }: {
     value?: string | number; unit?: string; caption?: string; pct?: number | null; tone?: Tone;
     odds?: Odds | null;
-  }>();
+  } = $props();
 
   // A seven-segment display shows numbers only. Whatever trails the number
   // ("84g") becomes the painted unit beside it; a value with no number at all

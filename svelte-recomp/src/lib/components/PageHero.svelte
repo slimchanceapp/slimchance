@@ -12,12 +12,12 @@
   let {
     title, sub = '', tone = 'na', pct = null, value = '', unit = '', caption = '',
     story = '', stats = [], odds = null, aside, children
-  } = $props<{
+  }: {
     title: string; sub?: string; tone?: Tone; pct?: number | null;
     value?: string | number; unit?: string; caption?: string; story?: string;
     stats?: Array<{ v: string | number; l: string }>; aside?: Snippet; children?: Snippet;
     odds?: Odds | null;
-  }>();
+  } = $props();
 </script>
 
 <section class="phero">
