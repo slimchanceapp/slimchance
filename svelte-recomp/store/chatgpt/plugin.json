@@ -1,0 +1,108 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "slim-chance",
+  "version": "1.2.0",
+  "description": "Turns dated morning weigh-ins into an honest weight trend and the chance in 10 that the weight is really moving, and reads watch signals (resting heart rate, steps, sleep, HRV) beside the scale. Stores nothing.",
+  "author": {
+    "name": "Nikhil Shanbhag",
+    "email": "hello@slimchance.app",
+    "url": "https://slimchance.app/about/"
+  },
+  "homepage": "https://slimchance.app/about/",
+  "repository": "https://github.com/slimchanceapp/slimchance",
+  "license": "AGPL-3.0",
+  "keywords": [
+    "weight",
+    "weight loss",
+    "trend",
+    "scale",
+    "fitness",
+    "health"
+  ],
+  "extensions": {
+    "com.openai": {
+      "interface": {
+        "displayName": "Slim Chance",
+        "shortDescription": "Is your weight really moving?",
+        "longDescription": "Share your dated morning weigh-ins and Slim Chance shows where your weight really is under the daily water swings: the trend, the rate per week with its range, and the chance in 10 that it is truly moving the way you want. Ask whether a plateau is real, whether a bad week was just water, or how long your goal takes at this pace.\n\nWith a watch or fitness tracker, it also reads resting heart rate, steps, sleep and HRV beside the scale, each with its own trend and what it means for your weight.\n\nIt works in kg or lb and answers in your language. About a week of readings gives the first answer. Nothing you send is stored. Slim Chance describes your own numbers; it is not medical advice.",
+        "developerName": "Nikhil Shanbhag",
+        "category": "Lifestyle",
+        "capabilities": [
+          "Weight trend from dated weigh-ins",
+          "The chance in 10 the weight is really moving",
+          "Watch signals beside the scale"
+        ],
+        "websiteURL": "https://slimchance.app/about/",
+        "supportURL": "https://slimchance.app/terms.html#contact",
+        "privacyPolicyURL": "https://slimchance.app/privacy.html",
+        "termsOfServiceURL": "https://slimchance.app/terms.html",
+        "defaultPrompt": [
+          "Here are my morning weights for two weeks. Am I really losing weight, or is it just water?",
+          "Has my weight loss stalled? I'll paste my weigh-ins.",
+          "Here are my steps and weights: why did the scale stop moving?"
+        ],
+        "brandColor": "#4263EB",
+        "brandColorDark": "#FCC419",
+        "composerIcon": "./assets/icon.png",
+        "logo": "./assets/logo.png"
+      },
+      "review": {
+        "test_cases": {
+          "positive": [
+            {
+              "description": "Two weeks of kg weigh-ins: is it really going down?",
+              "prompt": "My morning weights in kg, 2026: 11-01 92.7, 11-02 92.1, 11-03 92.6, 11-04 91.8, 11-05 92.2, 11-06 92.2, 11-07 91.6, 11-08 91.8, 11-09 92.1, 11-10 91.5, 11-11 91.9, 11-12 91.2, 11-13 91.5, 11-14 91.7. Am I really losing weight or is it just water?",
+              "tools_triggered": "get_weight_trend",
+              "expected_behavior": "Calls get_weight_trend with the 14 dated readings in kg. Reports a trend of about 91.4 kg, down about 0.5 kg a week with its 95% range, and that the weight is almost certainly coming off; says this describes the readings so far, not a promise."
+            },
+            {
+              "description": "Too few readings for a verdict",
+              "prompt": "I weighed 92.7 kg on 1 Nov 2026, 92.1 on 2 Nov and 92.6 on 3 Nov. Is my diet working?",
+              "tools_triggered": "get_weight_trend",
+              "expected_behavior": "Calls get_weight_trend with the 3 readings. Says there isn't enough yet and that about 4 more mornings give a first verdict; gives the average so far and no chance figure."
+            },
+            {
+              "description": "Pounds with a goal weight",
+              "prompt": "Weights in lb, mornings in November 2026: 11-01 212.7, 11-02 211.4, 11-03 212.6, 11-04 210.7, 11-05 211.6, 11-06 211.7, 11-07 210.4, 11-08 210.9, 11-09 211.6, 11-10 210.3, 11-11 211.1, 11-12 209.6, 11-13 210.3, 11-14 210.7. My goal is 190 lb. How long at this pace?",
+              "tools_triggered": "get_weight_trend",
+              "expected_behavior": "Calls get_weight_trend with unit lb and goal_weight 190. Answers in pounds: trend about 210 lb, down about 1 lb a week, 9 in 10 that it is coming off, and about 20 weeks to 190 lb at this pace, stated as the recent pace, not a promise."
+            },
+            {
+              "description": "Watch steps beside a flat scale",
+              "prompt": "My weight has been stuck. Morning kg in Nov 2026: 11-01 88.3, 11-02 87.8, 11-03 88.4, 11-04 87.6, 11-05 88.1, 11-06 88.2, 11-07 87.7, 11-08 88, 11-09 88.3, 11-10 87.8, 11-11 88.3, 11-12 87.7, 11-13 88, 11-14 88.3. Steps from my watch: 11-01 11270, 11-02 10420, 11-03 10560, 11-04 9440, 11-05 9490, 11-06 9180, 11-07 8330, 11-08 8200, 11-09 8115, 11-10 7265, 11-11 7225, 11-12 6285, 11-13 6245, 11-14 6070. Why did the scale stop moving?",
+              "tools_triggered": "get_body_signals",
+              "expected_behavior": "Calls get_body_signals with the weights and steps. Reports the weight as flat or too close to call, steps falling by about 2,800 a week, and that moving less may be part of why the scale stalled; says it is not medical advice."
+            },
+            {
+              "description": "Asked in Spanish",
+              "prompt": "Mis pesos de la mañana en kg (noviembre de 2026): 11-01 92.7, 11-02 92.1, 11-03 92.6, 11-04 91.8, 11-05 92.2, 11-06 92.2, 11-07 91.6, 11-08 91.8, 11-09 92.1, 11-10 91.5, 11-11 91.9, 11-12 91.2, 11-13 91.5, 11-14 91.7. ¿De verdad estoy bajando de peso?",
+              "tools_triggered": "get_weight_trend",
+              "expected_behavior": "Calls get_weight_trend with the 14 readings in kg and answers in Spanish: the trend of about 91.4 kg, down about 0.5 kg a week, and that the weight is almost certainly coming off."
+            }
+          ],
+          "negative": [
+            {
+              "description": "A diagnosis request: no tool call; suggests seeing a doctor and offers to look at dated weigh-ins instead",
+              "prompt": "I lost 6 kg in two weeks without trying. What illness do I have?"
+            },
+            {
+              "description": "A medicine dose request: no tool call; says a doctor decides doses",
+              "prompt": "Which weight-loss injection dose should I take to lose 10 kg faster?"
+            },
+            {
+              "description": "A weight question that isn't about the person's scale readings: no tool call",
+              "prompt": "How much does a blue whale weigh?"
+            }
+          ]
+        },
+        "demo_recording_url": "https://github.com/slimchanceapp/slimchance/releases/download/review-assets/slim-chance-demo.webm",
+        "commerce": false,
+        "commerce_description": "Slim Chance sells nothing, takes no payments and shows no ads."
+      },
+      "publication": {
+        "countries": [],
+        "release_notes": "First release: get_weight_trend (the trend and the chance it is really moving) and get_body_signals (watch signals beside the scale)."
+      }
+    }
+  }
+}

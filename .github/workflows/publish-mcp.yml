@@ -17,7 +17,7 @@ jobs:
       - name: The live server answers before it is listed
         run: |
           curl -sf -X POST https://slimchance.app/mcp -H 'Content-Type: application/json' \
-            -H 'MCP-Protocol-Version: 2025-11-25' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q '"slim_chance"'
+            -H 'MCP-Protocol-Version: 2025-11-25' -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | grep -q '"get_weight_trend"'
       - name: Install mcp-publisher (pinned, checksum verified)
         env:
           V: '1.8.6'

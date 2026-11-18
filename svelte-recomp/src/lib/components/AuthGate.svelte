@@ -97,7 +97,7 @@
     {/if}
 
     <footer class="ag-links">
-      <a href="/about/">How it works</a> · <a href="/privacy.html">Privacy</a> · <a href="https://github.com/slimchanceapp/slimchance" target="_blank" rel="noopener noreferrer">Open source</a>
+      <a href="/about/">How it works</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="https://github.com/slimchanceapp/slimchance" target="_blank" rel="noopener noreferrer">Open source</a>
     </footer>
   </div>
 </div>

@@ -57,7 +57,7 @@ function robot(): { automated?: true } {
 export const isRobot = (): boolean => !!robot().automated;
 
 /** The version of the privacy page a consent was given to (static/privacy.html). */
-export const PRIVACY_VERSION = '2026-11-13';
+export const PRIVACY_VERSION = '2026-11-18';
 
 /** Creating an account needs explicit consent to keeping health data (GDPR
  *  Art. 9); it's recorded on the account itself, so it can be shown later. */

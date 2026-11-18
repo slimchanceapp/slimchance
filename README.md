@@ -65,9 +65,9 @@ Gemini CLI: `gemini extensions install https://github.com/slimchanceapp/slimchan
 dated morning weights and ask whether the weight is really moving; the assistant answers in your
 language.
 
-- `slim_chance`: the trend, the rate per week with its 95% range, and the chance in 10 that the
+- `get_weight_trend`: the trend, the rate per week with its 95% range, and the chance in 10 that the
   weight is really moving the way you want. Needs 7 readings in 5 weeks.
-- `body_signals`: resting heart rate, steps, sleep and HRV, each with its own trend and what it
+- `get_body_signals`: resting heart rate, steps, sleep and HRV, each with its own trend and what it
   means beside the scale.
 
 Nothing sent to the tools is stored; calls are counted per day by tool, assistant name and country.

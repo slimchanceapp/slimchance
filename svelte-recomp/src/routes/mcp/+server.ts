@@ -1,5 +1,5 @@
 // The MCP endpoint (src/lib/mcp.ts): moves bytes, decides nothing.
-import { handleMcp, clientLabel } from '$lib/mcp';
+import { handleMcp, clientLabel, toolName } from '$lib/mcp';
 import { PUBLIC_SUPABASE_URL, PUBLIC_SUPABASE_PUBLISHABLE_KEY } from '$env/static/public';
 import type { RequestHandler } from './$types';
 
@@ -38,8 +38,8 @@ export const POST: RequestHandler = async ({ request }) => {
  *  arguments (migrations 20261110130000_mcp_calls, 20261113090000_mcp_calls_by_client).
  *  Never slows or breaks an answer: a short timeout, and any failure is ignored. */
 async function count(msg: { method?: string; params?: { name?: string } }, client: string, country: string) {
-  const tool = msg.method === 'tools/call' ? msg.params?.name : msg.method;
-  if (tool !== 'initialize' && tool !== 'tools/list' && tool !== 'slim_chance' && tool !== 'body_signals') return;
+  const tool = msg.method === 'tools/call' ? toolName(msg.params?.name) : msg.method;
+  if (!tool || (msg.method !== 'tools/call' && tool !== 'initialize' && tool !== 'tools/list')) return;
   try {
     await fetch(`${PUBLIC_SUPABASE_URL}/rest/v1/rpc/note_mcp_call`, {
       method: 'POST', signal: AbortSignal.timeout(800),

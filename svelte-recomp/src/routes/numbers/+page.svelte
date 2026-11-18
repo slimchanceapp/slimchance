@@ -83,8 +83,8 @@
   <section class="card" aria-label="Assistants using Slim Chance">
     <div class="card-lbl">Assistants using Slim Chance · MCP, last 30 days</div>
     <div class="nb-pair"><span>Connected</span><b>{m.mcp?.['initialize'] ?? 0}</b></div>
-    <div class="nb-pair"><span>Asked for the chance</span><b>{m.mcp?.['slim_chance'] ?? 0}</b></div>
-    <div class="nb-pair"><span>Asked about a watch</span><b>{m.mcp?.['body_signals'] ?? 0}</b></div>
+    <div class="nb-pair"><span>Asked for the chance</span><b>{m.mcp?.['get_weight_trend'] ?? 0}</b></div>
+    <div class="nb-pair"><span>Asked about a watch</span><b>{m.mcp?.['get_body_signals'] ?? 0}</b></div>
     <p class="nb-foot">Counts of calls to slimchance.app/mcp, by day and tool. Nothing anyone sent is kept, so these are calls, not people.</p>
   </section>
 

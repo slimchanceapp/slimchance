@@ -309,6 +309,7 @@ stepping back on the scale after a gap is welcomed, not scored
 t-critical is the real t value, not the normal approximation
 the 4-day split alternates lower and upper
 the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area
+the ChatGPT directory pack follows the directory’s rules
 the Coach area keeps its boundary: the AI’s words and their checks, building only on Moments
 the Food hero praises protein when it’s hit and never colours a day still in progress
 the Google Play build updates only through Play and loads slimchance.app
@@ -380,8 +381,10 @@ the summary describes what was actually built
 the summary reads like a message, and carries the real numbers
 the surplus stays lean rather than sprinting
 the tap map counts named buttons per screen and day, with nothing that says who and never what a button shows
+the terms page says what Slim Chance is and isn’t, and every door links it
 the text-size setting is wired end to end
 the theme switch turns light on at once, not after a restart
+the tools have plain verb names for the directories, and their first names still answer
 the training reminder comes at the session's own time, and not once you have trained
 the update dot never says "up to date" while the phone app is behind
 the user's own sport name and time are used, never a hardcoded club

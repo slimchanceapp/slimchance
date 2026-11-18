@@ -76,7 +76,7 @@ expect(coach.status === 401, `coach without a login: ${coach.status}, not 401`);
 // The MCP endpoint answers an assistant the way the spec says (src/lib/mcp.ts).
 const mcp = await get(`${HOSTS[1]}/mcp`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream', 'mcp-protocol-version': '2025-11-25' },
   body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/list' }) });
-expect(mcp.status === 200 && mcp.body.includes('"slim_chance"'), `mcp tools/list: ${mcp.status}`);
+expect(mcp.status === 200 && mcp.body.includes('"get_weight_trend"'), `mcp tools/list: ${mcp.status}`);
 
 if (fails.length) {
   console.error(`smoke: ${fails.length} failed\n  ${fails.join('\n  ')}`);

@@ -26,7 +26,7 @@ const LB = 2.20462;
 const MAX_READINGS = 400;
 
 const TOOL = {
-  name: 'slim_chance',
+  name: 'get_weight_trend',
   title: 'Slim Chance: is my weight really moving?',
   description:
     'Use when someone shares dated scale readings, or asks whether their weight loss (or gain) is really ' +
@@ -81,7 +81,7 @@ const series = (field: string, what: string) => ({
 });
 
 const SIGNALS_TOOL = {
-  name: 'body_signals',
+  name: 'get_body_signals',
   title: 'Slim Chance: what the watch says beside the scale',
   description:
     'Use when someone with a watch or fitness tracker asks what their resting heart rate, steps, sleep or HRV ' +
@@ -225,6 +225,16 @@ export function clientLabel(msg: any, userAgent: string | null): string {
   return raw.toLowerCase().replace(/[^a-z0-9 ._-]/g, '').trim().slice(0, 40) || 'unknown';
 }
 
+// 18 Nov 2026: ChatGPT's directory wants plain-language, verb-based tool names.
+// Assistants that saved the first names keep getting answers.
+const FIRST_NAMES: Record<string, string> = { slim_chance: 'get_weight_trend', body_signals: 'get_body_signals' };
+
+/** A tool's current name, from its current or first name; null for anything else. */
+export function toolName(name: unknown): string | null {
+  const n = typeof name === 'string' ? FIRST_NAMES[name] ?? name : null;
+  return n === TOOL.name || n === SIGNALS_TOOL.name ? n : null;
+}
+
 export interface McpReply { status: number; body: unknown | null }
 
 /** One HTTP POST: a JSON-RPC message in, a status and a JSON body (or none) out. */
@@ -246,14 +256,14 @@ export function handleMcp(msg: any, headers: { protocolVersion?: string | null }
         protocolVersion: SUPPORTED.includes(want) ? want : SUPPORTED[0],
         capabilities: { tools: {} },
         serverInfo: { name: 'slim-chance', title: 'Slim Chance', version: '1.0.0', websiteUrl: 'https://slimchance.app' },
-        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (slim_chance), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (body_signals). Ask for at least a week of dated daily values. Weights go in kg or lb: convert others first (1 jin (斤) = 0.5 kg, 1 stone = 14 lb). The numbers mean the same in every language, so answer in the person\'s own language. Not medical advice. Nothing anyone sends is stored; calls are counted per day, with the assistant\'s name and country.',
+        instructions: 'Slim Chance turns dated morning scale readings into an honest weight trend and the chance in 10 that it is really moving (get_weight_trend), and reads a watch beside the scale: resting heart rate, steps, sleep and HRV (get_body_signals). Ask for at least a week of dated daily values. Weights go in kg or lb: convert others first (1 jin (斤) = 0.5 kg, 1 stone = 14 lb). The numbers mean the same in every language, so answer in the person\'s own language. Not medical advice. Nothing anyone sends is stored; calls are counted per day, with the assistant\'s name and country.',
       });
     }
     case 'ping': return ok({});
     case 'tools/list': return ok({ tools: [TOOL, SIGNALS_TOOL] });
     case 'tools/call':
-      if (msg.params?.name === TOOL.name) return ok(slimChance(msg.params?.arguments ?? {}));
-      if (msg.params?.name === SIGNALS_TOOL.name) return ok(bodySignals(msg.params?.arguments ?? {}));
+      if (toolName(msg.params?.name) === TOOL.name) return ok(slimChance(msg.params?.arguments ?? {}));
+      if (toolName(msg.params?.name) === SIGNALS_TOOL.name) return ok(bodySignals(msg.params?.arguments ?? {}));
       return err(200, msg.id, -32602, `Unknown tool: ${msg.params?.name}`);
     default: return err(404, msg.id, -32601, `Method not found: ${msg.method}`);
   }

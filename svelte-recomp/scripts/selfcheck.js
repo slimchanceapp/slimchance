@@ -5430,7 +5430,7 @@ check('any AI assistant can ask Slim Chance for the trend and the chance over MC
   assert.equal(newer.body.error.code, -32022, 'a newer client is told which versions to fall back to');
   assert.deepEqual(newer.body.error.data.supported, SUPPORTED);
   const list = handleMcp({ jsonrpc: '2.0', id: 3, method: 'tools/list' }, { protocolVersion: '2025-11-25' });
-  assert.deepEqual(list.body.result.tools.map((t) => t.name), ['slim_chance', 'body_signals']);
+  assert.deepEqual(list.body.result.tools.map((t) => t.name), ['get_weight_trend', 'get_body_signals']);
   assert.equal(list.body.result.tools[0].annotations.readOnlyHint, true);
   assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).status, 404);
   assert.equal(handleMcp({ jsonrpc: '2.0', id: 4, method: 'resources/list' }).body.error.code, -32601);
@@ -5644,7 +5644,7 @@ check('people and their assistants can find the MCP server: llms.txt, the landin
   assert.equal(url, 'https://slimchance.app/mcp');
   const llms = readFileSync('static/llms.txt', 'utf8');
   assert.match(llms, /^# Slim Chance\n\n> /, 'llmstxt.org shape: a title, then a one-paragraph summary');
-  for (const t of ['slim_chance', 'body_signals', url, 'https://slimchance.app/privacy.html']) assert.ok(llms.includes(t), `llms.txt names ${t}`);
+  for (const t of ['get_weight_trend', 'get_body_signals', url, 'https://slimchance.app/privacy.html']) assert.ok(llms.includes(t), `llms.txt names ${t}`);
   const about = readFileSync('static/about/index.html', 'utf8');
   assert.match(about, /<details id="ai"><summary>Can my AI assistant use Slim Chance\?<\/summary>/);
   assert.ok(about.includes(`<code>${url}</code>`), 'the landing page gives the address to paste');
@@ -6302,6 +6302,81 @@ check('ship stops on any high advisory nobody has read, and an accepted one hold
   const ok = { 'GHSA-aaaa-bbbb-cccc': { reason: 'x', until: '2026-12-21' } };
   assert.equal(gate(audit('critical', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), ok, '2026-11-18').length, 0, 'accepted, in date');
   assert.equal(gate(audit('high', 'https://github.com/advisories/GHSA-aaaa-bbbb-cccc'), ok, '2026-12-22').length, 1, 'past its date it stops ship again');
+});
+
+check('the tools have plain verb names for the directories, and their first names still answer', async () => {
+  // 18 Nov: ChatGPT's directory wants plain-language, verb-based tool names.
+  // Assistants that saved slim_chance / body_signals keep working.
+  const { handleMcp, toolName } = await import('../src/lib/mcp.ts');
+  const names = handleMcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' }).body.result.tools.map((t) => t.name);
+  for (const n of names) assert.match(n, /^(get|check|read)_[a-z_]+$/, n);
+  assert.equal(toolName('slim_chance'), 'get_weight_trend');
+  assert.equal(toolName('body_signals'), 'get_body_signals');
+  assert.equal(toolName('get_body_signals'), 'get_body_signals');
+  assert.equal(toolName('drop_tables'), null);
+  const old = handleMcp({ jsonrpc: '2.0', id: 2, method: 'tools/call', params: { name: 'body_signals', arguments: { steps: [] } } });
+  assert.ok(old.body.result && !old.body.error, 'an old name gets an answer, not "unknown tool"');
+  const { readFileSync, readdirSync } = await import('node:fs');
+  assert.match(readFileSync('src/routes/mcp/+server.ts', 'utf8'), /msg\.method === 'tools\/call' \? toolName\(msg\.params\?\.name\) : msg\.method/, 'counted under the new name, whichever was called');
+  const mig = readdirSync('../supabase/migrations').filter((f) => f.endsWith('_mcp_tool_names.sql'));
+  assert.equal(mig.length, 1);
+  const sql = readFileSync(`../supabase/migrations/${mig[0]}`, 'utf8');
+  assert.match(sql, /if p_tool not in \('initialize', 'tools\/list', 'get_weight_trend', 'get_body_signals'\) then/);
+  assert.match(sql, /update public\.mcp_calls set tool = 'get_weight_trend' where tool = 'slim_chance';/, 'past counts move with the name');
+  const numbers = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
+  assert.match(numbers, /m\.mcp\?\.\['get_weight_trend'\]/);
+  for (const f of ['scripts/smoke.mjs', '../.github/workflows/publish-mcp.yml']) assert.match(readFileSync(f, 'utf8'), /get_weight_trend/, `${f} looks for the new name`);
+});
+
+check('the terms page says what Slim Chance is and isn’t, and every door links it', async () => {
+  // 18 Nov: ChatGPT's directory needs a terms URL; there wasn't one.
+  const { readFileSync } = await import('node:fs');
+  const t = readFileSync('static/terms.html', 'utf8');
+  assert.match(t, /Not medical advice/);
+  assert.match(t, /18 and over/);
+  assert.match(t, /Nothing here takes away rights the consumer law of your\s+country gives you/);
+  assert.match(t, /id="contact"/, 'the support address the directory links to');
+  for (const f of ['static/privacy.html', 'static/about/index.html', 'src/lib/components/AuthGate.svelte', 'static/llms.txt', 'static/sitemap.xml']) {
+    assert.match(readFileSync(f, 'utf8'), /terms\.html/, `${f} links the terms`);
+  }
+});
+
+check('the ChatGPT directory pack follows the directory’s rules', async () => {
+  // developers.openai.com/plugins/deploy/submission, read 18 Nov 2026.
+  const { readFileSync, existsSync } = await import('node:fs');
+  const dir = 'store/chatgpt';
+  const plugin = JSON.parse(readFileSync(`${dir}/plugin.json`, 'utf8'));
+  const mcpCfg = JSON.parse(readFileSync(`${dir}/mcp.json`, 'utf8'));
+  assert.match(plugin.name, /^[a-z0-9]+(-[a-z0-9]+)*$/);
+  assert.ok(plugin.name.length <= 64);
+  assert.match(plugin.version, /^\d+\.\d+\.\d+$/);
+  const servers = Object.values(mcpCfg.mcpServers);
+  assert.equal(servers.length, 1, 'exactly one server');
+  assert.deepEqual(servers[0], { type: 'streamable-http', url: 'https://slimchance.app/mcp' }, 'no headers, no auth');
+  const oai = plugin.extensions['com.openai'];
+  const i = oai.interface;
+  assert.ok(i.displayName.length <= 30 && i.shortDescription.length <= 30 && i.longDescription.length <= 4000 && i.developerName.length <= 80);
+  assert.equal(i.developerName, 'Nikhil Shanbhag', 'his verified name (his yes, 18 Nov)');
+  for (const k of ['websiteURL', 'supportURL', 'privacyPolicyURL', 'termsOfServiceURL']) assert.match(i[k], /^https:\/\/slimchance\.app\//, k);
+  assert.ok(existsSync(`static/${i.termsOfServiceURL.replace('https://slimchance.app/', '').replace(/#.*/, '')}`), 'the terms page ships');
+  assert.ok((i.defaultPrompt ?? []).length <= 3 && i.defaultPrompt.every((x) => x.length <= 128));
+  const listing = [i.displayName, i.shortDescription, i.longDescription, ...(i.capabilities ?? []), ...i.defaultPrompt].join(' ');
+  assert.doesNotMatch(listing, /\bfree\b|no cost|costs nothing|\bMCP\b|plugin/i, 'no pricing words, no "MCP" or "plugin" in the listing');
+  for (const k of ['logo', 'composerIcon']) assert.ok(existsSync(`${dir}/${i[k].slice(2)}`), `${k} file is in the pack`);
+  const { handleMcp } = await import('../src/lib/mcp.ts');
+  const names = handleMcp({ jsonrpc: '2.0', id: 1, method: 'tools/list' }).body.result.tools.map((t) => t.name);
+  const tc = oai.review.test_cases;
+  assert.equal(tc.positive.length, 5);
+  assert.equal(tc.negative.length, 3);
+  for (const c of tc.positive) {
+    assert.ok(c.description && c.prompt && c.expected_behavior, c.description);
+    for (const n of c.tools_triggered.split(/,\s*/)) assert.ok(names.includes(n), `${c.description}: ${n} is a real tool`);
+  }
+  for (const c of tc.negative) assert.ok(c.description && c.prompt);
+  assert.match(oai.review.demo_recording_url, /^https:\/\//);
+  assert.equal(oai.review.commerce, false);
+  assert.deepEqual(oai.publication.countries, [], 'every country the directory serves');
+  assert.doesNotMatch(JSON.stringify(plugin), /clientSecret|test_credentials|reviewer_instructions|"apps"|hooks/);
 });
 
 // Nothing may be reported until the async checks have actually settled.
