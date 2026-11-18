@@ -232,7 +232,7 @@ use outside tools and data. The assistant is the *client*; we are a
 
 | Primitive | What it is | Ours |
 |---|---|---|
-| Tools | Actions the model can decide to call | `slim_chance` |
+| Tools | Actions the model can decide to call | `get_weight_trend` (called `slim_chance` until 18 Nov 2026: directories want plain verb names, and the old name still answers) |
 | Resources | Documents the app can read into the conversation | none yet |
 | Prompts | Ready-made conversation starters the person picks | none yet |
 
@@ -248,7 +248,7 @@ transport "Streamable HTTP").
    instructions for the model.
 2. **notifications/initialized.** "Ready." A notification has no `id`, so
    no answer is due: we return HTTP 202 and nothing else.
-3. **tools/list.** We describe `slim_chance`: a title, a description, and a
+3. **tools/list.** We describe `get_weight_trend`: a title, a description, and a
    JSON Schema for its input (dated weights, kg or lb, which way the person
    wants to go) and its output.
 4. **The model decides.** Nobody presses a button. The model reads the
