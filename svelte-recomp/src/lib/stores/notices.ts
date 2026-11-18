@@ -83,7 +83,3 @@ export const saveAccountOpen = writable(false);
 
 /** "Bring your weigh-ins", opened from Settings or day one on Today. */
 export const importOpen = writable(false);
-
-/** "Bring in your watch and phone?" on Today again, from the menu
- *  (2026-11-18: after Not now there was no way back). */
-export const healthAskOpen = writable(false);

@@ -3106,10 +3106,14 @@ check('watch data and the morning note can always be found again: one tap in the
   // 2026-11-18, the owner on his own phone: "now that I have refused the watch
   // connection - how I can bring it back - and I am the author of this app."
   const { readFileSync } = await import('node:fs');
-  assert.match(readFileSync('src/lib/stores/notices.ts', 'utf8'), /export const healthAskOpen = writable\(false\);/);
+  // Same day, on the Play install: the entry sent him to the top of Today,
+  // with the question below the fold. A settings switch does the thing itself.
   const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
   assert.match(layout, /<span>Watch & phone data<\/span>/, 'a menu entry, named as the card names it');
-  assert.match(layout, /if \(watchShared\) openHealthConnectSettings\(\); else \{ healthAskOpen\.set\(true\); goto\(base \+ '\/'\); \}/, 'off: the question again; on: Health Connect, to change it');
+  assert.match(layout, /if \(watchShared\) \{ openHealthConnectSettings\(\); return; \}/, 'on: Health Connect, to change what is shared');
+  assert.match(layout, /const s = await syncHealthConnect\(uid, \{ force: true \}\);/, 'off: Android\u2019s own permission screen, straight from the menu');
+  assert.match(layout, /'Android didn\u2019t show the request'[^\n]*\n\s*openHealthConnectSettings\(\);/, 'and when Android won\u2019t show it, Health Connect itself');
+  assert.doesNotMatch(layout, /healthAskOpen/, 'never sends anyone hunting for a card');
   const ask = readFileSync('src/lib/components/HealthAsk.svelte', 'utf8');
   assert.match(ask, /Any time: ··· menu → Watch & phone data/, 'Not now says where it lives');
   assert.match(ask, /Any time: ··· menu → Notifications/);

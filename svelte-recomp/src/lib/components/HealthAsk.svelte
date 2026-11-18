@@ -12,7 +12,6 @@
   import { healthConnect, syncHealthConnect, openHealthConnectSettings } from '$lib/health/healthConnect';
   import { brandForPackage, setupHelp } from '$lib/health/watches';
   import { notesPermission } from '$lib/moments/nativeAlarms';
-  import { healthAskOpen } from '$lib/stores/notices';
   import { speak } from '$lib/stores/toast';
 
   const KEY = 'recompos.healthAskLater';
@@ -21,17 +20,7 @@
   const shared = $derived(($healthConnect.grantedPerms ?? []).length > 0);
   // Known to share nothing: a sync has checked and found no permission.
   const none = $derived($healthConnect.native && $healthConnect.available && $healthConnect.grantedPerms != null && !shared);
-  // Opened again from the menu (··· → Watch & phone data).
-  let reopened = $state(false);
-  $effect(() => {
-    if (!$healthAskOpen) return;
-    healthAskOpen.set(false);
-    later = false;
-    reopened = true;
-    step = 'ask';
-    try { localStorage.removeItem(KEY); } catch { /* nothing remembered */ }
-  });
-  const show = $derived(isAndroidApp() && (((none || reopened) && !shared && !later) || step !== 'ask'));
+  const show = $derived(isAndroidApp() && ((none && !later) || step !== 'ask'));
   const brands = $derived([...new Set($healthConnect.sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))]);
   const help = $derived(setupHelp('other'));
 
@@ -68,7 +57,6 @@
     noteEvent('health_later');
     speak('health-later', 'Any time: ··· menu → Watch & phone data', { force: true });
     later = true;
-    reopened = false;
     try { localStorage.setItem(KEY, '1'); } catch { /* asked again on another visit */ }
   }
 </script>

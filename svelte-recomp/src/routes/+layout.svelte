@@ -7,7 +7,7 @@
   import { syncStatus } from '$lib/stores/sync';
   import { user, authReady, initAuth, signOut, deleteAccount, isTrial, isRobot } from '$lib/stores/user';
   import SaveAccount from '$lib/components/SaveAccount.svelte';
-  import { saveAccountOpen, importOpen, healthAskOpen } from '$lib/stores/notices';
+  import { saveAccountOpen, importOpen } from '$lib/stores/notices';
   import ImportWeights from '$lib/components/ImportWeights.svelte';
   import { initSync, destroySync, upsertRecord } from '$lib/stores/sync';
   import { subscribeWebPush } from '$lib/push';
@@ -19,7 +19,7 @@
   import Diagnostics from '$lib/components/Diagnostics.svelte';
   import CoachToast from '$lib/components/CoachToast.svelte';
   import NativeUpdateBanner from '$lib/components/NativeUpdateBanner.svelte';
-  import { resetSpoken } from '$lib/stores/toast';
+  import { resetSpoken, speak } from '$lib/stores/toast';
   import Modal from '$lib/components/Modal.svelte';
   import { base } from '$app/paths';
   import { syncHealthConnect, healthConnect, openHealthConnectSettings } from '$lib/health/healthConnect';
@@ -57,13 +57,26 @@
   let { children }: { children: import('svelte').Snippet } = $props();
   let crashMsg = $state<string | null>(null);
   let menuOpen = $state(false);
-  // Watch data, findable again after Not now: off brings the question back on
-  // Today; on names the app and opens Health Connect to change what's shared.
+  // Watch data, findable again after Not now (2026-11-18). Off: Android's own
+  // permission screen, straight from here, and a line saying how it went; when
+  // Android won't show it, Health Connect itself. On: names the app the data
+  // comes from, and opens Health Connect to change what's shared.
   const watchShared = $derived(($healthConnect.grantedPerms ?? []).length > 0);
-  const watchApps = $derived([...new Set($healthConnect.sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))].join(', '));
-  function watchMenu() {
+  const appsOf = (sources: string[]) => [...new Set(sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))].join(', ');
+  const watchApps = $derived(appsOf($healthConnect.sources));
+  async function watchMenu() {
     menuOpen = false;
-    if (watchShared) openHealthConnectSettings(); else { healthAskOpen.set(true); goto(base + '/'); }
+    if (watchShared) { openHealthConnectSettings(); return; }
+    const uid = $user?.id;
+    if (!uid) return;
+    const s = await syncHealthConnect(uid, { force: true });
+    if ((s.grantedPerms ?? []).length) {
+      const apps = appsOf(s.sources);
+      speak('watch-on', apps ? `Connected: reading from ${apps}` : 'Connected', { tone: 'good', force: true, body: apps ? undefined : 'Nothing in yet: in your watch app, switch on sharing with Health Connect.' });
+    } else {
+      speak('watch-off', 'Android didn’t show the request', { force: true, body: 'Opening Health Connect: allow Slim Chance there.' });
+      openHealthConnectSettings();
+    }
   }
   let deleteOpen = $state(false);
   let leaveOpen = $state(false);
