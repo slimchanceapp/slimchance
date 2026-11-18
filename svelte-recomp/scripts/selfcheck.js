@@ -3087,6 +3087,44 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the coach reads the watch: each signal this week against the person’s own usual, with what the research says it means', async () => {
+  // 2026-11-18, the owner: "disappointed that you aren't doing very much with
+  // my watch data". The coach saw workout minutes only. Every number here is
+  // worked out by the app, so the coach can quote it and the reply check
+  // still holds; the evidence is in docs/learn (chapter: what the watch says).
+  const { watchBrief } = await import('../src/lib/health/brief.ts');
+  const day = (back) => { const d = new Date('2026-11-18T12:00:00'); d.setDate(d.getDate() - back); return d.toISOString().slice(0, 10); };
+  const series = (fn, from = 35, to = 0) => { const out = []; for (let b = from; b >= to; b--) { const v = fn(b); if (v != null) out.push({ date: day(b), value: v }); } return out; };
+  const usualSleep = (b) => (b <= 6 ? 5.5 : 7.2 + ((b % 3) - 1) * 0.2);
+  const brief = watchBrief({
+    today: '2026-11-18', weightKg: 100,
+    sleep: series(usualSleep),
+    steps: series((b) => (b === 0 ? 1200 : b <= 7 ? 6000 : 9000 + ((b % 2) ? 400 : -400))),
+    restingHr: series((b) => (b <= 2 ? 68 : 62 + ((b % 3) - 1) * 2)),
+    hrv: series((b) => (b <= 6 ? 38 : 48 + ((b % 4) - 1.5) * 6)),
+  });
+  const of = (k) => brief.find((f) => f.kind === k);
+  assert.deepEqual(brief.map((f) => f.kind), ['resting_hr', 'sleep', 'hrv', 'steps'], 'the most pressing first');
+  assert.equal(of('sleep').week, 5.5);
+  assert.match(of('sleep').says, /385 kcal/, 'short nights: next-day eating, from the meta-analysis');
+  assert.match(of('sleep').says, /270 kcal/, 'and the sleep-extension trial');
+  assert.equal(of('steps').week, 6000, 'today is half walked, so the week ends yesterday');
+  assert.equal(of('steps').change, -3000);
+  assert.deepEqual([of('steps').kcalLow, of('steps').kcalHigh], [110, 180], '3000 steps at 100 kg: 0.5-0.8 kcal per kg per km, 0.75 km per 1000 steps');
+  assert.equal(of('resting_hr').week, 68, 'resting heart rate: the last 3 mornings');
+  assert.match(of('resting_hr').says, /easier day/);
+  assert.doesNotMatch(brief.map((f) => f.says).join(' '), /you are ill|infection|diagnos/i, 'never a diagnosis');
+  assert.ok(of('hrv').swc > 0 && of('hrv').week < of('hrv').usual - of('hrv').swc, 'HRV below the smallest change that matters for this person');
+  assert.deepEqual(watchBrief({ today: '2026-11-18', weightKg: 100, sleep: [], steps: [], restingHr: [], hrv: [] }), [], 'no watch, nothing said');
+  const steady = watchBrief({ today: '2026-11-18', weightKg: 100, sleep: series(() => 7.4), steps: series(() => 9000), restingHr: series(() => 60), hrv: series(() => 50) });
+  assert.deepEqual(steady, [], 'nothing changed, nothing said');
+  const { readFileSync } = await import('node:fs');
+  assert.match(readFileSync('../supabase/functions/coach/index.ts', 'utf8'), /facts\.watch/, 'the coach is told what the watch says');
+  assert.match(readFileSync('src/lib/stores/brain.ts', 'utf8'), /watch: get\(watchSays\)/, 'the evening coach gets it');
+  assert.match(readFileSync('src/lib/components/TrainPlan.svelte', 'utf8'), /watch: \$watchSays/, 'and the training planner');
+  assert.match(readFileSync('src/lib/stores/body.ts', 'utf8'), /export const watchSays/, 'worked out once, in the body store');
+});
+
 check('the iPhone app carries the app inside it (Apple 4.2), and its proof runs with the live site blocked', async () => {
   // 2026-11-18, Apple prep (Pact m27): Apple rejects "a website in a wrapper",
   // and the iPhone shell loaded the live site, so it also showed an error in

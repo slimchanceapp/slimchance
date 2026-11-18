@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { watchSays } from '$lib/stores/body';
   // The coach arranges the rest of your training week (pact m14, 2026-11-10):
   // your own sessions, walks and rest over the days left. src/lib/trainPlan.ts
   // refuses anything else: never a new exercise or load, never more sessions
@@ -45,7 +46,7 @@
     let got: CheckedTrainPlan | null = null;
     const facts: Record<string, unknown> = {
       today, days, sessions, sessionsLeft: left, doneDates: doneDates.filter((d) => d >= monday),
-      easyToday, readiness: ready?.word ?? null, notes: $coachNotes ?? '',
+      easyToday, readiness: ready?.word ?? null, notes: $coachNotes ?? '', watch: $watchSays,
     };
     for (let attempt = 0; attempt < 2 && !got && !err; attempt++) {
       const { data, error } = await supabase.functions.invoke('coach', { body: { mode: 'train', facts }, timeout: 55_000 });

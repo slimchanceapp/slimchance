@@ -346,6 +346,7 @@ the coach brain is safe: nothing harmful gets through, whatever the AI was told 
 the coach brain sees only the app's own numbers, and nothing it writes goes out unchecked
 the coach never assumes the user is cutting
 the coach plans the next days inside the floor, and the app does every sum
+the coach reads the watch: each signal this week against the person’s own usual, with what the research says it means
 the coach’s evening note never names a time or a session that will have passed when it shows
 the coach’s plan is kept, and its meals are ticked as they are logged
 the confirmation names real numbers, not "done"

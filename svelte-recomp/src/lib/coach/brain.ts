@@ -42,7 +42,13 @@ export interface BrainFacts {
   usualFoods: string[];
   recentEvenings: string[];
   notes: string | null;
+  /** What the watch says this week against the person's usual, worked out by
+   *  the app (health/brief.ts): plain words and numbers. */
+  watch: WatchNote[];
 }
+
+/** One watch fact as the coach sees it (health/brief.ts WatchFact). */
+export type WatchNote = { kind: string; says: string; week?: number; usual?: number };
 
 /** Flat, so Gemini's response schema stays simple: empty strings mean "none". */
 export interface BrainReply {
@@ -72,6 +78,7 @@ export interface FactsInput {
   usualFoods: string[];
   recentEvenings: string[];
   notes: string | null;
+  watch?: WatchNote[];
 }
 
 const DOW = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -121,6 +128,7 @@ export function buildFacts(i: FactsInput): BrainFacts {
     usualFoods: i.usualFoods.slice(0, 8),
     recentEvenings: i.recentEvenings.slice(-7),
     notes: i.notes?.trim() || null,
+    watch: (i.watch ?? []).slice(0, 4),
   };
 }
 

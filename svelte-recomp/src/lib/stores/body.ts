@@ -21,7 +21,7 @@ import { resolveCalorieTarget, burnFloor, calcTdee, type LiveTargetResult, type 
 import { proteinTargetG, ageFrom } from '$lib/profile';
 import { parseCalorieTarget } from '$lib/nutrition';
 import { mondayOf, shiftYmd } from '$lib/date';
-import { signalTrend } from '$lib/health';
+import { signalTrend, watchBrief, type WatchFact } from '$lib/health';
 import { weekBudget, weekShape, type WeekBudget, type WeekShape } from '$lib/nutrition';
 import { LINE_MARGIN_KG, lineState, type LineState } from '$lib/body';
 import { heldUnder, milestoneState, type MilestoneState } from '$lib/body';
@@ -204,6 +204,28 @@ export const scaleUp: Readable<UpExplained | null> = derived(
       return t == null ? [] : [{ date: w.date, kg: w.weight - t }];
     });
     return explainUp({ ...input, cycleNote: cycleNote(cycleInfo(starts, residuals, $b.today), starts, $b.today) });
+  },
+);
+
+/** What the watch says this week against the person's own usual (sleep,
+ *  steps, resting heart rate, HRV), with what it means: once, for the evening
+ *  coach and the training planner alike (health/brief.ts, 2026-11-18). */
+export const watchSays: Readable<WatchFact[]> = derived(
+  [liveBiometrics(), liveDailySteps(), body],
+  ([$bio, $steps, $body]) => {
+    const latest = new Map<string, any>();
+    for (const r of ($bio as any[]) ?? []) {
+      const prev = latest.get(r.date);
+      if (!prev || (r.updated_at || '') >= (prev.updated_at || '')) latest.set(r.date, r);
+    }
+    const rows = [...latest.values()];
+    const pick = (k: string) => rows.filter((r) => r[k] != null).map((r) => ({ date: r.date as string, value: +r[k] }));
+    return watchBrief({
+      today: $body.today,
+      weightKg: $body.weight?.trendKg ?? $body.currentKg ?? null,
+      sleep: pick('sleep_hours'), restingHr: pick('resting_hr'), hrv: pick('hrv'),
+      steps: [...(($steps as Map<string, number>) ?? new Map())].map(([date, value]) => ({ date, value })),
+    });
   },
 );
 

@@ -8,5 +8,7 @@ export { fitness } from './fitness.ts';
 export type { Fitness } from './fitness.ts';
 export { readyToday } from './readiness.ts';
 export { signalTrend, together, watchAgreement } from './signals.ts';
+export { watchBrief } from './brief.ts';
+export type { WatchFact, WatchKind } from './brief.ts';
 export type { SignalKind, SignalTrend } from './signals.ts';
 export { sleepPerformance } from './sleepPerformance.ts';

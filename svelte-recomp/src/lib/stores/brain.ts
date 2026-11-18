@@ -8,7 +8,7 @@
 // messages stand: no reply is never worse than the app without the coach.
 import { derived, get, writable, type Readable } from 'svelte/store';
 import { supabase } from '$lib/db/client';
-import { body } from './body';
+import { body, watchSays } from './body';
 import { liveActivitySessions, liveFoodLogs, liveProfile, liveSchedule, liveSessionCompletions, liveWeights, liveWorkoutLogs } from './live';
 import { upsertRecord } from './sync';
 import { PRIVACY_VERSION, userId } from './user';
@@ -73,6 +73,7 @@ function currentFacts(now: Date, recentEvenings: string[]) {
     usualFoods: frequentFoods(food, 8).map((f) => f.name),
     recentEvenings,
     notes: coachOf(profile).notes ?? null,
+    watch: get(watchSays),
   });
 }
 

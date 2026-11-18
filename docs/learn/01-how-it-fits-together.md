@@ -16,6 +16,7 @@ into the page.
 6. [The AI layer: engines, evidence, and an expensive lesson](#chapter-6-the-ai-layer-engines-evidence-and-an-expensive-lesson): the barcode chain, the day the AI went dark, and the two engines that replaced one.
 7. [Learning from the best: MacroFactor, Oura, Duolingo](#chapter-7-learning-from-the-best-macrofactor-oura-duolingo): reading the leaders' own methods, two faults they showed us, and the tests that proved the fixes.
 8. [Ask about your numbers: retrieval, a tool and a small agent](#chapter-8-ask-about-your-numbers-retrieval-a-tool-and-a-small-agent): finding the right paragraph by meaning, letting a model call our code, and the check that decides what you see.
+9. [What the watch tells the coach](#chapter-9-what-the-watch-tells-the-coach): four signals, how sure the research is about each, and how the app turns them into a sentence it can stand behind.
 
 [Glossary](#glossary) at the end. Decisions are in [docs/decisions](../decisions/README.md).
 
@@ -1133,6 +1134,140 @@ afterwards): 3 to 6 seconds per answer.
 passage. Then in `src/lib/coach/ask.ts`, delete the `if you` line and run
 `node scripts/eval-ask.mjs`: watch the oil question get refused for quoting
 our own guide.
+
+## Chapter 9. What the watch tells the coach
+
+**In short.**
+- The coach now reads four watch signals: sleep, steps, resting heart rate and HRV, each this week against your own previous four weeks.
+- It speaks only when a change is bigger than your normal wobble, and says what it means for today and for the scale.
+- Every number is worked out by the app, never by the AI; the AI only words it, and a check rejects any number it invents.
+- The watch's calorie count is never used: the evidence says it is too far off. Your budget keeps learning from your scale.
+
+### Why "against your own usual"
+
+People differ far more from each other than from themselves. In 92,457 wearers,
+normal resting heart rates ranged from 40 to 109 bpm, but a person's own value
+moved only about 3 bpm from day to day (Quer et al., PLOS ONE 2020). The same holds
+for HRV, which differs several-fold between healthy people. So a population
+"normal" says almost nothing about you, and a change against *your* baseline says
+a lot. Every rule below compares the last 7 days (resting heart rate: the last 3
+mornings) with the 28 days before, and needs at least 10 days of baseline and 4 of
+the week before it says anything.
+
+### How far the watch can be trusted
+
+| Signal | Typical error against lab measures | What we do with it |
+|---|---|---|
+| Steps | about 9% too few (umbrella review of wearable validation, Doherty et al. 2024) | Use, as a change against your usual: a constant undercount cancels out. |
+| Heart rate at rest | about ±3% (same review); wrist devices close to ECG at rest (Quer 2020) | Use. |
+| Sleep duration | total sleep counted too long, by 10% or more (same review) | Use, and say so: real sleep is likely a little shorter. |
+| HRV (night, RMSSD) | good for trends on the better devices; brand-dependent | Use only against your own baseline, never as an absolute. |
+| Calories burned | errors from about −21% to +15% by device and activity; one systematic review found them outside acceptable limits | **Never used.** Your budget is learned from your scale and your log instead (Chapter 1). |
+
+### The four signals, the evidence, and the rule
+
+**Sleep.** The strongest diet-relevant evidence of the four.
+- Short sleep raises eating: a meta-analysis of 11 controlled studies (172 people)
+  found about **+385 kcal/day** (95% CI 252 to 517) after partial sleep deprivation,
+  with no change in calories burned (Al Khatib et al., Eur J Clin Nutr 2017).
+  Limits: mostly lab settings, nights of 3.5 to 5.5 hours, at most 2 weeks.
+- Longer sleep lowers it: in a randomised trial of 80 adults with overweight who
+  slept under 6.5 hours, one counselling session added about 1.2 hours a night and
+  cut intake by about **270 kcal/day**, measured by doubly labelled water, not food
+  logs (Tasali et al., JAMA Intern Med 2022). Limits: 4 weeks; the authors call it
+  "not a weight-loss study".
+- Dieting on short sleep lost a smaller share as fat in two small trials (10 people
+  over 14 days, Nedeltcheva 2010; 36 people over 8 weeks, Wang 2018). Only the first
+  found more muscle lost; treat this as suggestive.
+- *Rule:* a 7-night average under 6.5 h says the eating numbers; a drop of 0.75 h or
+  more from your usual says just the drop.
+
+**Steps.** What a change in daily steps is worth in calories, with honest bounds.
+- Walking costs about **0.5 kcal per kg per km** on a treadmill (net of rest) and
+  about **0.8 outdoors**, where real walking costs about 30% more (Stockholm commuter
+  study, 2022). 1000 steps is about 0.75 km. So 3000 fewer steps a day at 100 kg is
+  roughly **110 to 180 kcal a day** less burned. We say the range, not one number.
+- The body compensates for part of extra activity: across 1,754 adults, about 28% of
+  the energy of activity was offset by lower basal burn (Careau et al., Curr Biol
+  2021). That is one reason the app learns maintenance from the scale rather than
+  adding up activity.
+- Whether dieting makes people move less is genuinely mixed: one 6-month trial (48
+  people, 25% restriction) concluded activity energy fell, a later report from the
+  same group found no change in spontaneous activity, and a 2022 study found no
+  significant change in non-exercise activity. So the app reports *your* steps and
+  does not assume.
+- *Rule:* a change of 1000 steps a day or more, with its calorie range and the walk
+  that makes up a day (about 100 steps a minute).
+
+**Resting heart rate.** A sign to go easy, never a diagnosis.
+- Rises above a person's own normal (by half a standard deviation, with sleep half a
+  standard deviation short) tracked flu-like illness across 47,249 Fitbit wearers
+  and improved state-level flu prediction in all five US states studied (Radin et
+  al., Lancet Digital Health 2020). That is population surveillance: it does not say
+  any one person is ill.
+- Short-lived rises of 10 bpm or more occur with infections and menstrual cycle phases
+  (Quer 2020). Alcohol, a hard week and short sleep raise it too.
+- *Rule:* the last 3 mornings at least 3 bpm (or one of your standard deviations, if
+  larger) above your usual means "an easier day is the safe choice". A fall of 2 bpm
+  or more over the week is reported as fitness improving.
+
+**HRV.** The weakest evidence for weight, a reasonable one for training load.
+- The practice: a 7-day rolling average against your own baseline, with half a
+  standard deviation as the smallest change that matters (Plews and Buchheit).
+- The evidence: a 2021 systematic review and meta-analysis found HRV-guided training
+  better than fixed plans for HRV itself (SMD 0.50, 95% CI 0.09 to 0.91) but only
+  slightly better, if at all, for fitness and performance. So HRV decides *how hard*,
+  never *whether* to train.
+- *Rule:* the 7-day average below your usual by more than your smallest worthwhile
+  change means "keep training easy until it comes back"; above it, "a good week to
+  train".
+
+### How it reaches you
+
+`src/lib/health/brief.ts` turns the raw days into at most four facts, most pressing
+first (a raised resting heart rate, then short sleep, then low HRV, then steps), and
+`watchSays` in `src/lib/stores/body.ts` works them out once for the whole app. The
+evening coach and the training planner get them as `facts.watch`, with rules: use at
+most one, in its own words, with its numbers; a short night or a raised heart rate
+means an easier day and an earlier night; fewer steps means a walk, never eating less.
+The research sentences live in the coach's own instructions (server side), so the
+phone doesn't download them. And the reply check from Chapter 6 still applies: a
+number the coach writes that isn't in its facts is rejected.
+
+### What this enables next, by strength of evidence
+
+1. **Sleep-aware evenings** (strong): after a short night, the evening note can name
+   the likely extra appetite and plan around it with foods you already eat, without
+   changing your budget.
+2. **A sick-day pause** (moderate): when resting heart rate and sleep both move the
+   wrong way, the app can tell you the scale's next jump is probably water and
+   inflammation, not fat, and hold its judgement.
+3. **Training load** (moderate for HRV itself, small for fitness): plan the hard
+   session on a day your HRV is at or above your usual.
+4. **Steps as the explanation for a stall** (solid physics, mixed behaviour): when the
+   scale stops and steps have fallen, show the calorie gap before the scale does.
+
+### What it will not do
+
+Diagnose; use the watch's calorie number; compare you with other people's averages;
+or ask you to wear, sync or log more.
+
+### Sources
+
+- Quer et al. 2020, PLOS ONE, 92,457 adults: daily resting heart rate.
+- Radin et al. 2020, Lancet Digital Health, 47,249 Fitbit users: resting heart rate, sleep and flu.
+- Al Khatib et al. 2017, Eur J Clin Nutr: meta-analysis, 11 studies, 172 people.
+- Tasali et al. 2022, JAMA Internal Medicine: randomised trial, 80 adults.
+- Nedeltcheva et al. 2010, Ann Intern Med (10 people); Wang et al. 2018, Sleep (36 people).
+- Careau et al. 2021, Current Biology: energy compensation, 1,754 adults.
+- Stockholm commuter walking study 2022, Frontiers in Public Health: net walking cost.
+- Doherty et al. 2024: umbrella review of consumer wearable accuracy.
+- 2021 systematic review and meta-analysis of HRV-guided training.
+
+**Try it.** Open `src/lib/health/brief.ts` and the check "the coach reads the watch"
+in `scripts/selfcheck.js`: the made-up week there (5.5 h nights, 3000 fewer steps,
+heart rate up 6) prints the four facts in order. Change one number and see which
+fact appears or goes.
 
 ## Glossary
 
