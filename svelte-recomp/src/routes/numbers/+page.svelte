@@ -30,6 +30,11 @@
   const SPANS = [30, 90, 365] as const;
   let days = $state<number>(90);
   let m = $state<Metrics | null>(null);
+  // The Play closed test (2026-11-18): what testers do, as totals. Google's
+  // count of who opted in is in Play Console, not here.
+  type PlayTest = { opened: number; setup: number; weighed: number; back: number; week: number; since: string | null; health_yes: number; health_later: number };
+  let play = $state<PlayTest | null>(null);
+  $effect(() => { supabase.rpc('owner_play_test').then(({ data }) => { play = (data as PlayTest) ?? null; }); });
   let failed = $state('');
   let loading = $state(false);
 
@@ -65,6 +70,17 @@
 {:else if !m}
   <div class="card nb-note">{loading ? 'Counting…' : ''}</div>
 {:else}
+  {#if play}
+    <section class="card" aria-label="Play test">
+      <div class="card-lbl">Play test{play.since ? ` · since ${play.since}` : ''}</div>
+      <div class="nb-pair"><span>Opened the Play app</span><b>{play.opened}</b></div>
+      <div class="nb-pair"><span>Finished setup</span><b>{play.setup}</b></div>
+      <div class="nb-pair"><span>Weighed in</span><b>{play.weighed}</b></div>
+      <div class="nb-pair"><span>Came back on another day</span><b>{play.back}</b></div>
+      <div class="nb-pair"><span>Opened it in the last 7 days</span><b>{play.week}</b></div>
+      <p class="nb-foot">Testers other than you, as totals. Who opted in is Google's count, in Play Console; Play opens 14 days after 12 are in, if they use it. Watch data: {play.health_yes} connected, {play.health_later} chose not now.</p>
+    </section>
+  {/if}
   <!-- Decision 0003: the measure is people still weighing in at week 4 and
        moving toward their goal by week 8, not sign-ups or opens. First. -->
   <section class="card" aria-label="Is it helping?">

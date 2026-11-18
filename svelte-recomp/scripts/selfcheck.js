@@ -3087,6 +3087,20 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the Numbers page shows the Play test as totals: opened, set up, weighed in, came back, never who', async () => {
+  // 2026-11-18, his question: are the testers actually using it? Google
+  // counts who opted in (Play Console); this counts what they do.
+  const { readFileSync } = await import('node:fs');
+  const sql = readFileSync('../supabase/migrations/20261118200000_owner_play_test.sql', 'utf8');
+  assert.match(sql, /if not exists \(select 1 from public\.app_owners where user_id = auth\.uid\(\)\) then\s+raise exception 'not allowed' using errcode = '42501';/, 'only the owner reads it');
+  assert.match(sql, /revoke all on function public\.owner_play_test\(\) from public, anon;/);
+  assert.match(sql, /user_id not in \(select user_id from public\.app_owners\)/, 'the owner is left out, as everywhere on that page');
+  assert.doesNotMatch(sql.replace(/--.*$/gm, ''), /jsonb_agg|array_agg|string_agg/, 'totals, never a list of people');
+  const page = readFileSync('src/routes/numbers/+page.svelte', 'utf8');
+  assert.match(page, /supabase\.rpc\('owner_play_test'\)/);
+  assert.match(page, /aria-label="Play test"/);
+});
+
 check('the Android app asks for watch and phone data in plain sight, takes no for an answer, and names where the data comes from', async () => {
   // 2026-11-18: the Play install never visibly asked. The only ask fired by
   // itself the moment an account existed, swallowed any failure, and a "no"

@@ -320,6 +320,7 @@ the Health signals area keeps its boundary: the app reaches it only through its 
 the Metrics area keeps its boundary: events are counted only through its door
 the Moments area keeps its boundary: the briefing, the hold and the plans behind their doors, building on Body and Nutrition
 the Numbers page leads with whether we help: still weighing at week 4, nearer the goal by week 8
+the Numbers page shows the Play test as totals: opened, set up, weighed in, came back, never who
 the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body
 the Stoic lines rotate by date, never at random, and each is sourced
 the Sunday check-ins become a journal, newest first, in the user’s words
