@@ -6396,6 +6396,10 @@ check('the ChatGPT directory pack follows the directory’s rules', async () => 
   const plugin = JSON.parse(readFileSync(`${dir}/plugin.json`, 'utf8'));
   const mcpCfg = JSON.parse(readFileSync(`${dir}/mcp.json`, 'utf8'));
   assert.match(plugin.name, /^[a-z0-9]+(-[a-z0-9]+)*$/);
+  // 18 Nov: the dashboard refused "Lifestyle" ("Select a valid category").
+  // A calorie app's accepted pack in the same format uses this title
+  // (github.com/ReceiptCal/receiptcal-plugin, 14 Nov).
+  assert.equal(plugin.extensions['com.openai'].interface.category, 'Health & Fitness', 'a category title the dashboard lists');
   assert.ok(plugin.name.length <= 64);
   assert.match(plugin.version, /^\d+\.\d+\.\d+$/);
   const servers = Object.values(mcpCfg.mcpServers);
