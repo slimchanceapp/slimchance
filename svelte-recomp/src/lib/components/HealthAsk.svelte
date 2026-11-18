@@ -4,11 +4,14 @@
   // its own when the account was made. After Connect it says which app the
   // data comes from (OHealth, Samsung Health…), or how to switch sharing on
   // in that app when nothing has arrived. "Not now" is remembered.
+  // Then, once that's answered, the morning note: Android's notification
+  // permission, asked here rather than by a background reminder.
   import { user } from '$lib/stores/user';
   import { noteEvent } from '$lib/metrics/events';
   import { isAndroidApp } from '$lib/platform';
   import { healthConnect, syncHealthConnect, openHealthConnectSettings } from '$lib/health/healthConnect';
   import { brandForPackage, setupHelp } from '$lib/health/watches';
+  import { notesPermission } from '$lib/moments/nativeAlarms';
 
   const KEY = 'recompos.healthAskLater';
   let later = $state((() => { try { return !!localStorage.getItem(KEY); } catch { return false; } })());
@@ -19,6 +22,23 @@
   const show = $derived(isAndroidApp() && ((none && !later) || step !== 'ask'));
   const brands = $derived([...new Set($healthConnect.sources.map((p) => brandForPackage(p)).filter((b) => b && b.id !== 'phone').map((b) => b!.companionApp))]);
   const help = $derived(setupHelp('other'));
+
+  const NOTES_KEY = 'recompos.notesAskLater';
+  let notesLater = $state((() => { try { return !!localStorage.getItem(NOTES_KEY); } catch { return false; } })());
+  let notes = $state<'granted' | 'denied' | 'prompt' | null>(null);
+  let notesStep = $state<'ask' | 'on' | 'blocked'>('ask');
+  $effect(() => { if (isAndroidApp()) notesPermission().then((p) => (notes = p)); });
+  const showNotes = $derived(isAndroidApp() && !show && notes != null && ((notes !== 'granted' && !notesLater) || notesStep !== 'ask'));
+
+  async function allowNotes() {
+    notes = await notesPermission(true);
+    notesStep = notes === 'granted' ? 'on' : 'blocked';
+  }
+  function notesDone() {
+    notesLater = true;
+    notesStep = 'ask';
+    try { localStorage.setItem(NOTES_KEY, '1'); } catch { /* asked again on another visit */ }
+  }
 
   async function connect() {
     const uid = $user?.id;
@@ -34,6 +54,27 @@
     try { localStorage.setItem(KEY, '1'); } catch { /* asked again on another visit */ }
   }
 </script>
+
+{#if showNotes}
+  <section class="card ha" aria-label="Morning note">
+    {#if notesStep === 'ask'}
+      <div class="ha-t">A quiet note each morning?</div>
+      <p class="ha-b">One line at your first unlock after 6:00: where your weight really is and today's chance. No sound, never an alarm.</p>
+      <div class="ha-row">
+        <button class="ha-btn ha-yes" data-tap="notes-allow" onclick={allowNotes}>Allow</button>
+        <button class="ha-btn" data-tap="notes-later" onclick={notesDone}>Not now</button>
+      </div>
+    {:else if notesStep === 'on'}
+      <div class="ha-t">Morning note is on</div>
+      <p class="ha-b">Tomorrow, at your first unlock after 6:00.</p>
+      <button class="ha-close" onclick={notesDone}>Close</button>
+    {:else}
+      <div class="ha-t">Android has notifications off</div>
+      <p class="ha-b">Turn them on in Settings → Apps → Slim Chance → Notifications.</p>
+      <button class="ha-close" onclick={notesDone}>Close</button>
+    {/if}
+  </section>
+{/if}
 
 {#if show}
   <section class="card ha" aria-label="Watch and phone data">

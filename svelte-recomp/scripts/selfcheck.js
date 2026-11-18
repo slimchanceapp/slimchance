@@ -3087,6 +3087,24 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the morning note is asked for in plain sight on Android, after the watch question, and never by a background reminder', async () => {
+  // 2026-11-18: Android's "allow notifications?" popped up by itself at first
+  // launch (the nudges scheduling in the background). A tester who said no,
+  // or missed it, never got the morning note: the daily reason to come back
+  // during the 14 days Google watches.
+  const { readFileSync } = await import('node:fs');
+  const na = readFileSync('src/lib/moments/nativeAlarms.ts', 'utf8');
+  assert.match(na, /if \(perm\.display !== 'granted' && ask\) perm = await LocalNotifications\.requestPermissions\(\);/, 'asking is a choice of the caller');
+  assert.match(na, /const ready = await readyPlugin\(!isAndroidApp\(\)\);/, 'background reminders on Android never ask');
+  assert.match(na, /export async function notesPermission\(ask = false\)/);
+  const ask = readFileSync('src/lib/components/HealthAsk.svelte', 'utf8');
+  assert.match(ask, /notesPermission\(true\)/, 'Allow asks Android');
+  assert.match(ask, /data-tap="notes-allow"/);
+  assert.match(ask, /data-tap="notes-later"/, 'and no is one tap');
+  assert.match(ask, /Settings → Apps → Slim Chance → Notifications/, 'when Android has blocked it, the way to turn it on');
+  assert.match(ask, /no sound/i, 'it says the note is quiet, as it is');
+});
+
 check('the Numbers page shows the Play test as totals: opened, set up, weighed in, came back, never who', async () => {
   // 2026-11-18, his question: are the testers actually using it? Google
   // counts who opted in (Play Console); this counts what they do.

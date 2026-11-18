@@ -67,6 +67,21 @@ async function cancelRange(LN: any, belongs: (id: number) => boolean): Promise<v
 
 export { isNativeApp };
 
+/** The notification permission the morning note needs: 'granted', 'denied'
+ *  (Android won't ask again; only Settings changes it), 'prompt', or null off
+ *  the app. `ask` shows Android's dialog first: only from a tap. */
+export async function notesPermission(ask = false): Promise<'granted' | 'denied' | 'prompt' | null> {
+  if (!isNativeApp()) return null;
+  try {
+    const { LocalNotifications } = await import('@capacitor/local-notifications');
+    let perm = await LocalNotifications.checkPermissions();
+    if (ask && perm.display !== 'granted') perm = await LocalNotifications.requestPermissions();
+    return perm.display === 'granted' ? 'granted' : perm.display === 'denied' ? 'denied' : 'prompt';
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Hand the whole alarm list to Android. Returns false when this isn't the native
  * app (or the user refused notification permission), so the caller can fall back to
@@ -129,13 +144,17 @@ export async function scheduleNativeAlarms(alarms: AlarmRow[]): Promise<boolean>
 // which is not a permissions problem, a manifest problem, or a plugin-missing
 // problem, however much it reads like one. Wrapping it in a plain object keeps
 // the proxy off the promise-resolution path.
-async function readyPlugin(): Promise<{ LN: any } | null> {
+// `ask`: may this call show Android's "allow notifications?" dialog. A
+// reminder the person just set may; the background nudges on Android may not
+// (2026-11-18: that dialog popped up by itself at first launch). Today asks
+// in plain sight instead (HealthAsk, notesPermission below).
+async function readyPlugin(ask = true): Promise<{ LN: any } | null> {
   if (!isNativeApp()) return null;
   try {
     const { LocalNotifications } = await import('@capacitor/local-notifications');
 
     let perm = await LocalNotifications.checkPermissions();
-    if (perm.display !== 'granted') perm = await LocalNotifications.requestPermissions();
+    if (perm.display !== 'granted' && ask) perm = await LocalNotifications.requestPermissions();
     if (perm.display !== 'granted') {
       console.warn('[alarms] notification permission denied — nothing will fire');
       return null;
@@ -179,7 +198,7 @@ async function readyPlugin(): Promise<{ LN: any } | null> {
  * can only change by typing it into this app.
  */
 export async function scheduleNudges(nudges: Nudge[], now: Date = new Date()): Promise<boolean> {
-  const ready = await readyPlugin();
+  const ready = await readyPlugin(!isAndroidApp());
   if (!ready) return false;
   const LocalNotifications = ready.LN;
 
