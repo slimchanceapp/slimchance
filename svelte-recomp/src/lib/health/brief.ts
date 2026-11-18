@@ -103,8 +103,11 @@ export function watchBrief(i: WatchInput): WatchFact[] {
 
   // Steps: the 7 full days before today (today is half walked) against the
   // usual, when the change is 1000 a day or more, with what it's worth.
-  const stUsual = within(i.steps, i.today, 35, 8);
-  const stWeek = within(i.steps, i.today, 7, 1);
+  // Under 1000 steps is the watch off or unsynced, not a day of rest (the
+  // owner's month had days of 10 and 47).
+  const worn = i.steps.filter((p) => p.value >= 1000);
+  const stUsual = within(worn, i.today, 35, 8);
+  const stWeek = within(worn, i.today, 7, 1);
   if (stUsual.length >= 10 && stWeek.length >= 4) {
     const u = r10(mean(stUsual)), w = r10(mean(stWeek)), change = w - u;
     if (Math.abs(change) >= 1000) {

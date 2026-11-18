@@ -3116,6 +3116,11 @@ check('the coach reads the watch: each signal this week against the person’s o
   assert.doesNotMatch(brief.map((f) => f.says).join(' '), /you are ill|infection|diagnos/i, 'never a diagnosis');
   assert.ok(of('hrv').swc > 0 && of('hrv').week < of('hrv').usual - of('hrv').swc, 'HRV below the smallest change that matters for this person');
   assert.deepEqual(watchBrief({ today: '2026-11-18', weightKg: 100, sleep: [], steps: [], restingHr: [], hrv: [] }), [], 'no watch, nothing said');
+  // The owner's own month (18 Nov): days of 10 and 47 steps were the watch off,
+  // not days of rest, and dragged "usual" down. Under 1000 steps is not a day.
+  const offDays = watchBrief({ today: '2026-11-18', weightKg: 100, sleep: [], restingHr: [], hrv: [],
+    steps: series((b) => (b >= 8 && b % 3 === 0 ? 10 : 7000)) });
+  assert.deepEqual(offDays, [], 'days with the watch off are not days of fewer steps');
   const steady = watchBrief({ today: '2026-11-18', weightKg: 100, sleep: series(() => 7.4), steps: series(() => 9000), restingHr: series(() => 60), hrv: series(() => 50) });
   assert.deepEqual(steady, [], 'nothing changed, nothing said');
   const { readFileSync } = await import('node:fs');
