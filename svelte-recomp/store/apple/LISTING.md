@@ -7,13 +7,17 @@ Character counts in brackets were measured when written; recount if a text chang
 
 ## 1. Before submitting: guideline 4.2 (minimum functionality)
 
-Apple rejects "a website in a wrapper", and the shell loads the live site. Reviewers
-switch on airplane mode. Native parts today: Apple Health weigh-ins (`Health.swift`)
-and the silent morning and evening notifications (`Moments.swift`). Add before the
-first submission:
+Apple rejects "a website in a wrapper". Reviewers switch on airplane mode. Native
+parts: Apple Health weigh-ins (`Health.swift`) and the silent morning and evening
+notifications (`Moments.swift`). Before the first submission:
 
-- Opening offline: the app shows its last state, never an error page.
-- A home-screen widget with the coins (WidgetKit), like Android's.
+- Done 18 Nov: the iPhone app carries the app inside it (`BUILD_TARGET=capacitor`
+  build, `scripts/ios-bundled.mjs` drops the live-site address from the iPhone's
+  Capacitor config), so it opens with no connection. The iPhone proof
+  (`.github/workflows/phone-proof.yml`) blocks the live site before launching it
+  and runs the first-run flow. Android still loads the live site.
+- To do: a home-screen widget with the coins (WidgetKit), like Android's.
+- Each web change reaches iPhones with the next App Store update, not at once.
 
 Already met: account deletion inside the app (5.1.1(v)); no third-party login, so
 Sign in with Apple is not required (4.8); nothing sold, so no in-app purchase rules.
