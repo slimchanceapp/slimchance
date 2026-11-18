@@ -1,8 +1,8 @@
 {
   "_about": "Supabase's security advisor findings we have read and accept, each with why (ENGINEERING.md). scripts/advisors.mjs runs at every ship and fails on anything not listed. 'only' lists exact tables or functions; 'any' accepts the rule wherever it appears.",
   "rls_enabled_no_policy": {
-    "reason": "Deny-all on purpose: these are written and read only through the SECURITY DEFINER functions below (quota, events, origins, owners, MCP counts, the tap map), never directly.",
-    "only": ["public.ai_usage", "public.ai_usage_global", "public.app_events", "public.app_origins", "public.app_owners", "public.app_taps", "public.mcp_calls"]
+    "reason": "Deny-all on purpose: these are written and read only through the SECURITY DEFINER functions below (quota, events, origins, owners, MCP counts, the tap map, Google's tester count: written by the owner's laptop through the Management API, read by owner_play_test), never directly.",
+    "only": ["public.ai_usage", "public.ai_usage_global", "public.app_events", "public.app_origins", "public.app_owners", "public.app_taps", "public.mcp_calls", "public.play_status"]
   },
   "anon_security_definer_function_executable": {
     "reason": "note_mcp_call is how the public MCP server counts calls with the publishable key; it only adds one to a day's count for four known tool names, and stores nothing anyone sent.",
