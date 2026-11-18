@@ -3087,6 +3087,31 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the Android app asks for watch and phone data in plain sight, takes no for an answer, and names where the data comes from', async () => {
+  // 2026-11-18: the Play install never visibly asked. The only ask fired by
+  // itself the moment an account existed, swallowed any failure, and a "no"
+  // became an error notice pointing at a Readiness card that no longer exists.
+  const { readFileSync, existsSync } = await import('node:fs');
+  const hc = readFileSync('src/lib/health/healthConnect.ts', 'utf8');
+  assert.match(hc, /if \(asked \|\| \(!prompt && before\.size === 0\)\) \{/, 'a background sync never asks someone who was never asked');
+  assert.match(hc, /ensurePermissions\(HealthConnect, !!opts\.force\)/, 'only a tap asks');
+  assert.doesNotMatch(hc, /throw new Error\('Health Connect permission not granted'\)/, 'a no is not an error');
+  assert.doesNotMatch(hc, /hint: '[^']*Readiness card/, 'no hint points at a card that is gone');
+  assert.ok(existsSync('src/lib/components/HealthAsk.svelte'));
+  const ask = readFileSync('src/lib/components/HealthAsk.svelte', 'utf8');
+  assert.match(ask, /syncHealthConnect\(uid, \{ force: true \}\)/, 'Connect asks Android');
+  assert.match(ask, />Not now</, 'and no is one tap');
+  assert.match(ask, /openHealthConnectSettings\(\)/, 'when Android won’t show the request, the way to Health Connect itself');
+  assert.match(ask, /brandForPackage\(/, 'it says which app the data comes from (OHealth, Samsung Health…)');
+  assert.match(ask, /setupHelp\(/, 'and how to switch sharing on when nothing arrives');
+  assert.match(ask, /isAndroidApp\(\)/, 'Android app only');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /<HealthAsk \/>/, 'on Today');
+  const events = readFileSync('src/lib/metrics/events.ts', 'utf8').match(/APP_EVENTS = \[([^\]]*)\]/)[1];
+  for (const e of ['play_open', 'health_yes', 'health_later']) assert.ok(events.includes(`'${e}'`), e);
+  assert.match(readFileSync('src/lib/platform.ts', 'utf8'), /\(await App\.getInfo\(\)\)\.id === 'app\.slimchance'/, 'the Play build knows it is the Play build');
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /isPlayApp\(\)\.then\(\(play\) => \{ if \(play\) noteEvent\('play_open'\); \}\)/, 'and counts its testers, by day, never who');
+});
+
 check('food search knows where you shop: your country first, names in your language, words in any script', async () => {
   // 2026-11-18 (Pact m30): search was Slovakia/Czechia plus the world, so
   // "amul butter" in India ranked US-tagged rows first and every chip said

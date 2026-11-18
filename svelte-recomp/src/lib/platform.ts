@@ -23,3 +23,15 @@ export const isIOSApp = (): boolean => platform() === 'ios';
 export function hasPlugin(name: string): boolean {
   return !!(globalThis as any).Capacitor?.isPluginAvailable?.(name);
 }
+
+/** The Google Play build (app.slimchance), not the GitHub APK
+ *  (com.toxicminds.recompos): Play's closed test needs 12 testers. */
+export async function isPlayApp(): Promise<boolean> {
+  if (!isAndroidApp()) return false;
+  try {
+    const { App } = await import('@capacitor/app');
+    return (await App.getInfo()).id === 'app.slimchance';
+  } catch {
+    return false;
+  }
+}

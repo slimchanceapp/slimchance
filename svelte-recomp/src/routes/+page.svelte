@@ -31,6 +31,7 @@
   import { editing } from '$lib/moments/commitments';
   import { sportOf } from '$lib/moments';
   import CommitmentAlerts from '$lib/components/CommitmentAlerts.svelte';
+  import { isAndroidApp } from '$lib/platform';
   import MilestoneMoment from '$lib/components/MilestoneMoment.svelte';
   import GoalMoment from '$lib/components/GoalMoment.svelte';
   import MonthLetter from '$lib/components/MonthLetter.svelte';
@@ -371,6 +372,8 @@
   {/if}
   <!-- Days 3 to 7, once: is it for them, and what's in the way (lib/fit). -->
   <FitAsk />
+  <!-- Android app only, so the web's first screen doesn't carry it. -->
+  {#if isAndroidApp()}{#await import('$lib/components/HealthAsk.svelte') then { default: HealthAsk }}<HealthAsk />{/await}{/if}
   {#if askToSave}
     <div class="card sv">
       <p class="sv-t"><b>Keep what you've started.</b> This trial lives on this device only. Save it with an email and it's yours on any phone.</p>

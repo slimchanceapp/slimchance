@@ -418,7 +418,11 @@ async function pushActivitySessions(
 
 type PermCheck = { ok: boolean; granted: Set<string> };
 
-async function ensurePermissions(HealthConnect: any): Promise<PermCheck> {
+/** `prompt`: the person tapped Connect (HealthAsk on Today). A background
+ *  sync asks on its own only someone who already shares some data and hasn't
+ *  seen a newly added type; never a person who was never asked (2026-11-18:
+ *  that ask fired unseen the moment an account existed). */
+async function ensurePermissions(HealthConnect: any, prompt: boolean): Promise<PermCheck> {
   const { availability } = await HealthConnect.checkAvailability();
   healthConnect.update((s) => ({ ...s, available: availability === 'Available' }));
   if (availability === 'NotSupported') return { ok: false, granted: new Set() };
@@ -431,9 +435,9 @@ async function ensurePermissions(HealthConnect: any): Promise<PermCheck> {
   // Only auto-prompt once PER TYPE SET so we don't nag after a decline — but do
   // ask again when we start requesting a type the user was never shown.
   const asked = typeof localStorage !== 'undefined' && localStorage.getItem(PERM_ASKED_KEY);
-  if (asked) {
-    const granted = new Set<string>(check.grantedPermissions || []);
-    return { ok: granted.size > 0, granted };
+  const before = new Set<string>(check.grantedPermissions || []);
+  if (asked || (!prompt && before.size === 0)) {
+    return { ok: before.size > 0, granted: before };
   }
   try {
     localStorage.setItem(PERM_ASKED_KEY, '1');
@@ -541,11 +545,15 @@ export async function syncHealthConnect(
         /* ignore */
       }
     }
-    const { ok, granted } = await ensurePermissions(HealthConnect);
+    const { ok, granted } = await ensurePermissions(HealthConnect, !!opts.force);
     // Record exactly what's granted so the UI can show a per-signal breakdown
     // ("steps: OK, sleep: not granted") even before any data lands.
     healthConnect.update((s) => ({ ...s, grantedPerms: Array.from(granted) }));
-    if (!ok) throw new Error('Health Connect permission not granted');
+    // Nothing shared: not an error. HealthAsk on Today offers the choice.
+    if (!ok) {
+      healthConnect.update((s) => ({ ...s, syncing: false, lastError: null }));
+      return getState();
+    }
 
     const full = opts.force || fullReadDue();
     const nDays = opts.days ?? (full ? FULL_DAYS : RECENT_DAYS);
@@ -656,7 +664,7 @@ export async function syncHealthConnect(
     }));
   } catch (e: any) {
     notify('Health Connect', e?.message || 'Sync failed', {
-      hint: 'Tap Sync again, or open Health Connect permissions from the Readiness card.'
+      hint: 'Pull down to try again, or open Health Connect and check what Slim Chance may read.'
     });
     healthConnect.update((s) => ({
       ...s,

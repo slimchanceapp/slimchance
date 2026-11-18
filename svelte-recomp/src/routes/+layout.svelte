@@ -26,6 +26,7 @@
   import { pullToRefresh } from '$lib/actions/pullToRefresh';
   import { refreshAll, refreshing, refreshError, lastRefresh, startClock, stopClock, nowTick } from '$lib/stores/refresh';
   import { noteEvent, noteOrigin, countTaps, noteTap } from '$lib/metrics/events';
+  import { isPlayApp } from '$lib/platform';
   import Onboarding from '$lib/components/Onboarding.svelte';
   import { liveProfile, liveProfileLoaded, liveAlarms, liveFoodLogs, liveWeights, liveWorkoutLogs, liveGoal, liveSchedule, liveSessionCompletions, liveActivitySessions } from '$lib/stores/live';
   import { trainedDates } from '$lib/training';
@@ -214,6 +215,8 @@
       // Native Android shell only: pull OnePlus Watch data from Health Connect
       // into the app. No-ops in a browser.
       syncHealthConnect(u.id);
+      // Google opens Play after 12 testers for 14 days: count Play opens.
+      isPlayApp().then((play) => { if (play) noteEvent('play_open'); });
     } else if (!u && syncStarted) {
       syncStarted = false;
       destroySync();

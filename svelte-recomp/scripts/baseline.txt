@@ -310,6 +310,7 @@ stale weigh-ins outside the window do not prop up a verdict
 stepping back on the scale after a gap is welcomed, not scored
 t-critical is the real t value, not the normal approximation
 the 4-day split alternates lower and upper
+the Android app asks for watch and phone data in plain sight, takes no for an answer, and names where the data comes from
 the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area
 the ChatGPT directory pack follows the directory’s rules
 the Coach area keeps its boundary: the AI’s words and their checks, building only on Moments
