@@ -143,15 +143,16 @@
       const words = (j?.result?.content || []).map((c) => c.text || '').join(' ');
       if (!s) { out.innerHTML = `<p class="err">${esc(j?.error?.message || words || 'That didn’t work. Check the lines and try again.')}</p>`; return; }
       const u = esc(s.unit);
-      const way = goal === 'gain' ? 'gaining' : goal === 'hold' ? 'moving' : 'losing';
+      // The tool's rate is positive when losing, whatever the goal.
       const rate = s.rate_per_week != null ? `${Math.abs(s.rate_per_week).toFixed(2)} ${u}` : '–';
-      const range = Array.isArray(s.rate_range) ? `${s.rate_range[0].toFixed(2)} to ${s.rate_range[1].toFixed(2)} ${u}` : '–';
+      const paceWord = s.rate_per_week == null ? 'a week' : s.rate_per_week >= 0 ? 'lost a week' : 'gained a week';
+      const range = Array.isArray(s.rate_range) ? `${s.rate_range[0].toFixed(2)} to ${s.rate_range[1].toFixed(2)} ${u} lost a week (a minus is a gain)` : '–';
       let html = '';
       if (s.chance_in_10 != null) html += `<div class="big">${s.chance_in_10}<small>in 10</small></div>${coins(s.chance_in_10)}<p><b>${esc(s.chance)}</b></p>`;
       else html += `<p><b>Not enough yet.</b> ${s.more_mornings_needed ? `About ${s.more_mornings_needed} more mornings give a first answer.` : ''}</p>`;
       html += `<div class="facts">
         <div><b>${s.trend != null ? `${s.trend} ${u}` : '–'}</b><span>Your trend (as of ${esc(s.as_of || '')})</span></div>
-        <div><b>${rate}</b><span>a week, ${way === 'moving' ? 'change' : way.replace('ing', '')} pace</span></div>
+        <div><b>${rate}</b><span>${paceWord}, on the trend</span></div>
         <div><b>±${s.scale_noise ?? '–'} ${u}</b><span>your scale's daily noise</span></div>
         <div><b>${s.readings_used}</b><span>mornings used</span></div>
       </div>`;
