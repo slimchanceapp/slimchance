@@ -172,7 +172,8 @@ public struct CoinsWidgetView: View {
             HStack(spacing: 6) {
                 Text("Slim Chance").font(.system(size: 12, weight: .semibold)).foregroundColor(p.muted)
                 Spacer(minLength: 0)
-                if day.weighed { Text("✓ Weighed in").font(.system(size: 11, weight: .semibold)).foregroundColor(p.brass) }
+                // Small has room for the tick only; the words would wrap the name.
+                if day.weighed { Text(size == .small ? "✓" : "✓ Weighed in").font(.system(size: 11, weight: .semibold)).foregroundColor(p.brass) }
             }
             if size == .small {
                 if day.lit != nil {
@@ -188,8 +189,10 @@ public struct CoinsWidgetView: View {
             } else {
                 CoinRow(lit: lit, size: size == .large ? 26 : 22, rows: 1, p: p)
                 Text(day.title).font(.system(size: 15, weight: .bold)).foregroundColor(p.text).lineLimit(2)
-                if let hint = day.hint, !hint.isEmpty {
-                    Text(hint).font(.system(size: 13)).foregroundColor(p.muted).lineLimit(size == .large ? 2 : 1)
+                    .fixedSize(horizontal: false, vertical: true)
+                // Medium gives the title its two lines; the hint shows on large.
+                if size == .large, let hint = day.hint, !hint.isEmpty {
+                    Text(hint).font(.system(size: 13)).foregroundColor(p.muted).lineLimit(2)
                 }
                 if size == .medium, let food = day.food {
                     Text([food, day.protein].compactMap { $0 }.joined(separator: " · "))
