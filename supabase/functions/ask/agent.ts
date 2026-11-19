@@ -10,7 +10,7 @@
 export interface Weighed { date: string; weight: number }
 export interface Retrieved { id: string; title: string; url: string; text: string }
 export interface ToolCall { name: string; args: Record<string, unknown>; result: unknown }
-export interface AgentResult { answer: string; sources: string[]; calls: ToolCall[] }
+export interface AgentResult { answer: string; sources: string[]; calls: ToolCall[]; actions: unknown[] }
 type Message = Record<string, unknown>;
 export type Chat = (messages: Message[], tools?: unknown[]) => Promise<{ content?: string | null; tool_calls?: Array<{ id: string; function: { name: string; arguments: string } }> }>;
 export type CallTool = (name: string, args: Record<string, unknown>) => Promise<unknown>;
@@ -42,19 +42,42 @@ Rules, always:
 Reply with JSON only: {"answer": "...", "sources": ["passage id"]}`;
 }
 
+/** Talk to your coach (Pact m49): a conversation, with their week, and changes
+ *  the app shows as cards they accept (src/lib/coach/chat.ts checks each one). */
+export function chatSystem(today: string): string {
+  return `You are the coach inside Slim Chance, talking with one person about their own weight, food and training, the way a good personal coach would: you listen, you ask when you don't know, you suggest. Today is ${today}.
+Use only: facts (their last 14 days, from the app; facts.week is their Train week: each day's session or sport, their sessions with their exercises, their alarms and their goal in their own words), passages (Slim Chance's own guides, each with an id) and the slim_chance tool (the chance their trend is going their goal's way, over any date range).
+Rules, always:
+- Every number you write must come from the facts or a tool result. Never work out a number yourself.
+- When you need something the facts don't say (which days they play their sport, what they want from their training), ask one short question instead of guessing.
+- You may propose changes to their own week in "actions". The app shows each one as a card they tap to accept, and checks it first. Only these:
+  {"type":"swap_exercise","session":"<one of their sessions, by name>","from":"<an exercise in it>","to":"<another exercise, by name only>"}
+  {"type":"move_session","session":"<one of their sessions, by name>","to_day":"Monday".."Sunday"} (never onto a day of their sport)
+  {"type":"set_sport","day":"Monday".."Sunday","sport":"<the sport's name>"}
+  {"type":"remember","note":"<one short sentence about them worth keeping, like when they play their sport>"}
+  Never a load, sets, reps, a new session or anything else. Propose a change only when they asked for it or agreed to it, and say in your answer what each card will do. Never say a change is made: it is made only when they tap its card.
+- Calm, plain and kind; one to four sentences. Talk in trends and likelihoods, never promises.
+- Never ask them to log more or log more completely. No medical advice: a condition, an injury or a medication goes to their doctor.
+Reply with JSON only: {"answer": "...", "sources": ["passage id"], "actions": []}`;
+}
+
 /** Up to `maxTurns` model calls; each tool call is answered before the next. */
 export async function runAgent(i: {
   question: string; today: string; facts: unknown; passages: Retrieved[];
   chat: Chat; callTool: CallTool; maxTurns?: number;
+  /** Talk to your coach: the conversation before this message (oldest first). */
+  history?: { role: 'user' | 'coach'; text: string }[];
   /** Why the app refused the last answer (src/lib/coach/ask.ts checkAnswer). */
   problem?: string;
   /** Their first weigh-in on record: without it "my first month" has no dates. */
   firstWeighIn?: string | null;
 }): Promise<AgentResult> {
   const calls: ToolCall[] = [];
+  const talking = !!i.history;
   const messages: Message[] = [
-    { role: 'system', content: system(i.today) },
-    { role: 'user', content: `Question: ${i.question}\n\nFacts (JSON): ${JSON.stringify(i.facts)}\n\nPassages:\n${i.passages.map((p) => `[${p.id}] ${p.title}: ${p.text}`).join('\n') || '(none)'}${i.firstWeighIn ? `\n\nTheir weigh-ins run from ${i.firstWeighIn} to ${i.today}.` : ''}${i.problem ? `\n\nYour last answer was refused by the app because: ${i.problem}. Answer again without that.` : ''}` },
+    { role: 'system', content: talking ? chatSystem(i.today) : system(i.today) },
+    ...(i.history ?? []).map((m) => ({ role: m.role === 'coach' ? 'assistant' : 'user', content: m.text })),
+    { role: 'user', content: `${talking ? 'Message' : 'Question'}: ${i.question}\n\nFacts (JSON): ${JSON.stringify(i.facts)}\n\nPassages:\n${i.passages.map((p) => `[${p.id}] ${p.title}: ${p.text}`).join('\n') || '(none)'}${i.firstWeighIn ? `\n\nTheir weigh-ins run from ${i.firstWeighIn} to ${i.today}.` : ''}${i.problem ? `\n\nYour last answer was refused by the app because: ${i.problem}. Answer again without that.` : ''}` },
   ];
   const turns = i.maxTurns ?? 3;
   for (let turn = 0; turn < turns; turn++) {
@@ -74,12 +97,12 @@ export async function runAgent(i: {
     const text = m.content ?? '';
     try {
       const o = JSON.parse(text.slice(text.indexOf('{'), text.lastIndexOf('}') + 1));
-      return { answer: String(o.answer ?? '').trim(), sources: Array.isArray(o.sources) ? o.sources.map(String) : [], calls };
+      return { answer: String(o.answer ?? '').trim(), sources: Array.isArray(o.sources) ? o.sources.map(String) : [], calls, actions: Array.isArray(o.actions) ? o.actions : [] };
     } catch {
-      return { answer: text.trim(), sources: [], calls };
+      return { answer: text.trim(), sources: [], calls, actions: [] };
     }
   }
-  return { answer: '', sources: [], calls };
+  return { answer: '', sources: [], calls, actions: [] };
 }
 
 /** The slim_chance tool's server side: the person's weigh-ins in the range,

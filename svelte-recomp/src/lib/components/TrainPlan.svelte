@@ -99,6 +99,8 @@
       <button class="btn {plan ? 'bg_' : 'bp'} bfl" disabled={busy} onclick={ask}>{busy ? 'Your coach is planning…' : plan ? 'Plan again' : 'Plan my week'}</button>
       {#if plan}<button class="btn bg_" onclick={() => trainPlan.set(null)}>Close</button>{/if}
     </div>
+    <!-- Talk to your coach (Pact m49): change the week by talking, not only by asking for a plan. -->
+    <a class="btn bg_ bfl tp-talk" href="/coach">Talk to your coach</a>
     {#if err}<p class="tp-err">{err}</p>{/if}
   </section>
 {/if}
@@ -114,5 +116,6 @@
   .tp-days li.tp-today{outline:2px solid var(--amber);outline-offset:-2px}
   .tp-note{font-size:0.875rem;line-height:1.5;color:var(--text);margin:0 0 10px}
   .tp-btns{display:flex;gap:8px}
+  .tp-talk{margin-top:8px;text-align:center;text-decoration:none}
   .tp-err{font-size:0.8125rem;color:var(--led-warn);margin:8px 0 0}
 </style>

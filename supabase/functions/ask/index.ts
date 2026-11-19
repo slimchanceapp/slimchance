@@ -1,4 +1,6 @@
-// ask — "Ask about your numbers" (book chapter 8). One question, answered by
+// ask — "Ask about your numbers" (book chapter 8), and "Talk to your coach"
+// (Pact m49: the conversation, with their week in the facts, and changes the
+// app shows as cards they accept). One question, answered by
 // the agent in agent.ts from three things: the person's facts (built by the app,
 // src/lib/coach/brain.ts buildFacts), the passages of our guides nearest the question
 // by meaning (knowledge.ts), and the slim_chance tool, which this function
@@ -12,8 +14,9 @@
 //   POST {"question": "...", "today": "YYYY-MM-DD", "facts": {...},
 //         "weights": [{"date": "YYYY-MM-DD", "weight": 94.2}], "unit": "kg"|"lb",
 //         "goal": "lose"|"gain"|"hold", "goal_weight": 88 | null, "problem"?: "..."}
+//   (or "messages": [{"role": "user"|"coach", "text": "..."}] instead of "question")
 //   -> {"answer": "...", "sources": ["passage id"], "calls": [{name, args, result}],
-//       "passages": [{id, title, url}]}
+//       "actions": [...], "passages": [{id, title, url}]}
 
 import { corsHeaders, embed, gemmaTurn, json } from '../_shared/llm.ts';
 import { gate, providersFor } from '../_shared/auth.ts';
@@ -50,8 +53,15 @@ Deno.serve(async (req: Request) => {
 
   let body: any;
   try { body = await req.json(); } catch { return json({ error: 'Send JSON.' }, 400); }
-  const question = typeof body?.question === 'string' ? body.question.trim() : '';
-  if (!question || question.length > 300) return json({ error: 'Ask one question, up to 300 characters.' }, 400);
+  // Talk to your coach (Pact m49) sends the conversation; Ask about your numbers, one question.
+  const history = Array.isArray(body?.messages)
+    ? body.messages.filter((m: any) => (m?.role === 'user' || m?.role === 'coach') && typeof m?.text === 'string' && m.text.trim())
+      .slice(-12).map((m: any) => ({ role: m.role as 'user' | 'coach', text: m.text.trim().slice(0, 800) }))
+    : null;
+  const last = history?.at(-1);
+  if (history && last?.role !== 'user') return json({ error: 'The last message is theirs.' }, 400);
+  const question = history ? (last?.text ?? '') : typeof body?.question === 'string' ? body.question.trim() : '';
+  if (!question || question.length > (history ? 600 : 300)) return json({ error: history ? 'Say it in up to 600 characters.' : 'Ask one question, up to 300 characters.' }, 400);
   const today = typeof body?.today === 'string' && YMD.test(body.today) ? body.today : null;
   const facts = body?.facts;
   if (!today || !facts || typeof facts !== 'object' || JSON.stringify(facts).length > 20_000) return json({ error: 'Send today and the day\'s facts.' }, 400);
@@ -72,6 +82,7 @@ Deno.serve(async (req: Request) => {
     const passages = nearest(q, KB.passages, 3, 0.5);
     const r = await runAgent({
       question, today, facts, passages, problem, firstWeighIn: weights[0]?.date ?? null, chat: gemmaTurn,
+      history: history ? history.slice(0, -1) : undefined,
       callTool: (_name, args) => slimChance(weighInsFor(weights, args, today), tool),
     });
     return json({ ...r, passages: passages.map(({ id, title, url }) => ({ id, title, url })) });

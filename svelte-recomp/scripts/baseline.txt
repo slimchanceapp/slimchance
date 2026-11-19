@@ -315,6 +315,7 @@ sport never collides with a gym session
 stale weigh-ins outside the window do not prop up a verdict
 stepping back on the scale after a gap is welcomed, not scored
 t-critical is the real t value, not the normal approximation
+talk to your coach: it proposes changes to your own week, the app checks each one, and nothing saves until you accept it
 the 4-day split alternates lower and upper
 the Android app asks for watch and phone data in plain sight, takes no for an answer, and names where the data comes from
 the Body area keeps its boundary: the app reaches it only through its door, and Body reaches no other area

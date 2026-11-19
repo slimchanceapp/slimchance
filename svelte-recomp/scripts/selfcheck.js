@@ -6423,7 +6423,8 @@ check('the Training area keeps its boundary: the app reaches it only through its
   // workouts and the one definition of a trained day behind index.ts, logging
   // an activity through logActivity.ts. The move brought the watch-workout
   // maths out of health/ (the adapters' folder) and into the pure core.
-  await areaBorder('training', { doors: ['logActivity'], shell: { 'logActivity.ts': ['src/lib/db/client', 'src/lib/db/dexie'] } });
+  // planEdits.ts (19 Nov): the changes he accepts in Talk to your coach.
+  await areaBorder('training', { doors: ['logActivity', 'planEdits'], shell: { 'logActivity.ts': ['src/lib/db/client', 'src/lib/db/dexie'], 'planEdits.ts': ['src/lib/stores/sync'] } });
 });
 
 check('the Nutrition area keeps its boundary: the app reaches it only through its doors, and it builds only on Body', async () => {
@@ -6562,6 +6563,49 @@ check('the coach arranges your own sessions over the week: never a new one, neve
   assert.match(train, /weekPlan=\{schedule\.map/);
   assert.match(coach, /facts\.sports/);
   assert.match(coach, /facts\.week is the week they set up/);
+});
+
+check('talk to your coach: it proposes changes to your own week, the app checks each one, and nothing saves until you accept it', async () => {
+  // Pact m49, his ask (19 Nov): "You should be able to talk to the coach just
+  // like I am with you, no?" A chat that knows his week, his sport days, his
+  // alarms and his goal, and proposes changes as cards he accepts.
+  const { checkActions, describe } = await import('../src/lib/coach/chat.ts');
+  const week = {
+    sessions: [{ name: 'Full Body', exercises: ['Goblet Squat', 'Incline Dumbbell Press'] }, { name: 'Upper', exercises: ['Lat Pulldown'] }],
+    days: [{ dow: 1, session: 'Full Body', sport: null }, { dow: 2, session: null, sport: 'Badminton' }, { dow: 3, session: null, sport: null }, { dow: 5, session: 'Upper', sport: null }],
+  };
+  const ok = checkActions([
+    { type: 'swap_exercise', session: 'full body', from: 'goblet squat', to: 'Zercher Squat' },
+    { type: 'move_session', session: 'Upper', to_day: 'Wednesday' },
+    { type: 'set_sport', day: 'Thu', sport: 'Badminton' },
+  ], week);
+  assert.deepEqual(ok.dropped, []);
+  assert.deepEqual(ok.actions[0], { type: 'swap_exercise', session: 'Full Body', from: 'Goblet Squat', to: 'Zercher Squat' }, 'his own names, as he wrote them');
+  assert.deepEqual(ok.actions[1], { type: 'move_session', session: 'Upper', to_day: 3 });
+  assert.match(describe(ok.actions[0]), /Goblet Squat.*Zercher Squat.*Full Body/);
+  assert.equal(checkActions([{ type: 'set_sport', day: 'Thu', sport: 'badminton' }], week).actions[0].sport, 'Badminton', 'names as cards show them');
+  assert.equal(checkActions([{ type: 'swap_exercise', session: 'Full Body', from: 'Goblet Squat', to: 'zercher squat' }], week).actions[0].to, 'Zercher Squat');
+  const no = (a, why) => assert.match(checkActions([a], week).dropped[0] ?? '', why);
+  no({ type: 'swap_exercise', session: 'Full Body', from: 'Goblet Squat', to: 'Squat 5x5 at 100kg' }, /a name, never a load or a count/);
+  no({ type: 'swap_exercise', session: 'Legs', from: 'Goblet Squat', to: 'Zercher Squat' }, /isn't one of their sessions/);
+  no({ type: 'swap_exercise', session: 'Full Body', from: 'Deadlift', to: 'Zercher Squat' }, /isn't in Full Body/);
+  no({ type: 'move_session', session: 'Upper', to_day: 'Tue' }, /Badminton day/);
+  no({ type: 'move_session', session: 'Upper', to_day: 'Fri' }, /already/);
+  no({ type: 'delete_everything' }, /not something the coach can change/);
+  assert.equal(checkActions(Array(5).fill({ type: 'remember', note: 'Plays badminton on Tuesday evenings' }), week).actions.length, 3, 'three changes at most in one reply');
+  const { readFileSync } = await import('node:fs');
+  // The answer passes the same check as Ask about your numbers; changes only on a tap.
+  const brain = readFileSync('src/lib/stores/brain.ts', 'utf8');
+  assert.match(brain, /export async function talkToCoach\(/);
+  assert.match(brain, /const checked = checkAnswer\(data, facts\);[\s\S]*?checkActions\(data\.actions, week\)/, 'every word and every change checked before it is shown');
+  const page = readFileSync('src/routes/coach/+page.svelte', 'utf8');
+  assert.match(page, /onclick=\{\(\) => accept\(m, i\)\}>Do it<\/button>/, 'a change saves only when he taps Do it');
+  assert.match(page, /\{#if !\$coachOn\}/, 'only with the coach switched on (his consent)');
+  const fn = readFileSync('../supabase/functions/ask/index.ts', 'utf8');
+  assert.match(fn, /const history = Array\.isArray\(body\?\.messages\)/, 'the conversation, not one question');
+  assert.match(readFileSync('../supabase/functions/ask/agent.ts', 'utf8'), /"actions"/);
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /When you talk to your coach/);
+  assert.match(readFileSync('src/lib/components/TrainPlan.svelte', 'utf8'), /href="\/coach"/, 'reachable from the week card');
 });
 
 check('the hero speaks of the chance, never of the body', async () => {
