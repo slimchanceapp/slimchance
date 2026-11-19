@@ -825,10 +825,12 @@
       onSwipe: () => haptic('select'),
     }}
   >
-    <div class="tab-track" data-swipe-track style:transform={`translateX(${-Math.max(0, tabIdx) * 100}%)`}>
+    <div class="tab-track" data-swipe-track>
       {#each TABS as t, i (t.id)}
         {@const Page = tabPages[t.id]}
+        <!-- The tab shown is never moved, so its sheets open on the screen (swipeTabs.ts, restingAt). -->
         <section class="tab-panel page-scroll" id={i === tabIdx ? 'pages' : undefined} inert={i !== tabIdx}
+          style:transform={i === tabIdx ? null : `translateX(${(i - tabIdx) * 100}%)`}
           use:pullToRefresh={{ onRefresh: doRefresh, onPull, threshold: PULL_THRESHOLD, enabled: !$refreshing && i === tabIdx }}>
           {#if built.has(t.id) && Page}
             <svelte:boundary onerror={(e) => { console.error('Render error:', e); crashMsg = (e as any)?.message || String(e); recordError((e as any)?.message || String(e), { stack: (e as any)?.stack, kind: 'render' }); }}>
@@ -919,10 +921,11 @@
   .menu-note{font-size:0.6875rem;line-height:1.45;color:var(--muted);padding:8px 0 2px}
 main#pages{flex:1}
   .page-scroll{overflow-y:auto;overflow-x:hidden;padding:18px 16px calc(var(--nav-h) + 28px + var(--sb));overscroll-behavior-y:contain}
-  /* The tab strip: four full-width panels in a row, each its own scroll. */
+  /* The tab strip: four full-size panels, the one shown in place and never
+     moved, the others beside it; each its own scroll. */
   #tabs{flex:1;min-height:0;position:relative;overflow:hidden}
-  .tab-track{display:flex;height:100%}
-  .tab-panel{flex:0 0 100%;min-width:0;height:100%}
+  .tab-track{position:relative;height:100%}
+  .tab-panel{position:absolute;inset:0}
   /* Pull-to-refresh indicator: a zero-height strip above the scroll area that
      grows with the drag, so the content moves down with the finger. */
   #ptr{flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg2);transition:height .25s var(--ease)}

@@ -88,19 +88,25 @@ export interface SwipeTabsOptions {
   onSwipe?: () => void;
 }
 
-/** One planned move of the strip: from which tab to which (null: nothing that
- *  way, so it only stretches), and that tab's address. */
-type Move = { track: HTMLElement; from: number; to: number | null; path?: string };
+/** One planned move: the tab shown (from), the tab a swipe that way reaches
+ *  (to; null: nothing that way, so the page only stretches), and its address. */
+type Move = { panels: HTMLElement[]; from: number; to: number | null; path?: string };
 
-/** Where the strip sits with tab i in place, pulled dx px. */
-const at = (i: number, dx = 0) => `translate3d(calc(${-i * 100}% + ${dx}px),0,0)`;
+/** A tab panel k places from the one shown, pulled dx px (k = 0: the one shown). */
+const offset = (k: number, dx = 0) => `translate3d(calc(${k * 100}% + ${dx}px),0,0)`;
 
-/** Resolves when a strip's slide has finished (or should have). */
-function settle(track: HTMLElement, ms: number): Promise<void> {
+/** Where a tab panel rests, as the layout writes it: the one shown never moved,
+ *  so its sheets (fixed to the screen) open on the screen; inside a moved
+ *  element they'd be fixed to that element (19 Nov: a workout's sheet opened
+ *  two screens to the left). The others wait beside it. */
+const restingAt = (k: number) => (k === 0 ? null : `translateX(${k * 100}%)`);
+
+/** Resolves when a slide has finished (or should have). */
+function settle(el: HTMLElement, ms: number): Promise<void> {
   return new Promise((done) => {
-    const end = () => { track.removeEventListener('transitionend', end); clearTimeout(t); done(); };
+    const end = () => { el.removeEventListener('transitionend', end); clearTimeout(t); done(); };
     const t = setTimeout(end, ms + 80);
-    track.addEventListener('transitionend', end);
+    el.addEventListener('transitionend', end);
   });
 }
 
@@ -110,17 +116,22 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   let busy = false;
   let axis: 'x' | 'y' | null = null;
   let x0 = 0, y0 = 0, t0 = 0, x = 0, y = 0;
-  let moving: Move | null = null; // the strip following the finger now
+  let moving: Move | null = null; // the tabs following the finger now
+  let beside: number | null = null; // the tab showing beside the finger now
   let prepared = '';
   let frame = 0;
   let trail: [number, number][] = []; // the last moments of the finger: [time, x]
 
   const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function place(track: HTMLElement, transform: string, ms = 0) {
-    track.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none';
-    track.style.transform = transform;
-    track.style.willChange = 'transform';
+  /** Move a tab panel (null: unmoved), sliding if ms. */
+  function slide(el: HTMLElement, transform: string | null, ms = 0) {
+    el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none';
+    if (transform === null) el.style.removeProperty('transform');
+    else el.style.transform = transform;
+    el.style.willChange = 'transform';
   }
+  /** A panel at rest: no motion hints left on it. */
+  function still_(el: HTMLElement) { el.style.transition = ''; el.style.willChange = ''; }
   /** The finger's speed over its last ~60 ms, px per ms. */
   function speed(): number {
     const end = trail[trail.length - 1];
@@ -137,13 +148,20 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     const from = mainIndex();
     if (!track || from < 0) return null;
     const path = neighbourTab(o.current(), dir, o.tabs);
-    return { track, from, to: path ? from + (dir === 'next' ? 1 : -1) : null, path: path ?? undefined };
+    return { panels: [...track.children] as HTMLElement[], from, to: path ? from + (dir === 'next' ? 1 : -1) : null, path: path ?? undefined };
   }
 
-  /** Put the strip back where it rests. */
-  function rest(m: Move, ms = 0) {
-    place(m.track, at(m.from), ms);
-    if (!ms) m.track.style.willChange = '';
+  /** Put the tabs back where they rest. */
+  async function rest(m: Move, ms = 220) {
+    const cur = m.panels[m.from];
+    const nb = beside;
+    beside = null;
+    slide(cur, offset(0), ms);
+    if (nb !== null) slide(m.panels[nb], offset(nb - m.from), ms);
+    await settle(cur, ms);
+    slide(cur, null);
+    still_(cur);
+    if (nb !== null) { slide(m.panels[nb], restingAt(nb - m.from)); still_(m.panels[nb]); }
   }
 
   function start(e: TouchEvent) {
@@ -154,6 +172,7 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     tracking = true;
     axis = null;
     moving = null;
+    beside = null;
     x0 = x = t.clientX;
     y0 = y = t.clientY;
     t0 = e.timeStamp;
@@ -179,9 +198,16 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     frame = requestAnimationFrame(() => {
       const m = plan(dx < 0 ? 'next' : 'prev');
       if (!m) return;
+      if (beside !== null && beside !== m.to) { // turned back: that neighbour goes home
+        slide(m.panels[beside], restingAt(beside - m.from));
+        still_(m.panels[beside]);
+        beside = null;
+      }
       moving = m;
       if (m.path && m.path !== prepared) { prepared = m.path; o.prepare?.(m.path); }
-      place(m.track, at(m.from, m.to === null ? dx * 0.25 : dx)); // rubber band at either end
+      const pull = m.to === null ? dx * 0.25 : dx; // rubber band at either end
+      slide(m.panels[m.from], offset(0, pull));
+      if (m.to !== null) { slide(m.panels[m.to], offset(m.to - m.from, pull)); beside = m.to; }
     });
   }
 
@@ -192,18 +218,25 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     if (axis !== 'x') return;
     const dir = swipeVerdict(x - x0, y - y0, e.timeStamp - t0, innerWidth);
     const m = dir && plan(dir);
-    if (!m || m.to === null) { if (m) rest(m, 220); return; }
+    if (!m || m.to === null || m.to !== beside) { if (moving) await rest(moving); moving = null; return; }
     busy = true;
     o.onSwipe?.();
+    const cur = m.panels[m.from], next = m.panels[m.to];
     try {
       const ms = still() ? 0 : swipeDuration(x - x0, speed(), innerWidth);
-      place(m.track, at(m.to), ms);
-      await settle(m.track, ms);
+      slide(cur, offset(m.from - m.to), ms); // the tab shown leaves
+      slide(next, offset(0), ms); // the next one arrives
+      await settle(cur, ms);
       if (m.path) await o.go(m.path);
     } finally {
-      m.track.style.transition = '';
-      m.track.style.willChange = '';
+      // At rest as the layout places them: the tab shown unmoved, the other beside it.
+      const landed = o.current() === m.path;
+      slide(next, landed ? null : restingAt(m.to - m.from));
+      slide(cur, landed ? restingAt(m.from - m.to) : null);
+      still_(next);
+      still_(cur);
       moving = null;
+      beside = null;
       busy = false;
     }
   }
@@ -212,7 +245,8 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     if (!tracking) return;
     tracking = false;
     cancelAnimationFrame(frame);
-    if (axis === 'x' && moving) rest(moving, 220);
+    if (axis === 'x' && moving) void rest(moving);
+    moving = null;
   }
 
   node.addEventListener('touchstart', start, { passive: true });

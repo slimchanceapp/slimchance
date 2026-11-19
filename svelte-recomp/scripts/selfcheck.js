@@ -1440,7 +1440,7 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   const fs = await import('node:fs');
   const stSrc = fs.readFileSync('src/lib/actions/swipeTabs.ts', 'utf8');
   assert.doesNotMatch(stSrc, /data-swipe-tabs|innerStep|whichStrip|data-swipe-panel/, 'the swipe only ever moves the main tabs');
-  assert.match(fs.readFileSync('src/lib/components/SwipeViews.svelte', 'utf8'), /\.sv-track\{[^}]*transition:transform/, 'a tap on a page tab slides its views');
+  assert.match(fs.readFileSync('src/lib/components/SwipeViews.svelte', 'utf8'), /\.sv-view\{[^}]*transition:transform/, 'a tap on a page tab slides its views');
   const train = fs.readFileSync('src/routes/workouts/+page.svelte', 'utf8');
   assert.match(train, /role="tab" aria-selected=\{tab === 'upcoming'\}/, "Train's row is a real tab list for screen readers");
   assert.match(train, /role="tab" aria-selected=\{tab === 'history'\}/);
@@ -1483,17 +1483,26 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   // tab keeps its own scroll, like a native app.
   const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
   assert.match(layout, /<div id="tabs" hidden=\{tabIdx < 0\}\s*use:swipeTabs=\{\{/);
-  assert.match(layout, /<div class="tab-track" data-swipe-track style:transform=/);
+  // His report the next hour: a workout on Train opened nothing. Sheets are
+  // fixed to the screen, but anything inside a moved element is fixed to that
+  // element instead, so the sheet opened two screens to the left. At rest the
+  // tab shown is never moved: only the tabs beside it are.
+  assert.match(layout, /<div class="tab-track" data-swipe-track>/, 'the strip itself never moves');
+  assert.match(layout, /style:transform=\{i === tabIdx \? null : `translateX\(\$\{\(i - tabIdx\) \* 100\}%\)`\}/, 'the tab shown has no transform at rest');
   assert.match(layout, /\{#each TABS as t, i \(t\.id\)\}[\s\S]*?inert=\{i !== tabIdx\}[\s\S]*?\{#if built\.has\(t\.id\) && Page\}/, 'built once and kept; only the tab shown takes taps');
   assert.match(layout, /\[TABS\[tabIdx - 1\], TABS\[tabIdx \+ 1\]\]\.forEach\(\(t\) => t && build\(t\.id\)\)/, 'the neighbours built while the phone is idle');
   assert.match(layout, /prepare: \(path\) =>/, 'a swipe toward a tab not built yet builds it as the drag starts');
   assert.doesNotMatch(st, /startViewTransition/, 'no snapshot dance: the next tab is real and already there');
-  assert.match(st, /await settle\(m\.track, ms\);\s*if \(m\.path\) await o\.go\(m\.path\);/, 'the slide finishes first; the page address follows');
+  assert.match(st, /await settle\(cur, ms\);\s*if \(m\.path\) await o\.go\(m\.path\);/, 'the slide finishes first; the page address follows');
+  assert.match(st, /const restingAt = \(k: number\) => \(k === 0 \? null :/, 'after any swipe, landed or not, the tab shown ends unmoved');
+  assert.match(st, /slide\(next, landed \? null : restingAt/);
+  assert.match(st, /slide\(cur, null\);\s*still_\(cur\);/, 'a swipe let go short puts the tab back unmoved');
   assert.doesNotMatch(st, /await new Promise\(requestAnimationFrame\)/, 'no waiting on a frame mid-gesture');
   assert.match(readFileSync('src/lib/components/BottomNav.svelte', 'utf8'), /if \(currentPath === base \+ tabId\) document\.getElementById\('pages'\)/, "tapping another tab keeps this tab's place; tapping the tab you're on goes to its top");
   // A page's own tabs are a strip too, every view built once and kept.
   const sv = readFileSync('src/lib/components/SwipeViews.svelte', 'utf8');
   assert.match(sv, /inert=\{i !== index\}/);
+  assert.match(sv, /style:transform=\{i === index \? null :/, "the view shown has no transform at rest, so its sheets open on screen");
   for (const f of ['src/routes/recipes/+page.svelte', 'src/routes/workouts/+page.svelte'])
     assert.match(fs.readFileSync(f, 'utf8'), /role="tablist"[\s\S]*?<SwipeViews index=/, f);
 });
