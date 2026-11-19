@@ -7,7 +7,8 @@
   // when he taps Do it, after the app has checked it (src/lib/coach/chat.ts).
   // The chat is kept on this phone only.
   import { tick } from 'svelte';
-  import { coachOn, setCoach, talkToCoach, rememberForCoach } from '$lib/stores/brain';
+  import { coachOn, setCoach } from '$lib/stores/brain';
+  import { talkToCoach, rememberForCoach } from '$lib/stores/coachChat';
   import { liveSchedule, liveWorkoutSessions, liveAlarms, liveGoalReason } from '$lib/stores/live';
   import { userId } from '$lib/stores/user';
   import { DEFAULT_SESSIONS, buildSchedule, type PlanDay, type PlanSession } from '$lib/training';

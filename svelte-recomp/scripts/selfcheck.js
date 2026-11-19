@@ -6595,9 +6595,11 @@ check('talk to your coach: it proposes changes to your own week, the app checks 
   assert.equal(checkActions(Array(5).fill({ type: 'remember', note: 'Plays badminton on Tuesday evenings' }), week).actions.length, 3, 'three changes at most in one reply');
   const { readFileSync } = await import('node:fs');
   // The answer passes the same check as Ask about your numbers; changes only on a tap.
-  const brain = readFileSync('src/lib/stores/brain.ts', 'utf8');
+  // In its own file, so the first screen doesn't download the chat (bundle budget).
+  const brain = readFileSync('src/lib/stores/coachChat.ts', 'utf8');
   assert.match(brain, /export async function talkToCoach\(/);
   assert.match(brain, /const checked = checkAnswer\(data, facts\);[\s\S]*?checkActions\(data\.actions, week\)/, 'every word and every change checked before it is shown');
+  assert.doesNotMatch(readFileSync('src/lib/stores/brain.ts', 'utf8'), /checkActions|talkToCoach/, 'not in the store every screen loads');
   const page = readFileSync('src/routes/coach/+page.svelte', 'utf8');
   assert.match(page, /onclick=\{\(\) => accept\(m, i\)\}>Do it<\/button>/, 'a change saves only when he taps Do it');
   assert.match(page, /\{#if !\$coachOn\}/, 'only with the coach switched on (his consent)');
