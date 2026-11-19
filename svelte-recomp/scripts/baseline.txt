@@ -320,6 +320,7 @@ the Body area keeps its boundary: the app reaches it only through its door, and 
 the ChatGPT directory pack follows the directory’s rules
 the Coach area keeps its boundary: the AI’s words and their checks, building only on Moments
 the Food hero praises protein when it’s hit and never colours a day still in progress
+the Gemini CLI extensions gallery can find Slim Chance: a manifest at the repo root pointing at the server
 the Google Play build updates only through Play and loads slimchance.app
 the Health signals area keeps its boundary: the app reaches it only through its doors, and it builds only on Body and Training
 the Metrics area keeps its boundary: events are counted only through its door

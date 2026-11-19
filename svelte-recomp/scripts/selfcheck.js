@@ -3088,6 +3088,16 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('the Gemini CLI extensions gallery can find Slim Chance: a manifest at the repo root pointing at the server', async () => {
+  // 2026-11-19, his ask: every big assistant's directory. The gallery indexes
+  // public repos with this file at the root (and the gemini-cli-extension topic).
+  const { readFileSync } = await import('node:fs');
+  const m = JSON.parse(readFileSync('../gemini-extension.json', 'utf8'));
+  assert.equal(m.name, 'slim-chance');
+  assert.match(m.version, /^\d+\.\d+\.\d+$/);
+  assert.equal(m.mcpServers?.['slim-chance']?.httpUrl, 'https://slimchance.app/mcp', 'the hosted server, streamable HTTP');
+});
+
 check('every public guide is findable: canonical, description, structured data, in the sitemap and in llms.txt', async () => {
   // 2026-11-19, SEO: a page Google and the assistants can't find doesn't exist.
   const { readFileSync, readdirSync, existsSync } = await import('node:fs');
