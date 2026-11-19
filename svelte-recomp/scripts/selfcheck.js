@@ -1395,7 +1395,8 @@ check('the privacy page names every outside service the code talks to', async ()
     ...readdirSync('src', { recursive: true }).map((f) => `src/${f}`),
     ...readdirSync('../supabase/functions', { recursive: true }).map((f) => `../supabase/functions/${f}`),
   ].filter((f) => /\.(ts|svelte)$/.test(f));
-  const seen = new Set(files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/https?:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi)].map((m) => m[1].toLowerCase())));
+  // An XML namespace (xmlns='http://www.w3.org/2000/svg') names a format; nothing fetches it.
+  const seen = new Set(files.flatMap((f) => [...readFileSync(f, 'utf8').matchAll(/(?<!xmlns=['"])https?:\/\/([a-z0-9.-]+\.[a-z]{2,})/gi)].map((m) => m[1].toLowerCase())));
   for (const d of seen) {
     assert.ok(NAMES[d], `the code calls ${d}: name it in static/privacy.html and add it here`);
     assert.ok(policy.includes(NAMES[d]), `static/privacy.html must name ${NAMES[d]} (${d})`);
@@ -4194,12 +4195,38 @@ check('no published file names the AI assistant that helped build the app', asyn
   assert.equal(hits.trim(), '', `named in: ${hits.trim()}`);
 });
 
+check('a coin has heads and tails, and is tossed: it flips over and back up and down, landing heads up', async () => {
+  // 2026-11-19, the owner: "I want the coins to spin vertically (meaning
+  // bounce up and down) in the spinner and when the coins are being loaded in
+  // today instead of horizontally and the coins need to have a heads and a
+  // tails - to actually make it look like a coin!!"
+  const { readFileSync } = await import('node:fs');
+  const S = 'M14.25 8.1A2.6 2.6 0 1 0 12 12a2.6 2.6 0 1 1-2.25 3.9';
+  const TEN = 'M9.3 8.5L10.7 7.4V16.6M14.4 7.4A2 4.6 0 1 1 14.4 16.6A2 4.6 0 1 1 14.4 7.4';
+  const html = readFileSync('src/app.html', 'utf8');
+  assert.match(html, /class="cs-heads"/, 'the spinner coin has heads');
+  assert.match(html, /class="cs-tails"/, 'and tails');
+  assert.ok(html.includes(S) && html.includes(TEN), 'an S on heads, a 10 on tails');
+  const face = html.match(/@keyframes cs-face\{[\s\S]*?\n\s*\}/)?.[0] ?? '';
+  assert.match(face, /25%\{transform:scaleY\(0\)/, 'it flips over (vertically)');
+  assert.doesNotMatch(face, /scaleX/, 'not round (horizontally)');
+  assert.match(html, /@keyframes cs-toss\{0%\{transform:translateY\(0\)[^\n]*50%\{transform:translateY\(-/, 'and goes up and comes down');
+  const css = readFileSync('src/app.css', 'utf8');
+  assert.ok(css.includes(S.replace(/ /g, ' ')), 'the app’s coins carry the same S');
+  assert.match(css, /@keyframes coin-toss\{[^@]*scaleY\(-1\)/, 'one toss for every coin');
+  assert.match(css, /--coin-emblem:var\(--coin-tails-on\)/, 'showing tails in the air');
+  assert.match(css, /prefers-reduced-motion:reduce[^@]*\.coin[^}]*animation:none/, 'still for anyone who asked for less motion');
+  assert.match(readFileSync('src/routes/+page.svelte', 'utf8'), /\.hero-coins \.coin\.on\{[^}]*animation:coin-toss/, 'Today’s coins are tossed in');
+  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins \.coin\.on\{[^}]*animation:coin-toss/, 'and the readout’s');
+  assert.match(readFileSync('ios/App/CoinsWidget/CoinsViews.swift', 'utf8'), /struct HeadsS: Shape/, 'the iPhone widget’s coins have heads too');
+});
+
 check('the boot screen and the tab loader spin the same coin, still for anyone who asked for less motion', async () => {
   const { readFileSync } = await import('node:fs');
   const drawing = (src) => src.match(/<svg class="cspin"[^>]*>([\s\S]*?)<\/svg>/)[1];
   const html = readFileSync('src/app.html', 'utf8');
   assert.equal(drawing(html), drawing(readFileSync('src/lib/components/CoinSpin.svelte', 'utf8')));
-  assert.match(html, /@media \(prefers-reduced-motion:reduce\)\{\.cspin \.cs-face,\.cspin \.cs-edge,\.cspin \.cs-floor,\.cspin \.cs-tails\{animation:none\}\}/);
+  assert.match(html, /@media \(prefers-reduced-motion:reduce\)\{\.cspin \.cs-toss,\.cspin \.cs-face,\.cspin \.cs-edge,\.cspin \.cs-floor,\.cspin \.cs-heads,\.cspin \.cs-tails\{animation:none\}\}/);
   assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /if \(!\$authReady\) return;\s*const boot = document\.getElementById\('boot'\)/, 'the boot screen goes once the app is ready');
 });
 
@@ -5573,7 +5600,7 @@ check('the odds coins flip in and land as they light, and the themes are Deep an
   // The owner, 2026-11-03: George's motion, "coins flipping and landing on the
   // trend", and "the app colours are too dull".
   const { readFileSync } = await import('node:fs');
-  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins \.coin\.on\{[^}]*animation:ro-flip/);
+  assert.match(readFileSync('src/lib/components/Readout.svelte', 'utf8'), /\.ro-coins \.coin\.on\{[^}]*animation:coin-toss/);
   const css = readFileSync('src/app.css', 'utf8');
   // Black and gold was tried and reverted the same day; navy and brass gave
   // way on 2026-11-10 to Deep (dark) and Daylight (light), picked on the phone.

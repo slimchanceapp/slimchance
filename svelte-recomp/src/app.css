@@ -127,11 +127,30 @@ body::before{
    it shows and on the home-screen widget (scripts/widget-coins.mjs): a milled
    edge, the face and a raised rim. Unlit, the same coin in quiet colours, which
    a container may set (--coin-edge, -mill, -face, -ring): ten empty rings didn't
-   read as coins (the owner, 2026-11-12). Size: --coin. */
+   read as coins (the owner, 2026-11-12). Size: --coin. Heads is an S, tails
+   a 10 (the owner, 2026-11-19: "to actually make it look like a coin"); tails
+   shows only in the air (coin-toss), drawn upside down so the flip rights it. */
+:root{--coin-heads-off:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4.56 4.56 14.88 14.88'%3E%3Cpath d='M14.25 8.1A2.6 2.6 0 1 0 12 12a2.6 2.6 0 1 1-2.25 3.9' fill='none' stroke='%238E8BB8' stroke-opacity='.6' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");--coin-heads-on:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4.56 4.56 14.88 14.88'%3E%3Cpath d='M14.25 8.1A2.6 2.6 0 1 0 12 12a2.6 2.6 0 1 1-2.25 3.9' fill='none' stroke='%239C5C08' stroke-opacity='.7' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E");--coin-tails-on:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4.56 4.56 14.88 14.88'%3E%3Cg transform='translate(0 24) scale(1 -1)'%3E%3Cpath d='M9.3 8.5L10.7 7.4V16.6M14.4 7.4A2 4.6 0 1 1 14.4 16.6A2 4.6 0 1 1 14.4 7.4' fill='none' stroke='%239C5C08' stroke-opacity='.7' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/g%3E%3C/svg%3E")}
 .coin{position:relative;display:block;flex:none;box-sizing:border-box;width:var(--coin,24px);height:var(--coin,24px);border-radius:50%;border:calc(var(--coin,24px)*.085) solid var(--coin-edge,var(--border));background:var(--coin-face,var(--bg3));background-clip:padding-box}
 .coin::before{content:'';position:absolute;inset:calc(var(--coin,24px)*-.085);border-radius:50%;background:repeating-conic-gradient(var(--coin-mill,var(--border2)) 0 4deg,transparent 0 12.857deg);-webkit-mask:radial-gradient(closest-side,transparent 86%,#000 88%,#000 95%,transparent 97%);mask:radial-gradient(closest-side,transparent 86%,#000 88%,#000 95%,transparent 97%)}
-.coin::after{content:'';position:absolute;inset:calc(var(--coin,24px)*.105);border-radius:50%;border:calc(var(--coin,24px)*.048) solid var(--coin-ring,var(--border2))}
-.coin.on{--coin-edge:#C27C0E;--coin-mill:#E8A317;--coin-face:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#F08C00);--coin-ring:rgba(208,138,10,.75)}
+.coin::after{content:'';position:absolute;inset:calc(var(--coin,24px)*.105);border-radius:50%;border:calc(var(--coin,24px)*.048) solid var(--coin-ring,var(--border2));background:var(--coin-emblem,var(--coin-heads-off)) center/100% no-repeat border-box}
+.coin.on{--coin-edge:#C27C0E;--coin-mill:#E8A317;--coin-face:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#F08C00);--coin-ring:rgba(208,138,10,.75);--coin-emblem:var(--coin-heads-on)}
+/* A toss: up, flipping over its horizontal axis (heads, tails in the air,
+   heads again), down, a small bounce, landing heads up. Tails changes side
+   while the coin is edge-on (the paired keyframes), so the switch is unseen. */
+@keyframes coin-toss{
+  0%{transform:translateY(-22px) scaleY(1);opacity:0;--coin-emblem:var(--coin-heads-on);animation-timing-function:cubic-bezier(.3,0,.7,1)}
+  8%{opacity:1}
+  19.9%{--coin-emblem:var(--coin-heads-on)}
+  20%{transform:translateY(-27px) scaleY(0);--coin-emblem:var(--coin-tails-on)}
+  40%{transform:translateY(-22px) scaleY(-1)}
+  59.9%{--coin-emblem:var(--coin-tails-on)}
+  60%{transform:translateY(-12px) scaleY(0);--coin-emblem:var(--coin-heads-on)}
+  80%{transform:translateY(0) scaleY(1)}
+  90%{transform:translateY(-3px) scaleY(1)}
+  100%{transform:none;opacity:1;--coin-emblem:var(--coin-heads-on)}
+}
+@media (prefers-reduced-motion:reduce){.coin{animation:none !important}}
 .card{
   background:var(--bg2);border:1px solid var(--border);border-radius:var(--r-lg);
   padding:16px;margin-bottom:12px;transition:border-color .2s,transform .2s var(--ease);

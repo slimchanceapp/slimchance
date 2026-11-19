@@ -37,6 +37,7 @@ a camera misread fails the GS1 check digit
 a ceiling set below the trend is caught as a target, not shown as 8 kg over
 a clean deficit week reports fat loss and a positive win
 a clean steady loss is called answerable, with the right sign
+a coin has heads and tails, and is tossed: it flips over and back up and down, landing heads up
 a column that only appears in a later row still gets a header
 a comma or a quote in a food name cannot corrupt the CSV
 a daily digest says what broke, in totals, and only new errors raise the alarm

@@ -494,8 +494,14 @@
   .hero-big span{font-size:1.125rem;font-weight:800;opacity:.92}
   /* Unlit coins are the same coin, pale on the card's colour (.coin in app.css). */
   .hero-coins{display:flex;gap:6px;perspective:300px;margin-bottom:12px;--coin:24px;--coin-edge:rgba(255,255,255,.28);--coin-mill:rgba(255,255,255,.42);--coin-face:rgba(255,255,255,.12);--coin-ring:rgba(255,255,255,.42)}
-  .hero-coins .coin.on{box-shadow:0 2px 6px rgba(0,0,0,.25);animation:hero-flip .5s var(--ease) both}
-  @keyframes hero-flip{0%{transform:translateY(-18px) rotateY(180deg);opacity:0}60%{transform:translateY(3px) rotateY(15deg);opacity:1}100%{transform:none}}
+  .hero-coins .coin.on{box-shadow:0 2px 6px rgba(0,0,0,.25);animation:coin-toss .9s var(--ease) both}
+  .hero-coins .coin{--coin-heads-off:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='4.56 4.56 14.88 14.88'%3E%3Cpath d='M14.25 8.1A2.6 2.6 0 1 0 12 12a2.6 2.6 0 1 1-2.25 3.9' fill='none' stroke='%23FFFFFF' stroke-opacity='.5' stroke-width='1.5' stroke-linecap='round'/%3E%3C/svg%3E")}
+  /* Tossed in one after another, left to right. */
+  .hero-coins .coin:nth-child(2){animation-delay:.07s}.hero-coins .coin:nth-child(3){animation-delay:.14s}
+  .hero-coins .coin:nth-child(4){animation-delay:.21s}.hero-coins .coin:nth-child(5){animation-delay:.28s}
+  .hero-coins .coin:nth-child(6){animation-delay:.35s}.hero-coins .coin:nth-child(7){animation-delay:.42s}
+  .hero-coins .coin:nth-child(8){animation-delay:.49s}.hero-coins .coin:nth-child(9){animation-delay:.56s}
+  .hero-coins .coin:nth-child(10){animation-delay:.63s}
   .hero-line{font-family:var(--font-display);font-size:1.5rem;font-weight:800;line-height:1.1;margin:0}
   .hero-sub{font-size:0.875rem;line-height:1.45;margin:4px 0 0;opacity:.92}
   .hero-foot{font-size:0.8125rem;margin:10px 0 0;opacity:.92}

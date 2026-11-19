@@ -94,7 +94,6 @@
      flipping and landing"): on opening, and again when a weigh-in moves them. */
   /* Coins mean the chance and nothing else, and look the same wherever it
      shows: the gold coin of Today's hero (2026-11-10, the coin rule). */
-  .ro-coins .coin.on{animation:ro-flip .55s var(--ease) both}
-  @keyframes ro-flip{0%{transform:translateY(-10px) rotateY(180deg);opacity:.2}60%{transform:translateY(2px) rotateY(20deg);opacity:1}100%{transform:none}}
+  .ro-coins .coin.on{animation:coin-toss .9s var(--ease) both}
   .ro-odds{font-size:0.875rem;font-weight:700;line-height:1.35;color:var(--text);margin:8px 0 0}
 </style>

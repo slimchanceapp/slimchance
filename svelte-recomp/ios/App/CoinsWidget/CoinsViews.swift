@@ -68,15 +68,30 @@ struct Coin: View {
                                          startRadius: 0, endRadius: 11 * u))
                     .frame(width: 19.2 * u, height: 19.2 * u)
                 Circle().stroke(Self.ring.opacity(0.75), lineWidth: 1.1 * u).frame(width: 14.8 * u, height: 14.8 * u)
+                HeadsS().stroke(Color(hex: 0x9C5C08).opacity(0.7), style: StrokeStyle(lineWidth: 1.5 * u, lineCap: .round))
                 Ellipse().fill(Color.white.opacity(0.55)).frame(width: 4.2 * u, height: 2.4 * u)
                     .rotationEffect(.degrees(-35)).offset(x: -3.4 * u, y: -4.2 * u)
             } else {
                 Circle().fill(p.offFace).frame(width: 19.2 * u, height: 19.2 * u)
                 Circle().stroke(p.offRing, lineWidth: 1.1 * u).frame(width: 14.8 * u, height: 14.8 * u)
+                HeadsS().stroke(p.offRing, style: StrokeStyle(lineWidth: 1.5 * u, lineCap: .round))
             }
         }
         .frame(width: size, height: size)
         .accessibilityHidden(true)
+    }
+}
+
+/** Heads: the S engraved on every coin, the app's and Android's (src/app.css),
+ *  in the same 24-unit box. Two arcs; tails (a 10) shows only in a toss. */
+struct HeadsS: Shape {
+    func path(in rect: CGRect) -> Path {
+        let k = rect.width / 24
+        var p = Path()
+        p.move(to: CGPoint(x: 14.25 * k, y: 8.1 * k))
+        p.addArc(center: CGPoint(x: 12 * k, y: 9.4 * k), radius: 2.6 * k, startAngle: .degrees(-30), endAngle: .degrees(-270), clockwise: true)
+        p.addArc(center: CGPoint(x: 12 * k, y: 14.6 * k), radius: 2.6 * k, startAngle: .degrees(-90), endAngle: .degrees(150), clockwise: false)
+        return p
     }
 }
 
