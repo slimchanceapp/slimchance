@@ -3,10 +3,10 @@
 // tabs sit side by side in one strip (+layout.svelte), each built once and
 // kept, so the next tab is already there and shows beside the finger as it
 // drags; letting go only finishes the slide, at the finger's own speed, and the
-// page address follows. A page with its own tab row ([data-swipe-tabs]: Food's
-// Today, History, Recipes; Train's Upcoming, History) is a strip too
-// (SwipeViews.svelte) and is swiped through first; past either end of it the
-// main tabs take over.
+// page address follows. Only the main tabs move: a page's own tabs (Food's
+// Today, History, Recipes; Train's Upcoming, History) change by a tap and slide
+// when they do (SwipeViews.svelte). His report, 19 Nov evening: when a swipe
+// went through those first, Train was near impossible to reach from Food.
 //
 // It never takes a gesture that isn't its own: a touch that starts near the
 // screen's left or right edge belongs to the phone's back gesture; inputs, a
@@ -58,13 +58,6 @@ export function swipeAxis(dx: number, dy: number): 'x' | 'y' | null {
   return ax > 2 * ay ? 'x' : 'y';
 }
 
-/** A page's own tab row (Food: Today, History, Recipes): the tab a swipe moves
- *  to, or null past either end, where the main tabs take over. */
-export function innerStep(i: number, n: number, dir: SwipeDir): number | null {
-  const j = dir === 'next' ? i + 1 : i - 1;
-  return j >= 0 && j < n ? j : null;
-}
-
 /** Something under the finger has its own sideways gesture. */
 function ownsSideways(target: EventTarget | null, root: HTMLElement): boolean {
   for (let el = target as HTMLElement | null; el && el !== root; el = el.parentElement) {
@@ -95,12 +88,12 @@ export interface SwipeTabsOptions {
   onSwipe?: () => void;
 }
 
-/** One planned move of a strip: which strip, from which view to which (null:
- *  nothing that way, so it only stretches), and what landing there means. */
-type Move = { track: HTMLElement; from: number; to: number | null; gap: number; path?: string; commit: () => Promise<unknown> };
+/** One planned move of the strip: from which tab to which (null: nothing that
+ *  way, so it only stretches), and that tab's address. */
+type Move = { track: HTMLElement; from: number; to: number | null; path?: string };
 
-/** Where a strip sits with view i in place, pulled dx px. */
-const at = (i: number, gap: number, dx = 0) => `translate3d(calc(${-i} * (100% + ${gap}px) + ${dx}px),0,0)`;
+/** Where the strip sits with tab i in place, pulled dx px. */
+const at = (i: number, dx = 0) => `translate3d(calc(${-i * 100}% + ${dx}px),0,0)`;
 
 /** Resolves when a strip's slide has finished (or should have). */
 function settle(track: HTMLElement, ms: number): Promise<void> {
@@ -138,35 +131,18 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   const mainTrack = () => node.querySelector<HTMLElement>(':scope > [data-swipe-track]');
   const mainIndex = () => o.tabs.indexOf(o.current());
 
-  /** Which strip a swipe that way moves: this tab's own row first, then the main tabs. */
+  /** Where a swipe that way leads: the next or previous main tab. */
   function plan(dir: SwipeDir): Move | null {
-    const main = mainTrack();
-    const mi = mainIndex();
-    if (!main || mi < 0) return null;
-    const panel = main.children[mi] as HTMLElement | undefined;
-    const list = panel?.querySelector<HTMLElement>('[data-swipe-tabs]');
-    const inner = panel?.querySelector<HTMLElement>('[data-swipe-panel] [data-swipe-track]');
-    if (list?.offsetParent && inner) {
-      const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
-      const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
-      const j = i < 0 ? null : innerStep(i, tabs.length, dir);
-      if (j !== null) {
-        return { track: inner, from: i, to: j, gap: Number(inner.dataset.gap ?? 0), commit: async () => {
-          tabs[j].click();
-          // Keep the row in sight if the page was scrolled past it.
-          const top = list.getBoundingClientRect().top - panel!.getBoundingClientRect().top + panel!.scrollTop - 8;
-          if (panel!.scrollTop > top) panel!.scrollTop = Math.max(0, top);
-        } };
-      }
-    }
+    const track = mainTrack();
+    const from = mainIndex();
+    if (!track || from < 0) return null;
     const path = neighbourTab(o.current(), dir, o.tabs);
-    return { track: main, from: mi, to: path ? mi + (dir === 'next' ? 1 : -1) : null, gap: 0, path: path ?? undefined,
-      commit: async () => { if (path) await o.go(path); } };
+    return { track, from, to: path ? from + (dir === 'next' ? 1 : -1) : null, path: path ?? undefined };
   }
 
-  /** Put a strip back where it rests. */
+  /** Put the strip back where it rests. */
   function rest(m: Move, ms = 0) {
-    place(m.track, at(m.from, m.gap), ms);
+    place(m.track, at(m.from), ms);
     if (!ms) m.track.style.willChange = '';
   }
 
@@ -203,10 +179,9 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     frame = requestAnimationFrame(() => {
       const m = plan(dx < 0 ? 'next' : 'prev');
       if (!m) return;
-      if (moving && moving.track !== m.track) rest(moving); // turned back across a row's end
       moving = m;
       if (m.path && m.path !== prepared) { prepared = m.path; o.prepare?.(m.path); }
-      place(m.track, at(m.from, m.gap, m.to === null ? dx * 0.25 : dx)); // rubber band at either end
+      place(m.track, at(m.from, m.to === null ? dx * 0.25 : dx)); // rubber band at either end
     });
   }
 
@@ -217,15 +192,14 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     if (axis !== 'x') return;
     const dir = swipeVerdict(x - x0, y - y0, e.timeStamp - t0, innerWidth);
     const m = dir && plan(dir);
-    if (moving && (!m || moving.track !== m.track)) rest(moving, 220);
     if (!m || m.to === null) { if (m) rest(m, 220); return; }
     busy = true;
     o.onSwipe?.();
     try {
       const ms = still() ? 0 : swipeDuration(x - x0, speed(), innerWidth);
-      place(m.track, at(m.to, m.gap), ms);
+      place(m.track, at(m.to), ms);
       await settle(m.track, ms);
-      await m.commit();
+      if (m.path) await o.go(m.path);
     } finally {
       m.track.style.transition = '';
       m.track.style.willChange = '';

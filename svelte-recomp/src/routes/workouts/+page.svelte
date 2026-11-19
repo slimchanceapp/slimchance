@@ -920,7 +920,7 @@
   left={sessionsLeft(weeklyTarget, gymSessions7)}
   doneDates={[...trainedDates]} />
 
-<div class="week-tabs" role="tablist" aria-label="Train" data-swipe-tabs>
+<div class="week-tabs" role="tablist" aria-label="Train">
   <button class="wtab" role="tab" aria-selected={tab === 'upcoming'} class:on={tab === 'upcoming'} onclick={() => tab = 'upcoming'}>Upcoming</button>
   <button class="wtab" role="tab" aria-selected={tab === 'history'} class:on={tab === 'history'} onclick={() => tab = 'history'}>History</button>
 </div>

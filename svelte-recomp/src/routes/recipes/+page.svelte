@@ -415,7 +415,7 @@
   ]} />
 
 <!-- Three things to do here, one at a time: log today, look back, cook. -->
-<div class="food-views" role="tablist" aria-label="Food" data-swipe-tabs>
+<div class="food-views" role="tablist" aria-label="Food">
   {#each [['today', 'Today'], ['history', 'History'], ['recipes', 'Recipes']] as [v, label]}
     <button type="button" role="tab" aria-selected={view === v} class:on={view === v} onclick={() => setView(v as FoodView)}>{label}</button>
   {/each}

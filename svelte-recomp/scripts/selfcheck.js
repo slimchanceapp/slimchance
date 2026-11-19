@@ -1424,7 +1424,7 @@ check('consent is asked at sign-up and records the privacy page it was given to'
 check('a sideways swipe on a main screen moves to the next tab, and never steals a gesture that is not its own', async () => {
   // 2026-11-19, his ask ("why not on Slim Chance?"): tabbed apps let you swipe
   // between tabs. Today, Food, Train and Progress now do, in the bottom bar's order.
-  const { swipeVerdict, neighbourTab, atEdge, swipeAxis, innerStep } = await import('../src/lib/actions/swipeTabs.ts');
+  const { swipeVerdict, neighbourTab, atEdge, swipeAxis } = await import('../src/lib/actions/swipeTabs.ts');
   const W = 400;
   // His report the same day: every page has sideways things, and Food's history
   // scrolls. A thumb starting a scroll on a slight angle must stay a scroll:
@@ -1433,16 +1433,16 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   assert.equal(swipeAxis(-18, -10), 'y', 'a thumb arc starting a scroll stays a scroll');
   assert.equal(swipeAxis(-30, -10), 'x');
   assert.equal(swipeAxis(4, 40), 'y');
-  // Pages with their own tab row (Food: Today, History, Recipes; Train: Upcoming,
-  // History) swipe through it first, then hand over to the next main tab.
-  assert.equal(innerStep(0, 3, 'next'), 1);
-  assert.equal(innerStep(2, 3, 'next'), null, 'past the last one: the next main tab');
-  assert.equal(innerStep(0, 3, 'prev'), null, 'before the first one: the main tab before');
+  // His report (19 Nov evening): from Food every swipe went through History and
+  // Recipes first, so Train was near impossible to reach. A swipe anywhere moves
+  // the four main tabs, nothing else; a page's own tabs (Food: Today, History,
+  // Recipes; Train: Upcoming, History) change by a tap, and slide when they do.
   const fs = await import('node:fs');
-  assert.match(fs.readFileSync('src/routes/recipes/+page.svelte', 'utf8'), /class="food-views" role="tablist" aria-label="Food" data-swipe-tabs/);
+  const stSrc = fs.readFileSync('src/lib/actions/swipeTabs.ts', 'utf8');
+  assert.doesNotMatch(stSrc, /data-swipe-tabs|innerStep|whichStrip|data-swipe-panel/, 'the swipe only ever moves the main tabs');
+  assert.match(fs.readFileSync('src/lib/components/SwipeViews.svelte', 'utf8'), /\.sv-track\{[^}]*transition:transform/, 'a tap on a page tab slides its views');
   const train = fs.readFileSync('src/routes/workouts/+page.svelte', 'utf8');
-  assert.match(train, /role="tablist" aria-label="Train" data-swipe-tabs/);
-  assert.match(train, /role="tab" aria-selected=\{tab === 'upcoming'\}/);
+  assert.match(train, /role="tab" aria-selected=\{tab === 'upcoming'\}/, "Train's row is a real tab list for screen readers");
   assert.match(train, /role="tab" aria-selected=\{tab === 'history'\}/);
   assert.equal(swipeVerdict(-80, 6, 120, W), 'next', 'a quick flick left: next tab');
   assert.equal(swipeVerdict(-150, 10, 600, W), 'next', 'a slow drag past a third of the screen: next tab');
@@ -1488,16 +1488,14 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   assert.match(layout, /\[TABS\[tabIdx - 1\], TABS\[tabIdx \+ 1\]\]\.forEach\(\(t\) => t && build\(t\.id\)\)/, 'the neighbours built while the phone is idle');
   assert.match(layout, /prepare: \(path\) =>/, 'a swipe toward a tab not built yet builds it as the drag starts');
   assert.doesNotMatch(st, /startViewTransition/, 'no snapshot dance: the next tab is real and already there');
-  assert.match(st, /await settle\(m\.track, ms\);\s*await m\.commit\(\);/, 'the slide finishes first; the page address follows');
+  assert.match(st, /await settle\(m\.track, ms\);\s*if \(m\.path\) await o\.go\(m\.path\);/, 'the slide finishes first; the page address follows');
   assert.doesNotMatch(st, /await new Promise\(requestAnimationFrame\)/, 'no waiting on a frame mid-gesture');
   assert.match(readFileSync('src/lib/components/BottomNav.svelte', 'utf8'), /if \(currentPath === base \+ tabId\) document\.getElementById\('pages'\)/, "tapping another tab keeps this tab's place; tapping the tab you're on goes to its top");
   // A page's own tabs are a strip too, every view built once and kept.
   const sv = readFileSync('src/lib/components/SwipeViews.svelte', 'utf8');
-  assert.match(sv, /data-swipe-panel/);
-  assert.match(sv, /data-swipe-track data-gap=\{GAP\}/);
   assert.match(sv, /inert=\{i !== index\}/);
   for (const f of ['src/routes/recipes/+page.svelte', 'src/routes/workouts/+page.svelte'])
-    assert.match(fs.readFileSync(f, 'utf8'), /data-swipe-tabs[\s\S]*?<SwipeViews index=/, f);
+    assert.match(fs.readFileSync(f, 'utf8'), /role="tablist"[\s\S]*?<SwipeViews index=/, f);
 });
 
 check('the tip link shows on the public pages in a browser only, never inside the apps', async () => {
