@@ -35,7 +35,7 @@
   import { shiftYmd } from '$lib/date';
   import { scheduleNativeAlarms, scheduleNudges, isNativeApp, momentsSupport, armMoments, disarmMoments, setWidget, type AlarmRow } from '$lib/moments/nativeAlarms';
   import { isAndroidApp } from '$lib/platform';
-  import { goto, afterNavigate } from '$app/navigation';
+  import { goto, afterNavigate, preloadCode } from '$app/navigation';
   // The tap map: named buttons and screens seen, per day, no one attached.
   $effect(() => (isRobot() ? undefined : countTaps()));
   afterNavigate(() => { if (!isRobot()) noteTap(location.pathname, 'view'); });
@@ -113,6 +113,15 @@
   // table from Supabase, the watch's steps/sleep/heart-rate/workouts from
   // Health Connect, and the clock that muscle recovery and readiness are
   // measured against.
+  // Every tab's code ready before the first swipe (swipeTabs.ts), so the new
+  // tab is there the moment the finger lets go, not a beat later.
+  $effect(() => {
+    if (!$user) return;
+    const load = () => TABS.forEach((t) => preloadCode(base + t.id).catch(() => {}));
+    const idle = (window as any).requestIdleCallback;
+    if (idle) idle(load); else setTimeout(load, 1500);
+  });
+
   let pull = $state(0);
   const PULL_THRESHOLD = 72;
   const pullPct = $derived(Math.min(1, pull / PULL_THRESHOLD));

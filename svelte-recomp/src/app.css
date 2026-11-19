@@ -310,3 +310,18 @@ strong{color:var(--text);font-weight:800}
 .sync-dot.error{background:var(--led-bad)}
 @keyframes pulse-dot{0%,100%{opacity:1}50%{opacity:.3}}
 @media (prefers-reduced-motion:reduce){*{animation-duration:.001ms !important;transition-duration:.001ms !important}}
+
+/* Tab swipe (swipeTabs.ts): on release the old tab carries on from where the
+   finger let go (--swipe-from) and the new one arrives right beside it, in one
+   motion of --swipe-ms (the finger's own speed). No fade, no blank between. */
+::view-transition-group(tab-page){animation:none}
+html[data-swipe]::view-transition-old(tab-page),html[data-swipe]::view-transition-new(tab-page){animation-duration:var(--swipe-ms,260ms);animation-timing-function:cubic-bezier(.2,.9,.25,1);animation-fill-mode:both;mix-blend-mode:normal}
+html[data-swipe=next]::view-transition-old(tab-page){animation-name:tab-out-next}
+html[data-swipe=next]::view-transition-new(tab-page){animation-name:tab-in-next}
+html[data-swipe=prev]::view-transition-old(tab-page){animation-name:tab-out-prev}
+html[data-swipe=prev]::view-transition-new(tab-page){animation-name:tab-in-prev}
+html[data-swipe]::view-transition-old(root),html[data-swipe]::view-transition-new(root){animation-duration:var(--swipe-ms,260ms)}
+@keyframes tab-out-next{from{transform:translateX(var(--swipe-from))}to{transform:translateX(-100%)}}
+@keyframes tab-in-next{from{transform:translateX(calc(100% + var(--swipe-from)))}to{transform:none}}
+@keyframes tab-out-prev{from{transform:translateX(var(--swipe-from))}to{transform:translateX(100%)}}
+@keyframes tab-in-prev{from{transform:translateX(calc(-100% + var(--swipe-from)))}to{transform:none}}

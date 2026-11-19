@@ -420,6 +420,8 @@
   {/each}
 </div>
 
+<!-- What a swipe slides between Today, History and Recipes; the header and the row above stay put (swipeTabs.ts). -->
+<div data-swipe-panel>
 {#if view === 'today'}
 <!-- Where the number comes from, in the log's own terms: a log that leaves the
      same things out every week is still a good ruler, so the target is set in
@@ -599,6 +601,7 @@
   </div>
 {/if}
 {/if}
+</div>
 
 <Modal open={selected !== null} onclose={() => selected = null}>
   {#if selected}

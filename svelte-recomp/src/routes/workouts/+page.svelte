@@ -924,6 +924,8 @@
   <button class="wtab" role="tab" aria-selected={tab === 'history'} class:on={tab === 'history'} onclick={() => tab = 'history'}>History</button>
 </div>
 
+<!-- What a swipe slides between Upcoming and History; the header and the row above stay put (swipeTabs.ts). -->
+<div data-swipe-panel>
 {#if tab === 'upcoming'}
 
   {#snippet dayCard(day: ReturnType<typeof getWeekDates>[number], isToday: boolean)}
@@ -1084,6 +1086,7 @@
     </div>
   {/if}
 {/if}
+</div>
 
 {#if sessionKey && sessions.get(sessionKey)}
   {@const sess = sessions.get(sessionKey)}

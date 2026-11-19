@@ -71,6 +71,13 @@ function ownsSideways(target: EventTarget | null, root: HTMLElement): boolean {
   return false;
 }
 
+/** How long the release takes: the rest of the way at the finger's own speed
+ *  (px per ms), never a snap and never a crawl. */
+export function swipeDuration(fromPx: number, speed: number, width: number): number {
+  const left = Math.max(0, width - Math.abs(fromPx));
+  return Math.round(Math.min(340, Math.max(180, left / Math.max(speed, 0.5))));
+}
+
 export interface SwipeTabsOptions {
   /** Tab paths, in the bottom bar's order. */
   tabs: readonly string[];
@@ -82,38 +89,57 @@ export interface SwipeTabsOptions {
   onSwipe?: () => void;
 }
 
+type Target = { inner: HTMLElement } | { path: string };
+type Transition = { ready: Promise<void>; updateCallbackDone: Promise<void>; finished: Promise<void> };
+const quiet = () => {};
+
 export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   let o = opts;
   let tracking = false;
   let busy = false;
   let axis: 'x' | 'y' | null = null;
   let x0 = 0, y0 = 0, t0 = 0, x = 0, y = 0;
+  let mover: HTMLElement = node; // what follows the finger: the whole page, or only the content under its tab row
+  let shown = 0; // px the mover sits off centre now
+  let frame = 0;
+  let trail: [number, number][] = []; // the last moments of the finger: [time, x]
 
   const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const wait = (ms: number) => new Promise((r) => setTimeout(r, ms));
-  function place(px: number, opacity: number, ms: number) {
-    node.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.8,.2,1), opacity ${ms}ms linear` : 'none';
-    node.style.transform = px ? `translate3d(${px}px,0,0)` : '';
-    node.style.opacity = opacity >= 1 ? '' : String(opacity);
+  function place(el: HTMLElement, px: number, ms = 0) {
+    if (el !== mover) { mover.style.transform = ''; mover.style.willChange = ''; mover = el; }
+    shown = px;
+    el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none';
+    el.style.transform = px ? `translate3d(${px}px,0,0)` : '';
+    el.style.willChange = px ? 'transform' : '';
+  }
+  /** The finger's speed over its last ~60 ms, px per ms. */
+  function speed(): number {
+    const end = trail[trail.length - 1];
+    const from = trail.find(([t]) => end[0] - t <= 60) ?? trail[0];
+    return end && from && end[0] > from[0] ? Math.abs(end[1] - from[1]) / (end[0] - from[0]) : 0;
   }
 
   /** This page's own tab row, if it has one on screen ([data-swipe-tabs] with role="tab" buttons). */
-  function row(): { tabs: HTMLElement[]; i: number } | null {
+  function row(): { list: HTMLElement; tabs: HTMLElement[]; i: number } | null {
     const list = node.querySelector<HTMLElement>('[data-swipe-tabs]');
     if (!list?.offsetParent) return null;
     const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
     const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
-    return i < 0 ? null : { tabs, i };
+    return i < 0 ? null : { list, tabs, i };
   }
 
   /** Where a swipe that way leads: the page's own next tab, else the next main tab. */
-  function target(dir: SwipeDir): { inner: HTMLElement } | { path: string } | null {
+  function target(dir: SwipeDir): Target | null {
     const r = row();
     const j = r && innerStep(r.i, r.tabs.length, dir);
     if (r && j !== null) return { inner: r.tabs[j] };
     const path = neighbourTab(o.current(), dir, o.tabs);
     return path ? { path } : null;
   }
+
+  /** A page's own tabs slide only the content under the row ([data-swipe-panel]); main tabs slide the page. */
+  const moverFor = (to: Target | null) =>
+    to && 'inner' in to ? node.querySelector<HTMLElement>('[data-swipe-panel]') ?? node : node;
 
   function start(e: TouchEvent) {
     tracking = false;
@@ -125,6 +151,7 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     x0 = x = t.clientX;
     y0 = y = t.clientY;
     t0 = e.timeStamp;
+    trail = [[e.timeStamp, x]];
   }
 
   function move(e: TouchEvent) {
@@ -132,6 +159,8 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     const t = e.touches[0];
     x = t.clientX;
     y = t.clientY;
+    trail.push([e.timeStamp, x]);
+    if (trail.length > 8) trail.shift();
     const dx = x - x0, dy = y - y0;
     if (!axis) {
       axis = swipeAxis(dx, dy);
@@ -139,32 +168,64 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
       if (axis === 'y') { tracking = false; return; } // a scroll: leave it alone
     }
     if (e.cancelable) e.preventDefault(); // the page doesn't scroll while it's pulled sideways
-    const more = target(dx < 0 ? 'next' : 'prev');
-    place(more ? dx : dx * 0.25, 1, 0); // rubber band at either end
+    // One move per frame, however fast the screen reports the finger.
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      const to = target(dx < 0 ? 'next' : 'prev');
+      place(moverFor(to), to ? dx : dx * 0.25); // rubber band at either end
+    });
+  }
+
+  /** Open where the swipe leads. No waiting for a frame here: while a view
+   *  transition waits for this, the browser draws none (it froze 4 s, 19 Nov). */
+  async function open(to: Target) {
+    if ('inner' in to) {
+      const r = row();
+      to.inner.click();
+      await new Promise((done) => setTimeout(done, 0));
+      // Keep the tab row in sight if the page was scrolled past it.
+      const top = r ? r.list.getBoundingClientRect().top - node.getBoundingClientRect().top + node.scrollTop - 8 : 0;
+      if (node.scrollTop > top) node.scrollTop = Math.max(0, top);
+    } else {
+      await o.go(to.path);
+      node.scrollTop = 0;
+    }
   }
 
   async function end(e: TouchEvent) {
     if (!tracking) return;
     tracking = false;
+    cancelAnimationFrame(frame);
     if (axis !== 'x') return;
     const dir = swipeVerdict(x - x0, y - y0, e.timeStamp - t0, innerWidth);
     const to = dir && target(dir);
-    if (!to) { place(0, 1, 220); return; }
+    if (!to) { place(mover, 0, 220); return; }
     busy = true;
     o.onSwipe?.();
-    const out = dir === 'next' ? -innerWidth : innerWidth;
+    const root = document.documentElement;
+    const el = moverFor(to);
+    const from = el === mover ? shown : 0;
+    const doc = document as Document & { startViewTransition?: (update: () => Promise<void>) => Transition };
     try {
-      if (!still()) { place(out * 0.4, 0, 140); await wait(140); }
-      if ('inner' in to) { to.inner.click(); await new Promise(requestAnimationFrame); }
-      else await o.go(to.path);
-      node.scrollTop = 0;
-      if (still()) place(0, 1, 0);
-      else {
-        place(-out * 0.25, 0, 0); // the new tab starts on the side it comes from
-        node.getBoundingClientRect(); // so the slide starts from there
-        place(0, 1, 220);
+      if (still() || !doc.startViewTransition) {
+        place(el, 0);
+        await open(to);
+        return;
       }
+      // One motion: the old tab carries on from where the finger let go, and the
+      // new one arrives right beside it (app.css, tab-out-* and tab-in-*).
+      root.style.setProperty('--swipe-from', `${from}px`);
+      root.style.setProperty('--swipe-ms', `${swipeDuration(from, speed(), innerWidth)}ms`);
+      root.dataset.swipe = dir;
+      place(el, 0); // captured centred; the animation starts it at --swipe-from
+      el.style.viewTransitionName = 'tab-page';
+      const t = doc.startViewTransition(() => open(to));
+      t.ready.catch(quiet); // a skipped transition is no error: the tab still opens
+      t.updateCallbackDone.catch(quiet);
+      await t.finished.catch(quiet);
     } finally {
+      el.style.viewTransitionName = '';
+      delete root.dataset.swipe;
       busy = false;
     }
   }
@@ -172,7 +233,8 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   function cancel() {
     if (!tracking) return;
     tracking = false;
-    if (axis === 'x') place(0, 1, 220);
+    cancelAnimationFrame(frame);
+    if (axis === 'x') place(mover, 0, 220);
   }
 
   node.addEventListener('touchstart', start, { passive: true });
@@ -183,6 +245,7 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   return {
     update(next: SwipeTabsOptions) { o = next; },
     destroy() {
+      cancelAnimationFrame(frame);
       node.removeEventListener('touchstart', start);
       node.removeEventListener('touchmove', move);
       node.removeEventListener('touchend', end);

@@ -1468,6 +1468,25 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   assert.match(st, /input, textarea, select, \[contenteditable="true"\], \[data-own-swipe\], \.moverlay/);
   assert.match(st, /scrollWidth > el\.clientWidth/, 'a sideways scroller keeps its scroll');
   assert.match(st, /addEventListener\('touchmove', move, \{ passive: false \}\)/, 'touch events: the browser cancels pointer events once it scrolls');
+  // His second report: it worked but wasn't smooth like George or ESPNcricinfo.
+  // The release is one motion: the old tab carries on from where the finger let
+  // go while the new one arrives beside it (a view transition), at the finger's
+  // speed, with no fade to blank in between, and the tabs' code is already loaded.
+  const { swipeDuration } = await import('../src/lib/actions/swipeTabs.ts');
+  assert.equal(swipeDuration(-60, 3, 400), 180, 'a fast flick finishes fast');
+  assert.equal(swipeDuration(-60, 0.2, 400), 340, 'a slow drag never crawls');
+  assert.ok(swipeDuration(-300, 1.2, 400) < swipeDuration(-60, 1.2, 400), 'less left to travel, less time');
+  assert.match(st, /\.startViewTransition\(\(\) => open\(to\)\)/, 'the new tab opens inside the transition');
+  assert.doesNotMatch(st, /place\([^)]*, 0, 140\)/, 'no fade to blank before the new tab');
+  const css = readFileSync('src/app.css', 'utf8');
+  assert.match(st, /el\.style\.viewTransitionName = 'tab-page';/, 'what moved is what slides');
+  assert.doesNotMatch(st, /await new Promise\(requestAnimationFrame\)/, 'no waiting for a frame inside a transition: no frame comes, and it froze 4 s');
+  assert.match(st, /t\.ready\.catch\(quiet\)/, 'a skipped transition never shows an error');
+  // A page's own tabs slide only what is under the row; the header stays put.
+  for (const f of ['src/routes/recipes/+page.svelte', 'src/routes/workouts/+page.svelte'])
+    assert.match(fs.readFileSync(f, 'utf8'), /data-swipe-tabs[\s\S]*?<div data-swipe-panel>/, f);
+  assert.match(css, /@keyframes tab-in-next\{from\{transform:translateX\(calc\(100% \+ var\(--swipe-from\)\)\)\}/, 'the new tab starts right beside the old one');
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /preloadCode\(base \+ t\.id\)/, 'every tab ready before the first swipe');
 });
 
 check('the tip link shows on the public pages in a browser only, never inside the apps', async () => {
