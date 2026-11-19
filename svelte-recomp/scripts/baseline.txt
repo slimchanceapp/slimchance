@@ -50,6 +50,7 @@ a deload snaps to a real, rackable weight (rounds, not up)
 a fixed dumbbell jumps 17.5 -> 20, never 18.x
 a flat, noisy month rules out the plan: stalled, not “too noisy to say”
 a food eaten twice yesterday and once today still has one serving left
+a free weight trend calculator on the public site: the app’s own maths, nothing kept, findable
 a goal ABOVE current weight is a gain plan, not a no-op
 a goal ABOVE current weight prescribes a surplus, never a deficit
 a gym week recorded only on the watch counts as training in the weekly review

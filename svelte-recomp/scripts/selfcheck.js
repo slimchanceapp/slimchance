@@ -3087,6 +3087,24 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('a free weight trend calculator on the public site: the app’s own maths, nothing kept, findable', async () => {
+  // 2026-11-19, the owner: "do SEO". A tool people search for and share, on
+  // the same maths as the app and the assistants (the trend tool at /mcp, so
+  // nothing fits a line a second way). Its calls aren't counted as assistants.
+  const { readFileSync } = await import('node:fs');
+  const page = readFileSync('static/weight-trend-calculator/index.html', 'utf8');
+  assert.match(page, /<title>[^<]*[Ww]eight trend calculator[^<]*<\/title>/);
+  assert.match(page, /<link rel="canonical" href="https:\/\/slimchance\.app\/weight-trend-calculator\/">/);
+  assert.match(page, /"@type":"WebApplication"/, 'structured data says what it is');
+  assert.match(page, /name: 'get_weight_trend'/, 'the server’s trend, not a second fit');
+  assert.match(page, /'x-slimchance-from': 'calculator'/);
+  assert.match(page, /[Nn]othing you type is kept/, 'and it says so');
+  assert.doesNotMatch(page, /aggregateRating|reviewCount/, 'no ratings we don’t have');
+  assert.match(readFileSync('src/routes/mcp/+server.ts', 'utf8'), /\['ask', 'test', 'calculator'\]\.includes/, 'calculator calls are not counted as assistants');
+  assert.match(readFileSync('static/sitemap.xml', 'utf8'), /<loc>https:\/\/slimchance\.app\/weight-trend-calculator\/<\/loc>/);
+  assert.match(readFileSync('static/about/index.html', 'utf8'), /href="\/weight-trend-calculator\/"/, 'linked from the about page');
+});
+
 check('the iPhone has the coins widget: the app hands it the same lines as Android, and CI draws it at every size', async () => {
   // 2026-11-19 (Pact m27, Apple 4.2): "the coins widget, I'm so badly waiting for it".
   const { readFileSync } = await import('node:fs');
@@ -5822,7 +5840,7 @@ check('MCP calls are counted by day and tool, never what anyone sent, and counti
   assert.doesNotMatch(readFileSync('src/lib/mcp.ts', 'utf8'), /Nothing is stored\./, 'the tools say what is true: calls are counted');
   // 2026-11-18: our own test runs through GPT (the directory's review cases)
   // must not read as people using ChatGPT, as the app's own agent doesn't.
-  assert.match(route, /if \(r\.status === 200 && !\['ask', 'test'\]\.includes\(request\.headers\.get\('x-slimchance-from'\) \?\? ''\)\) \{/, 'our own callers are never counted');
+  assert.match(route, /if \(r\.status === 200 && !\['ask', 'test', 'calculator'\]\.includes\(request\.headers\.get\('x-slimchance-from'\) \?\? ''\)\) \{/, 'our own callers are never counted');
 });
 
 check('MCP calls are also counted by assistant and country, as short labels nobody can flood', async () => {

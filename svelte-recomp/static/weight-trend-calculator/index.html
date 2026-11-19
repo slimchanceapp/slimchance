@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Weight trend calculator: is your weight really going down? · Slim Chance</title>
+<meta name="description" content="Paste your morning weigh-ins and see your real weight under the daily water swings: the trend, how fast it's moving each week with its range, and the chance in 10 it's really coming off. Free, no sign-up, nothing kept.">
+<link rel="canonical" href="https://slimchance.app/weight-trend-calculator/">
+<meta name="theme-color" content="#100E26">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Is your weight really going down?">
+<meta property="og:description" content="A free weight trend calculator: paste your weigh-ins, see the trend under the daily swings and the chance it's really coming off.">
+<meta property="og:url" content="https://slimchance.app/weight-trend-calculator/">
+<meta property="og:image" content="https://slimchance.app/og.png">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" type="image/svg+xml" href="/icon.svg">
+<link rel="stylesheet" href="/guides/guide.css">
+<script type="application/ld+json">
+{"@context":"https://schema.org","@type":"WebApplication","name":"Weight trend calculator","url":"https://slimchance.app/weight-trend-calculator/","applicationCategory":"HealthApplication","operatingSystem":"Any (web browser)","isAccessibleForFree":true,"offers":{"@type":"Offer","price":"0","priceCurrency":"EUR"},"description":"Paste dated morning weigh-ins and get the weight trend under the daily water swings, the rate per week with its range, and the chance in 10 that the weight is really moving the way you want.","publisher":{"@type":"Organization","name":"Slim Chance","url":"https://slimchance.app/about/"}}
+</script>
+<script src="/from.js"></script>
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+<style>
+.calc{background:var(--ink2);border:1px solid var(--rule);border-radius:16px;padding:18px;margin:22px 0}
+.calc label{display:block;font-weight:700;margin:0 0 6px}
+.calc textarea{width:100%;min-height:190px;resize:vertical;font:1rem/1.5 ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--chalk);background:var(--ink);border:1px solid var(--rule);border-radius:12px;padding:12px}
+.row{display:flex;flex-wrap:wrap;gap:10px;align-items:end;margin-top:12px}
+.row .f{display:flex;flex-direction:column;gap:4px;font-size:.9375rem}
+.row select,.row input{font:inherit;color:var(--chalk);background:var(--ink);border:1px solid var(--rule);border-radius:10px;padding:9px 10px;min-width:0}
+.row input{width:8.5em}
+.btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:11px 18px;cursor:pointer;background:var(--brass);color:var(--ink)}
+.ghost{background:transparent;color:var(--brass);border:1px solid var(--rule)}
+.hint{font-size:.875rem;color:var(--muted);margin:8px 0 0}
+.out{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px}
+.big{font-family:'Archivo','Arial Narrow',sans-serif;font-weight:800;font-size:3rem;line-height:1;color:var(--brass)}
+.big small{font-size:1.1rem;color:var(--muted);font-weight:600;margin-left:6px}
+.coins{display:flex;gap:6px;margin:12px 0 8px;flex-wrap:wrap}
+.coins i{width:24px;height:24px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#FFF3BF,#FCC419 45%,#F08C00);box-shadow:inset 0 0 0 2px #C27C0E}
+.coins i.off{background:var(--ink);box-shadow:inset 0 0 0 2px var(--rule)}
+.facts{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px;margin-top:10px}
+.facts div{background:var(--ink);border:1px solid var(--rule);border-radius:12px;padding:10px 12px}
+.facts b{display:block;font-size:1.25rem}
+.facts span{font-size:.8125rem;color:var(--muted)}
+.err{color:#F08C00;font-weight:700}
+</style>
+</head>
+<body>
+<main>
+<div class="top"><a class="brand" href="/about/"><b>Slim</b> Chance</a><a class="go" href="/">Start now</a></div>
+<h1>Is your weight really going down?</h1>
+<p class="lede">The scale swings by a kilo or more from one morning to the next. Paste your weigh-ins and see the weight underneath: the trend, how fast it's moving, and the chance in 10 that it's really going your way.</p>
+
+<form class="calc" id="calc" autocomplete="off">
+  <label for="w">Your morning weigh-ins, one per line</label>
+  <textarea id="w" spellcheck="false" placeholder="2026-11-01 92.7&#10;2026-11-02 92.1&#10;2026-11-03 92.6&#10;…&#10;&#10;Or just the weights, one per morning, oldest first."></textarea>
+  <div class="row">
+    <div class="f"><span>Unit</span><select id="unit"><option value="kg">kg</option><option value="lb">lb</option></select></div>
+    <div class="f"><span>I want to</span><select id="goal"><option value="lose">lose weight</option><option value="hold">hold steady</option><option value="gain">gain weight</option></select></div>
+    <div class="f"><span>Goal weight (optional)</span><input id="target" inputmode="decimal" placeholder="e.g. 85"></div>
+    <button class="btn" type="submit">Show my trend</button>
+    <button class="btn ghost" type="button" id="example">Try an example</button>
+  </div>
+  <p class="hint">Dates like 2026-11-01, 1.11.2026 or 11/01; weights with a dot or a comma. Nothing you type is kept: it's worked out and forgotten.</p>
+  <div class="out" id="out" hidden aria-live="polite"></div>
+</form>
+
+<div class="box"><b>How to read it.</b> One morning says little: water, salt, a late meal and a hard workout move the scale more than a week of eating well. A week of mornings says a lot. The line through them is your trend, and the chance is how sure the numbers are that it's really heading your way, not just noise.</div>
+
+<h2>How it works</h2>
+<p>Your readings are fitted with a line that weighs recent mornings most, the same way the Slim Chance app does it every day. How much your mornings scatter around that line is your scale's noise. From the slope and the noise comes a range for your weekly rate, and from that range the chance in 10 that your weight is really moving the way you want. Fewer than about a week of mornings, or very noisy ones, and it tells you how many more it needs instead of guessing.</p>
+
+<h2>How many weigh-ins do I need?</h2>
+<p>About a week of mornings for a first answer, two to three weeks for a confident one. Weigh at the same time, after the bathroom and before food or drink, and keep every reading, high ones included. Skipping the bad mornings makes the trend look better than it is.</p>
+
+<h2>Why does my weight jump from day to day?</h2>
+<p>Water, mostly: salt, carbohydrate refilling your muscles' glycogen, a hard workout, the menstrual cycle, and food still on its way through. A kilo of fat holds about 7,000 kcal, so an overnight jump can't be fat. The guide <a href="/guides/why-the-scale-went-up/">why the scale went up overnight</a> goes through each cause and how big it is.</p>
+
+<h2>What does "7 in 10" mean?</h2>
+<p>That given your readings, there's about a 70% chance your weight is really going your way, and a 30% chance the drop is noise. 9 or 10 in 10 is about as sure as a bathroom scale gets. A low number early on isn't bad news: it usually means the line is still forming.</p>
+
+<div class="cta"><b>Get this every morning.</b> Slim Chance does this with each weigh-in, explains the jumps, and learns a calorie budget from your own scale, so a rough food log is enough. Free to use, open source, no ads.<br><a class="go" href="/">Start now, no account needed</a></div>
+
+<p class="src">Not medical advice: it describes your own numbers. The maths is open source at <a href="https://github.com/slimchanceapp/slimchance">github.com/slimchanceapp/slimchance</a>, and the same calculation is available to AI assistants at slimchance.app/mcp.</p>
+</main>
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const out = $('out');
+  const ymd = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  // Each line: an optional date and a weight. Without dates, one reading a
+  // morning, oldest first, ending today.
+  function parse(text) {
+    const rows = [], bare = [];
+    const year = new Date().getFullYear();
+    for (const line of text.split(/\n/)) {
+      const l = line.trim();
+      if (!l) continue;
+      let date = null, m;
+      if ((m = l.match(/(\d{4})-(\d{1,2})-(\d{1,2})/))) date = [+m[1], +m[2], +m[3]];
+      else if ((m = l.match(/\b(\d{1,2})\.(\d{1,2})\.(\d{4})\b/))) date = [+m[3], +m[2], +m[1]];
+      else if ((m = l.match(/\b(\d{1,2})\/(\d{1,2})(?:\/(\d{2,4}))?\b/))) date = [m[3] ? (+m[3] < 100 ? 2000 + +m[3] : +m[3]) : year, +m[1], +m[2]];
+      const rest = date ? l.replace(m[0], ' ') : l;
+      const w = rest.match(/(\d{2,3}(?:[.,]\d+)?)/);
+      if (!w) continue;
+      const weight = parseFloat(w[1].replace(',', '.'));
+      if (!(weight > 20 && weight < 700)) continue;
+      if (date) {
+        const d = new Date(date[0], date[1] - 1, date[2], 12);
+        if (!isNaN(d)) rows.push({ date: ymd(d), weight });
+      } else bare.push(weight);
+    }
+    if (!rows.length && bare.length) {
+      const today = new Date(); today.setHours(12, 0, 0, 0);
+      bare.forEach((weight, i) => { const d = new Date(today); d.setDate(d.getDate() - (bare.length - 1 - i)); rows.push({ date: ymd(d), weight }); });
+    }
+    return rows;
+  }
+
+  function coins(n) {
+    return `<div class="coins" aria-hidden="true">${Array.from({ length: 10 }, (_, i) => `<i class="${i < n ? '' : 'off'}"></i>`).join('')}</div>`;
+  }
+
+  async function run(e) {
+    if (e) e.preventDefault();
+    const weigh_ins = parse($('w').value);
+    out.hidden = false;
+    if (weigh_ins.length < 2) { out.innerHTML = '<p class="err">Add at least two mornings: a date and a weight on each line, or just the weights.</p>'; return; }
+    const unit = $('unit').value, goal = $('goal').value;
+    const target = parseFloat(($('target').value || '').replace(',', '.'));
+    const args = { weigh_ins, unit, goal, ...(target > 20 ? { goal_weight: target } : {}) };
+    out.innerHTML = '<p class="hint">Working it out…</p>';
+    try {
+      const r = await fetch('/mcp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-slimchance-from': 'calculator' },
+        body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'tools/call', params: { name: 'get_weight_trend', arguments: args } }),
+      });
+      const j = await r.json();
+      const s = j?.result?.structuredContent;
+      const words = (j?.result?.content || []).map((c) => c.text || '').join(' ');
+      if (!s) { out.innerHTML = `<p class="err">${esc(j?.error?.message || words || 'That didn’t work. Check the lines and try again.')}</p>`; return; }
+      const u = esc(s.unit);
+      const way = goal === 'gain' ? 'gaining' : goal === 'hold' ? 'moving' : 'losing';
+      const rate = s.rate_per_week != null ? `${Math.abs(s.rate_per_week).toFixed(2)} ${u}` : '–';
+      const range = Array.isArray(s.rate_range) ? `${s.rate_range[0].toFixed(2)} to ${s.rate_range[1].toFixed(2)} ${u}` : '–';
+      let html = '';
+      if (s.chance_in_10 != null) html += `<div class="big">${s.chance_in_10}<small>in 10</small></div>${coins(s.chance_in_10)}<p><b>${esc(s.chance)}</b></p>`;
+      else html += `<p><b>Not enough yet.</b> ${s.more_mornings_needed ? `About ${s.more_mornings_needed} more mornings give a first answer.` : ''}</p>`;
+      html += `<div class="facts">
+        <div><b>${s.trend != null ? `${s.trend} ${u}` : '–'}</b><span>Your trend (as of ${esc(s.as_of || '')})</span></div>
+        <div><b>${rate}</b><span>a week, ${way === 'moving' ? 'change' : way.replace('ing', '')} pace</span></div>
+        <div><b>±${s.scale_noise ?? '–'} ${u}</b><span>your scale's daily noise</span></div>
+        <div><b>${s.readings_used}</b><span>mornings used</span></div>
+      </div>`;
+      html += `<p class="hint">Weekly rate range: ${range}.${s.weeks_to_goal != null ? ` At this pace, about ${s.weeks_to_goal} weeks to your goal: the recent pace, not a promise.` : ''}${s.more_mornings_needed ? ` ${s.more_mornings_needed} more mornings would firm it up.` : ''}</p>`;
+      out.innerHTML = html;
+    } catch {
+      out.innerHTML = '<p class="err">Couldn’t reach the calculator. Check your connection and try again.</p>';
+    }
+  }
+
+  $('calc').addEventListener('submit', run);
+  $('example').addEventListener('click', () => {
+    const base = [92.7, 92.1, 92.6, 91.8, 92.2, 92.2, 91.6, 91.8, 92.1, 91.5, 91.9, 91.2, 91.5, 91.7];
+    const today = new Date(); today.setHours(12, 0, 0, 0);
+    $('w').value = base.map((w, i) => { const d = new Date(today); d.setDate(d.getDate() - (base.length - 1 - i)); return `${ymd(d)} ${w}`; }).join('\n');
+    $('unit').value = 'kg'; $('goal').value = 'lose'; $('target').value = '85';
+    run();
+  });
+})();
+</script>
+</body>
+</html>
