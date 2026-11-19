@@ -96,6 +96,7 @@
       bind:this={svgEl}
       viewBox="0 0 {chartW} {chartH}" width="100%" height={chartH}
       style="touch-action:pan-y"
+      data-own-swipe
       onpointerdown={onDown}
       onpointermove={onMove}
       role="img" aria-label="Trend chart — tap to read values"

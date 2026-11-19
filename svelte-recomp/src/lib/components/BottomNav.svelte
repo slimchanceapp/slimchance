@@ -1,9 +1,6 @@
-<script lang="ts">
-  import { page } from '$app/stores';
-  import { base } from '$app/paths';
-  import { haptic } from '$lib/haptics';
-
-  const tabs = [
+<script lang="ts" module>
+  // The tabs, in order: the bar below and the sideways swipe (swipeTabs) both read this.
+  export const TABS = [
     { id: '/', label: 'Today', icon: 'M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6' },
     { id: '/recipes', label: 'Food', icon: 'M12 6V2m0 4a4 4 0 100 8 4 4 0 000-8zm0 0V2m0 0l-2 2m2-2l2 2M3 12h4m10 0h4' },
     { id: '/workouts', label: 'Train', icon: 'M7 11V7a4 4 0 018 0v4M3 15h18M5 15v4a1 1 0 001 1h12a1 1 0 001-1v-4' },
@@ -12,6 +9,13 @@
     // not a daily destination) and now lives on the top bar, reachable anywhere.
     { id: '/progress', label: 'Progress', icon: 'M3 17l6-6 4 4 8-8M21 7v6h-6' },
   ];
+</script>
+
+<script lang="ts">
+  import { page } from '$app/stores';
+  import { base } from '$app/paths';
+  import { haptic } from '$lib/haptics';
+
 
   const currentPath = $derived($page.url.pathname);
 
@@ -25,7 +29,7 @@
 </script>
 
 <nav id="bottom-nav">
-  {#each tabs as tab}
+  {#each TABS as tab}
     <a href={base + tab.id} data-tap={'tab-' + tab.label.toLowerCase()} class="nb" class:active={currentPath === base + tab.id} onclick={() => toTop(tab.id)}>
       <svg viewBox="0 0 24 24"><path d={tab.icon}/></svg>
       {tab.label}

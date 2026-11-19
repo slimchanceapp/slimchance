@@ -18,6 +18,7 @@ export interface SwipeOptions {
 }
 
 export function swipeActions(node: HTMLElement, opts: SwipeOptions) {
+  node.dataset.ownSwipe = ''; // the tab swipe (swipeTabs.ts) leaves this row's sideways drag alone
   let startX = 0;
   let startY = 0;
   let dragging = false;

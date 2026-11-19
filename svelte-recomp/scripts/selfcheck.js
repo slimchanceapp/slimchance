@@ -1421,6 +1421,37 @@ check('consent is asked at sign-up and records the privacy page it was given to'
   assert.match(gate, /onclick=\{start\} disabled=\{busy \|\| !consent\}/);
 });
 
+check('a sideways swipe on a main screen moves to the next tab, and never steals a gesture that is not its own', async () => {
+  // 2026-11-19, his ask ("why not on Slim Chance?"): tabbed apps let you swipe
+  // between tabs. Today, Food, Train and Progress now do, in the bottom bar's order.
+  const { swipeVerdict, neighbourTab, atEdge } = await import('../src/lib/actions/swipeTabs.ts');
+  const W = 400;
+  assert.equal(swipeVerdict(-80, 6, 120, W), 'next', 'a quick flick left: next tab');
+  assert.equal(swipeVerdict(-150, 10, 600, W), 'next', 'a slow drag past a third of the screen: next tab');
+  assert.equal(swipeVerdict(150, 10, 600, W), 'prev', 'to the right: the tab before');
+  assert.equal(swipeVerdict(-60, 5, 400, W), null, 'a slow short drag springs back');
+  assert.equal(swipeVerdict(-100, 120, 150, W), null, 'mostly up or down is scrolling, not a swipe');
+  assert.equal(swipeVerdict(-30, 0, 40, W), null, 'a twitch is not a swipe');
+  const tabs = ['/', '/recipes', '/workouts', '/progress'];
+  assert.equal(neighbourTab('/', 'next', tabs), '/recipes');
+  assert.equal(neighbourTab('/progress', 'prev', tabs), '/workouts');
+  assert.equal(neighbourTab('/', 'prev', tabs), null, 'nothing before Today');
+  assert.equal(neighbourTab('/progress', 'next', tabs), null, 'nothing after Progress');
+  assert.equal(neighbourTab('/alarms', 'next', tabs), null, 'off the four tabs, a swipe does nothing');
+  assert.ok(atEdge(10, W) && atEdge(392, W) && !atEdge(200, W), "the screen's edges stay the phone's back gesture");
+  const { readFileSync } = await import('node:fs');
+  const nav = readFileSync('src/lib/components/BottomNav.svelte', 'utf8');
+  assert.match(nav, /<script lang="ts" module>[\s\S]*export const TABS = \[/, 'one list of tabs for the bar and the swipe');
+  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /use:swipeTabs=\{\{\s*tabs: TABS\.map/);
+  // Gestures that already own sideways moves keep them.
+  assert.match(readFileSync('src/lib/actions/swipe.ts', 'utf8'), /node\.dataset\.ownSwipe = ''/, "a row's swipe-to-delete");
+  assert.match(readFileSync('src/lib/components/MiniChart.svelte', 'utf8'), /data-own-swipe/, 'reading a chart by dragging');
+  const st = readFileSync('src/lib/actions/swipeTabs.ts', 'utf8');
+  assert.match(st, /input, textarea, select, \[contenteditable="true"\], \[data-own-swipe\], \.moverlay/);
+  assert.match(st, /scrollWidth > el\.clientWidth/, 'a sideways scroller keeps its scroll');
+  assert.match(st, /addEventListener\('touchmove', move, \{ passive: false \}\)/, 'touch events: the browser cancels pointer events once it scrolls');
+});
+
 check('the tip link shows on the public pages in a browser only, never inside the apps', async () => {
   // 2026-11-19, his ask: a "buy me a coffee" link. Google Play and Apple require
   // their own payment systems for tips to an app's maker, and the apps open these

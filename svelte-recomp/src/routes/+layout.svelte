@@ -1,6 +1,7 @@
 <script lang="ts">
   import '../app.css';
-  import BottomNav from '$lib/components/BottomNav.svelte';
+  import BottomNav, { TABS } from '$lib/components/BottomNav.svelte';
+  import { swipeTabs } from '$lib/actions/swipeTabs';
   import CoinSpin from '$lib/components/CoinSpin.svelte';
   import { navigating } from '$app/state';
   import AuthGate from '$lib/components/AuthGate.svelte';
@@ -773,6 +774,12 @@
       onPull,
       threshold: PULL_THRESHOLD,
       enabled: !$refreshing
+    }}
+    use:swipeTabs={{
+      tabs: TABS.map((t) => base + t.id),
+      current: () => location.pathname,
+      go: (path) => goto(path),
+      onSwipe: () => haptic('select'),
     }}
   >
     <svelte:boundary onerror={(e) => { console.error('Render error:', e); crashMsg = (e as any)?.message || String(e); recordError((e as any)?.message || String(e), { stack: (e as any)?.stack, kind: 'render' }); }}>
