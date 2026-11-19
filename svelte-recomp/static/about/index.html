@@ -189,6 +189,11 @@ footer a{color:var(--muted)}
 <script src="/from.js"></script>
 <script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
 <script defer src="/_vercel/insights/script.js"></script>
+<script>
+// A link to a question (like /about/#android from the app's first screen) opens its answer.
+function openAsked() { const d = document.getElementById(decodeURIComponent(location.hash.slice(1))); if (d && d.tagName === 'DETAILS') d.open = true; }
+document.addEventListener('DOMContentLoaded', openAsked); addEventListener('hashchange', openAsked);
+</script>
 </head>
 <body>
 <header class="wrap top">

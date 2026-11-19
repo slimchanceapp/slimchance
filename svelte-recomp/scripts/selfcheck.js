@@ -1434,7 +1434,10 @@ check('the front door shows the store apps in a browser only, and never a dead s
   if (apple !== 'null') assert.match(apple, /^'https:\/\/apps\.apple\.com\//);
   // Until Play is public, Android people join the closed test the about page explains.
   assert.match(gate, /\{:else\}<a href="\/about\/#android">/);
-  assert.match(readFileSync('static/about/index.html', 'utf8'), /<details id="android">/);
+  const about = readFileSync('static/about/index.html', 'utf8');
+  assert.match(about, /<details id="android">/);
+  // A link to a question opens its answer: no second tap on a folded one.
+  assert.match(about, /getElementById\(decodeURIComponent\(location\.hash\.slice\(1\)\)\)[\s\S]*?\.open = true[\s\S]*?addEventListener\('hashchange'/);
 });
 
 check('photos and body photos go to Gemini or Gemma, never through a free gateway', async () => {
