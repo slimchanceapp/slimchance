@@ -3087,6 +3087,26 @@ check('product ranking puts matching local products first', () => {
   assert.deepEqual(food.rankProducts(hits, 'excelent protein', 12, { tags: ['en:slovakia', 'en:czech-republic'], label: 'SK/CZ' }).map((c) => c.key), ['o:2', 'o:3']);
 });
 
+check('every public guide is findable: canonical, description, structured data, in the sitemap and in llms.txt', async () => {
+  // 2026-11-19, SEO: a page Google and the assistants can't find doesn't exist.
+  const { readFileSync, readdirSync, existsSync } = await import('node:fs');
+  const sitemap = readFileSync('static/sitemap.xml', 'utf8');
+  const llms = readFileSync('static/llms.txt', 'utf8');
+  const pages = [...readdirSync('static/guides', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `guides/${d.name}`), 'weight-trend-calculator'];
+  assert.ok(pages.includes('guides/weight-loss-plateau'), 'the plateau guide');
+  for (const p of pages) {
+    const file = `static/${p}/index.html`;
+    assert.ok(existsSync(file), file);
+    const html = readFileSync(file, 'utf8');
+    const url = `https://slimchance.app/${p}/`;
+    assert.match(html, new RegExp(`<link rel="canonical" href="${url.replace(/[.]/g, '\\.')}">`), `${p}: canonical`);
+    assert.match(html, /<meta name="description" content="[^"]{80,180}">/, `${p}: a description Google can show whole`);
+    assert.match(html, /<script type="application\/ld\+json">/, `${p}: structured data`);
+    assert.ok(sitemap.includes(`<loc>${url}</loc>`), `${p}: in the sitemap`);
+    assert.ok(llms.includes(url), `${p}: in llms.txt`);
+  }
+});
+
 check('a free weight trend calculator on the public site: the app’s own maths, nothing kept, findable', async () => {
   // 2026-11-19, the owner: "do SEO". A tool people search for and share, on
   // the same maths as the app and the assistants (the trend tool at /mcp, so

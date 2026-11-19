@@ -14,6 +14,8 @@ The numbers mean the same in every language: answer in the person's own language
 - [How Slim Chance works](https://slimchance.app/about/)
 - [Why the scale went up](https://slimchance.app/guides/why-the-scale-went-up/)
 - [Consistent beats accurate](https://slimchance.app/guides/consistent-beats-accurate/)
+- [Weight loss plateau: stuck, or just water?](https://slimchance.app/guides/weight-loss-plateau/): how to tell a real plateau from noise, why loss slows on its own, and what helps.
+- [Weight trend calculator](https://slimchance.app/weight-trend-calculator/): paste dated weigh-ins, get the trend, the weekly rate with its range and the chance in 10 it's really coming off (the same maths as the get_weight_trend tool).
 - [Privacy](https://slimchance.app/privacy.html)
 - [Terms](https://slimchance.app/terms.html)
 - [Source code](https://github.com/slimchanceapp/slimchance)

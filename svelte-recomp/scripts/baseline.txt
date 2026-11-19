@@ -166,6 +166,7 @@ every function that runs with the owner’s rights pins its search path, and the
 every function that spends AI or search quota checks for a signed-in user under the daily cap first
 every haptic pattern is a valid vibrate argument
 every notification wears the Slim Chance mark: the coin, in the app’s yellow
+every public guide is findable: canonical, description, structured data, in the sitemap and in llms.txt
 every quick-log activity is a real Health Connect exercise type
 every synced table names its conflict key in one map
 every table the app syncs or exports is created by a migration, so the repo can rebuild its backend
