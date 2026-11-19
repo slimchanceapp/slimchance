@@ -399,6 +399,7 @@ the tap map counts named buttons per screen and day, with nothing that says who 
 the terms page says what Slim Chance is and isn’t, and every door links it
 the text-size setting is wired end to end
 the theme switch turns light on at once, not after a restart
+the tip link shows on the public pages in a browser only, never inside the apps
 the tools have plain verb names for the directories, and their first names still answer
 the training reminder comes at the session's own time, and not once you have trained
 the update dot never says "up to date" while the phone app is behind

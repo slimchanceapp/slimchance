@@ -97,7 +97,7 @@
         },
         "demo_recording_url": "https://github.com/slimchanceapp/slimchance/releases/download/review-assets/slim-chance-demo.webm",
         "commerce": false,
-        "commerce_description": "Slim Chance sells nothing, takes no payments and shows no ads."
+        "commerce_description": "Slim Chance sells nothing and shows no ads. The plugin takes no payments; the website has a voluntary tip link (Ko-fi)."
       },
       "publication": {
         "countries": [],

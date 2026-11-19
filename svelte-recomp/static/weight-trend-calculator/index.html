@@ -32,6 +32,7 @@
 .btn{font:inherit;font-weight:700;border:0;border-radius:12px;padding:11px 18px;cursor:pointer;background:var(--brass);color:var(--ink)}
 .ghost{background:transparent;color:var(--brass);border:1px solid var(--rule)}
 .hint{font-size:.875rem;color:var(--muted);margin:8px 0 0}
+.tip{font-size:.875rem;color:var(--muted);margin-top:28px}
 .out{margin-top:18px;border-top:1px solid var(--rule);padding-top:16px}
 .big{font-family:'Archivo','Arial Narrow',sans-serif;font-weight:800;font-size:3rem;line-height:1;color:var(--brass)}
 .big small{font-size:1.1rem;color:var(--muted);font-weight:600;margin-left:6px}
@@ -85,6 +86,8 @@
 <div class="cta"><b>Get this every morning.</b> Slim Chance does this with each weigh-in, explains the jumps, and learns a calorie budget from your own scale, so a rough food log is enough. Free to use, open source, no ads.<br><a class="go" href="/">Start now, no account needed</a></div>
 
 <p class="src">Not medical advice: it describes your own numbers. The maths is open source at <a href="https://github.com/slimchanceapp/slimchance">github.com/slimchanceapp/slimchance</a>, and the same calculation is available to AI assistants at slimchance.app/mcp.</p>
+<p class="tip" id="tip" hidden></p>
+<script src="/tip.js" defer></script>
 </main>
 <script>
 (() => {

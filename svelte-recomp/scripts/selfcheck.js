@@ -1421,6 +1421,29 @@ check('consent is asked at sign-up and records the privacy page it was given to'
   assert.match(gate, /onclick=\{start\} disabled=\{busy \|\| !consent\}/);
 });
 
+check('the tip link shows on the public pages in a browser only, never inside the apps', async () => {
+  // 2026-11-19, his ask: a "buy me a coffee" link. Google Play and Apple require
+  // their own payment systems for tips to an app's maker, and the apps open these
+  // pages too, so the line stays hidden unless the page is in a plain browser.
+  const { readFileSync, readdirSync } = await import('node:fs');
+  const tip = readFileSync('static/tip.js', 'utf8');
+  assert.match(tip, /if \(c && c\.isNativePlatform && c\.isNativePlatform\(\)\) return;[\s\S]*p\.hidden = false;/, 'shown only after the app check');
+  assert.match(tip, /href="https:\/\/ko-fi\.com\/yourslimchance"/);
+  const pages = ['static/about/index.html', 'static/weight-trend-calculator/index.html',
+    ...readdirSync('static/guides', { withFileTypes: true }).filter((d) => d.isDirectory()).map((d) => `static/guides/${d.name}/index.html`)];
+  assert.ok(pages.length >= 5);
+  for (const f of pages) {
+    const html = readFileSync(f, 'utf8');
+    assert.match(html, /id="tip" hidden/, `${f}: hidden until the script says it's a browser`);
+    assert.match(html, /<script src="\/tip\.js" defer><\/script>/, `${f}: loads the one tip script`);
+    assert.doesNotMatch(html, /ko-fi\.com\/(widgets|cdn)|storage\.ko-fi\.com/, `${f}: a plain link, no Ko-fi script (pages stay cookie-free)`);
+  }
+  const { execSync } = await import('node:child_process');
+  assert.equal(execSync('grep -rli "ko-fi" src || true', { encoding: 'utf8' }).trim(), '', 'never in the app screens');
+  assert.match(readFileSync('static/privacy.html', 'utf8'), /<h2 id="tips">/, 'the privacy page says what a tip shares');
+  assert.match(readFileSync('store/chatgpt/plugin.json', 'utf8'), /"commerce_description": "[^"]*voluntary tip link/, 'the listing says the website takes tips');
+});
+
 check('the front door shows the store apps in a browser only, and never a dead store link', async () => {
   // 2026-11-19, his ask: Google Play and App Store links on slimchance.app before
   // either store has the app public. Inside an app the row would point at itself.
