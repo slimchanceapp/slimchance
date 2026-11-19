@@ -360,6 +360,7 @@ the export covers EVERY table the app syncs
 the first week shows one next step at a time, only before a trend
 the first-week checklist tracks what the user has actually done
 the forecast reads Open-Meteo by day, and only daytime rain counts
+the front door shows the store apps in a browser only, and never a dead store link
 the goal date reads as a date a human would say
 the hero reads the trend, the distance to the next stop, and a pace that is never red
 the hero speaks of the chance, never of the body

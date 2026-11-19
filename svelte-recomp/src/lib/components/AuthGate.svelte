@@ -7,6 +7,11 @@
   // nothing to type), with consent still explicit. "I have an account" opens
   // the login.
   import { signIn, signUp, startTrial } from '$lib/stores/user';
+  import { isNativeApp } from '$lib/platform';
+
+  // Each store's page, set the day the app is public there (null: not yet).
+  const PLAY_URL: string | null = null;
+  const APP_STORE_URL: string | null = null;
 
   let mode = $state<'start' | 'login' | 'signup'>('start');
   let email = $state('');
@@ -96,6 +101,15 @@
       </div>
     {/if}
 
+    {#if !isNativeApp()}
+      <!-- Browsers only: inside an app this row would point at itself. -->
+      <p class="ag-stores">
+        {#if PLAY_URL}<a href={PLAY_URL} target="_blank" rel="noopener noreferrer">Get it on Google Play</a>{:else}<a href="/about/#android">Android app: join the test</a>{/if}
+        <span aria-hidden="true">·</span>
+        {#if APP_STORE_URL}<a href={APP_STORE_URL} target="_blank" rel="noopener noreferrer">Download on the App Store</a>{:else}<span>iPhone app: coming soon</span>{/if}
+      </p>
+    {/if}
+
     <footer class="ag-links">
       <a href="/about/">How it works</a> · <a href="/privacy.html">Privacy</a> · <a href="/terms.html">Terms</a> · <a href="https://github.com/slimchanceapp/slimchance" target="_blank" rel="noopener noreferrer">Open source</a>
     </footer>
@@ -129,4 +143,6 @@
   .ag-note{font-size:0.8125rem;color:var(--muted);text-align:center;margin:10px 0 0}
   .ag-switch{display:block;width:100%;text-align:center;background:none;border:none;color:var(--text);text-decoration:underline;text-underline-offset:3px;font-family:inherit;font-size:0.875rem;font-weight:600;margin-top:14px;cursor:pointer;padding:4px}
   .ag-links{text-align:center;font-size:0.8125rem;color:var(--muted);margin-top:auto;padding-top:28px}
+  .ag-stores{display:flex;flex-wrap:wrap;justify-content:center;gap:4px 8px;font-size:0.875rem;color:var(--muted);margin:18px 0 0}
+  .ag-stores a{color:var(--amber);font-weight:600}
 </style>

@@ -1421,6 +1421,22 @@ check('consent is asked at sign-up and records the privacy page it was given to'
   assert.match(gate, /onclick=\{start\} disabled=\{busy \|\| !consent\}/);
 });
 
+check('the front door shows the store apps in a browser only, and never a dead store link', async () => {
+  // 2026-11-19, his ask: Google Play and App Store links on slimchance.app before
+  // either store has the app public. Inside an app the row would point at itself.
+  const { readFileSync } = await import('node:fs');
+  const gate = readFileSync('src/lib/components/AuthGate.svelte', 'utf8');
+  assert.match(gate, /\{#if !isNativeApp\(\)\}\s*(<!--[\s\S]*?-->\s*)?<p class="ag-stores">/, 'browsers only');
+  const play = gate.match(/const PLAY_URL: string \| null = (null|'[^']*');/)?.[1];
+  const apple = gate.match(/const APP_STORE_URL: string \| null = (null|'[^']*');/)?.[1];
+  assert.ok(play && apple, 'one place for each store link');
+  if (play !== 'null') assert.equal(play, "'https://play.google.com/store/apps/details?id=app.slimchance'", 'the Play build, not the GitHub APK');
+  if (apple !== 'null') assert.match(apple, /^'https:\/\/apps\.apple\.com\//);
+  // Until Play is public, Android people join the closed test the about page explains.
+  assert.match(gate, /\{:else\}<a href="\/about\/#android">/);
+  assert.match(readFileSync('static/about/index.html', 'utf8'), /<details id="android">/);
+});
+
 check('photos and body photos go to Gemini or Gemma, never through a free gateway', async () => {
   const { readFileSync } = await import('node:fs');
   const llm = readFileSync('../supabase/functions/_shared/llm.ts', 'utf8');
