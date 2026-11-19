@@ -2,7 +2,9 @@
 // Progress, in the bottom bar's order), the way tabbed apps work. The page
 // follows the finger, rubber-bands at either end, and on release past the
 // line the old tab slides out and the new one slides in from the side it was
-// pulled from.
+// pulled from. A page with its own tab row ([data-swipe-tabs]: Food's Today,
+// History, Recipes; Train's Upcoming, History) is swiped through first, and
+// past either end of it the main tabs take over.
 //
 // It never takes a gesture that isn't its own: a touch that starts near the
 // screen's left or right edge belongs to the phone's back gesture; inputs, a
@@ -41,6 +43,24 @@ export function neighbourTab(path: string, dir: SwipeDir, tabs: readonly string[
 /** A touch this close to a side is the phone's own back gesture. */
 export const atEdge = (x: number, width: number): boolean => x < EDGE || x > width - EDGE;
 
+const SLOP = 12; // px a finger moves before its direction counts
+
+/** Sideways only when clearly so: more than twice as sideways as up or down
+ *  (the rule Android's own swipeable pages use). A thumb that starts a scroll
+ *  on a slight angle stays a scroll. null: not moved far enough to tell. */
+export function swipeAxis(dx: number, dy: number): 'x' | 'y' | null {
+  const ax = Math.abs(dx), ay = Math.abs(dy);
+  if (ax < SLOP && ay < SLOP) return null;
+  return ax > 2 * ay ? 'x' : 'y';
+}
+
+/** A page's own tab row (Food: Today, History, Recipes): the tab a swipe moves
+ *  to, or null past either end, where the main tabs take over. */
+export function innerStep(i: number, n: number, dir: SwipeDir): number | null {
+  const j = dir === 'next' ? i + 1 : i - 1;
+  return j >= 0 && j < n ? j : null;
+}
+
 /** Something under the finger has its own sideways gesture. */
 function ownsSideways(target: EventTarget | null, root: HTMLElement): boolean {
   for (let el = target as HTMLElement | null; el && el !== root; el = el.parentElement) {
@@ -77,6 +97,24 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     node.style.opacity = opacity >= 1 ? '' : String(opacity);
   }
 
+  /** This page's own tab row, if it has one on screen ([data-swipe-tabs] with role="tab" buttons). */
+  function row(): { tabs: HTMLElement[]; i: number } | null {
+    const list = node.querySelector<HTMLElement>('[data-swipe-tabs]');
+    if (!list?.offsetParent) return null;
+    const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
+    const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
+    return i < 0 ? null : { tabs, i };
+  }
+
+  /** Where a swipe that way leads: the page's own next tab, else the next main tab. */
+  function target(dir: SwipeDir): { inner: HTMLElement } | { path: string } | null {
+    const r = row();
+    const j = r && innerStep(r.i, r.tabs.length, dir);
+    if (r && j !== null) return { inner: r.tabs[j] };
+    const path = neighbourTab(o.current(), dir, o.tabs);
+    return path ? { path } : null;
+  }
+
   function start(e: TouchEvent) {
     tracking = false;
     if (busy || e.touches.length !== 1) return;
@@ -96,12 +134,12 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     y = t.clientY;
     const dx = x - x0, dy = y - y0;
     if (!axis) {
-      if (Math.abs(dx) < 10 && Math.abs(dy) < 10) return;
-      axis = Math.abs(dx) > Math.abs(dy) * 1.2 ? 'x' : 'y';
+      axis = swipeAxis(dx, dy);
+      if (!axis) return;
       if (axis === 'y') { tracking = false; return; } // a scroll: leave it alone
     }
     if (e.cancelable) e.preventDefault(); // the page doesn't scroll while it's pulled sideways
-    const more = neighbourTab(o.current(), dx < 0 ? 'next' : 'prev', o.tabs);
+    const more = target(dx < 0 ? 'next' : 'prev');
     place(more ? dx : dx * 0.25, 1, 0); // rubber band at either end
   }
 
@@ -110,14 +148,15 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     tracking = false;
     if (axis !== 'x') return;
     const dir = swipeVerdict(x - x0, y - y0, e.timeStamp - t0, innerWidth);
-    const to = dir && neighbourTab(o.current(), dir, o.tabs);
+    const to = dir && target(dir);
     if (!to) { place(0, 1, 220); return; }
     busy = true;
     o.onSwipe?.();
     const out = dir === 'next' ? -innerWidth : innerWidth;
     try {
       if (!still()) { place(out * 0.4, 0, 140); await wait(140); }
-      await o.go(to);
+      if ('inner' in to) { to.inner.click(); await new Promise(requestAnimationFrame); }
+      else await o.go(to.path);
       node.scrollTop = 0;
       if (still()) place(0, 1, 0);
       else {

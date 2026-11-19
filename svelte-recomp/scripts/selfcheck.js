@@ -1424,8 +1424,26 @@ check('consent is asked at sign-up and records the privacy page it was given to'
 check('a sideways swipe on a main screen moves to the next tab, and never steals a gesture that is not its own', async () => {
   // 2026-11-19, his ask ("why not on Slim Chance?"): tabbed apps let you swipe
   // between tabs. Today, Food, Train and Progress now do, in the bottom bar's order.
-  const { swipeVerdict, neighbourTab, atEdge } = await import('../src/lib/actions/swipeTabs.ts');
+  const { swipeVerdict, neighbourTab, atEdge, swipeAxis, innerStep } = await import('../src/lib/actions/swipeTabs.ts');
   const W = 400;
+  // His report the same day: every page has sideways things, and Food's history
+  // scrolls. A thumb starting a scroll on a slight angle must stay a scroll:
+  // sideways only past twice as sideways as up-or-down (Android's own pager rule).
+  assert.equal(swipeAxis(-10, -3), null, 'under the slop: not decided yet');
+  assert.equal(swipeAxis(-18, -10), 'y', 'a thumb arc starting a scroll stays a scroll');
+  assert.equal(swipeAxis(-30, -10), 'x');
+  assert.equal(swipeAxis(4, 40), 'y');
+  // Pages with their own tab row (Food: Today, History, Recipes; Train: Upcoming,
+  // History) swipe through it first, then hand over to the next main tab.
+  assert.equal(innerStep(0, 3, 'next'), 1);
+  assert.equal(innerStep(2, 3, 'next'), null, 'past the last one: the next main tab');
+  assert.equal(innerStep(0, 3, 'prev'), null, 'before the first one: the main tab before');
+  const fs = await import('node:fs');
+  assert.match(fs.readFileSync('src/routes/recipes/+page.svelte', 'utf8'), /class="food-views" role="tablist" aria-label="Food" data-swipe-tabs/);
+  const train = fs.readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  assert.match(train, /role="tablist" aria-label="Train" data-swipe-tabs/);
+  assert.match(train, /role="tab" aria-selected=\{tab === 'upcoming'\}/);
+  assert.match(train, /role="tab" aria-selected=\{tab === 'history'\}/);
   assert.equal(swipeVerdict(-80, 6, 120, W), 'next', 'a quick flick left: next tab');
   assert.equal(swipeVerdict(-150, 10, 600, W), 'next', 'a slow drag past a third of the screen: next tab');
   assert.equal(swipeVerdict(150, 10, 600, W), 'prev', 'to the right: the tab before');
