@@ -1476,17 +1476,28 @@ check('a sideways swipe on a main screen moves to the next tab, and never steals
   assert.equal(swipeDuration(-60, 3, 400), 180, 'a fast flick finishes fast');
   assert.equal(swipeDuration(-60, 0.2, 400), 340, 'a slow drag never crawls');
   assert.ok(swipeDuration(-300, 1.2, 400) < swipeDuration(-60, 1.2, 400), 'less left to travel, less time');
-  assert.match(st, /\.startViewTransition\(\(\) => open\(to\)\)/, 'the new tab opens inside the transition');
-  assert.doesNotMatch(st, /place\([^)]*, 0, 140\)/, 'no fade to blank before the new tab');
-  const css = readFileSync('src/app.css', 'utf8');
-  assert.match(st, /el\.style\.viewTransitionName = 'tab-page';/, 'what moved is what slides');
-  assert.doesNotMatch(st, /await new Promise\(requestAnimationFrame\)/, 'no waiting for a frame inside a transition: no frame comes, and it froze 4 s');
-  assert.match(st, /t\.ready\.catch\(quiet\)/, 'a skipped transition never shows an error');
-  // A page's own tabs slide only what is under the row; the header stays put.
+  // His third ask the same day: no pause before the slide. The four tabs live
+  // side by side in one strip, each built once and kept, the neighbours of the
+  // one shown built while the phone is idle: the next tab is already there
+  // beside the finger as it drags, and a release only finishes the slide. Each
+  // tab keeps its own scroll, like a native app.
+  const layout = readFileSync('src/routes/+layout.svelte', 'utf8');
+  assert.match(layout, /<div id="tabs" hidden=\{tabIdx < 0\}\s*use:swipeTabs=\{\{/);
+  assert.match(layout, /<div class="tab-track" data-swipe-track style:transform=/);
+  assert.match(layout, /\{#each TABS as t, i \(t\.id\)\}[\s\S]*?inert=\{i !== tabIdx\}[\s\S]*?\{#if built\.has\(t\.id\) && Page\}/, 'built once and kept; only the tab shown takes taps');
+  assert.match(layout, /\[TABS\[tabIdx - 1\], TABS\[tabIdx \+ 1\]\]\.forEach\(\(t\) => t && build\(t\.id\)\)/, 'the neighbours built while the phone is idle');
+  assert.match(layout, /prepare: \(path\) =>/, 'a swipe toward a tab not built yet builds it as the drag starts');
+  assert.doesNotMatch(st, /startViewTransition/, 'no snapshot dance: the next tab is real and already there');
+  assert.match(st, /await settle\(m\.track, ms\);\s*await m\.commit\(\);/, 'the slide finishes first; the page address follows');
+  assert.doesNotMatch(st, /await new Promise\(requestAnimationFrame\)/, 'no waiting on a frame mid-gesture');
+  assert.match(readFileSync('src/lib/components/BottomNav.svelte', 'utf8'), /if \(currentPath === base \+ tabId\) document\.getElementById\('pages'\)/, "tapping another tab keeps this tab's place; tapping the tab you're on goes to its top");
+  // A page's own tabs are a strip too, every view built once and kept.
+  const sv = readFileSync('src/lib/components/SwipeViews.svelte', 'utf8');
+  assert.match(sv, /data-swipe-panel/);
+  assert.match(sv, /data-swipe-track data-gap=\{GAP\}/);
+  assert.match(sv, /inert=\{i !== index\}/);
   for (const f of ['src/routes/recipes/+page.svelte', 'src/routes/workouts/+page.svelte'])
-    assert.match(fs.readFileSync(f, 'utf8'), /data-swipe-tabs[\s\S]*?<div data-swipe-panel>/, f);
-  assert.match(css, /@keyframes tab-in-next\{from\{transform:translateX\(calc\(100% \+ var\(--swipe-from\)\)\)\}/, 'the new tab starts right beside the old one');
-  assert.match(readFileSync('src/routes/+layout.svelte', 'utf8'), /preloadCode\(base \+ t\.id\)/, 'every tab ready before the first swipe');
+    assert.match(fs.readFileSync(f, 'utf8'), /data-swipe-tabs[\s\S]*?<SwipeViews index=/, f);
 });
 
 check('the tip link shows on the public pages in a browser only, never inside the apps', async () => {

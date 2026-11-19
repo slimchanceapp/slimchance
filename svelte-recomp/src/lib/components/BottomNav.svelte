@@ -19,12 +19,12 @@
 
   const currentPath = $derived($page.url.pathname);
 
-  // The scroll container is <main id="pages">, not the window, so tapping a tab
-  // (even the one you're already on) otherwise leaves you mid-page. Snap to top,
-  // and give a light tick so switching tabs feels like a physical detent.
+  // Each tab keeps its own scroll (the tab strip in +layout.svelte), like a
+  // native app: tapping another tab finds it where you left it; tapping the tab
+  // you're on goes to its top. A light tick either way, a physical detent.
   function toTop(tabId: string) {
     haptic(currentPath === base + tabId ? 'tap' : 'select');
-    document.getElementById('pages')?.scrollTo({ top: 0, behavior: 'smooth' });
+    if (currentPath === base + tabId) document.getElementById('pages')?.scrollTo({ top: 0, behavior: 'smooth' });
   }
 </script>
 

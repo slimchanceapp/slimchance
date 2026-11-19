@@ -3,7 +3,9 @@
   import BottomNav, { TABS } from '$lib/components/BottomNav.svelte';
   import { swipeTabs } from '$lib/actions/swipeTabs';
   import CoinSpin from '$lib/components/CoinSpin.svelte';
-  import { navigating } from '$app/state';
+  import { navigating, page } from '$app/state';
+  import type { Component } from 'svelte';
+  import { SvelteSet } from 'svelte/reactivity';
   import AuthGate from '$lib/components/AuthGate.svelte';
   import { syncStatus } from '$lib/stores/sync';
   import { user, authReady, initAuth, signOut, deleteAccount, isTrial, isRobot } from '$lib/stores/user';
@@ -113,6 +115,34 @@
   // table from Supabase, the watch's steps/sleep/heart-rate/workouts from
   // Health Connect, and the clock that muscle recovery and readiness are
   // measured against.
+  // The four tabs side by side in one strip (swipeTabs.ts), the way native
+  // tabbed apps work: each built once and kept, the neighbours of the one shown
+  // built while the phone is idle, so a swipe finds the next tab already there
+  // and it shows beside the finger as it drags. Each tab keeps its own scroll.
+  const TAB_PAGES: Record<string, () => Promise<{ default: Component }>> = {
+    '/': () => import('./+page.svelte'),
+    '/recipes': () => import('./recipes/+page.svelte'),
+    '/workouts': () => import('./workouts/+page.svelte'),
+    '/progress': () => import('./progress/+page.svelte'),
+  };
+  const tabIdx = $derived(TABS.findIndex((t) => base + t.id === page.url.pathname));
+  const built = new SvelteSet<string>();
+  const tabPages: Record<string, Component> = $state({});
+  function build(id: string) {
+    if (built.has(id)) return;
+    built.add(id);
+    TAB_PAGES[id]().then((m) => (tabPages[id] = m.default));
+  }
+  $effect(() => {
+    if (!$user || tabIdx < 0) return;
+    const i = tabIdx;
+    untrack(() => build(TABS[i].id));
+    const neighbours = () => [TABS[tabIdx - 1], TABS[tabIdx + 1]].forEach((t) => t && build(t.id));
+    const w = window as any;
+    const h = w.requestIdleCallback ? w.requestIdleCallback(neighbours, { timeout: 2500 }) : setTimeout(neighbours, 800);
+    return () => (w.requestIdleCallback ? w.cancelIdleCallback(h) : clearTimeout(h));
+  });
+
   // Every tab's code ready before the first swipe (swipeTabs.ts), so the new
   // tab is there the moment the finger lets go, not a beat later.
   $effect(() => {
@@ -776,34 +806,58 @@
     </div>
   </div>
 
+  {#snippet crashBox(error: unknown, reset: () => void)}
+    <div class="crash-box">
+      <div style="font-size:2rem;margin-bottom:8px">⚠️</div>
+      <div style="font-weight:700;color:var(--text);margin-bottom:6px">Something broke on this screen</div>
+      <div style="font-size:0.75rem;color:var(--muted);margin-bottom:14px;word-break:break-word">{String((error as any)?.message || error)}</div>
+      <button class="btn bp bfl" onclick={() => { crashMsg = null; reset(); }}>Try again</button>
+      <button class="btn bg_ bfl" style="margin-top:8px" onclick={() => location.assign('/')}>Go to Today</button>
+    </div>
+  {/snippet}
+
+  <div id="tabs" hidden={tabIdx < 0}
+    use:swipeTabs={{
+      tabs: TABS.map((t) => base + t.id),
+      current: () => location.pathname,
+      go: (path) => goto(path),
+      prepare: (path) => { const t = TABS.find((x) => base + x.id === path); if (t) build(t.id); },
+      onSwipe: () => haptic('select'),
+    }}
+  >
+    <div class="tab-track" data-swipe-track style:transform={`translateX(${-Math.max(0, tabIdx) * 100}%)`}>
+      {#each TABS as t, i (t.id)}
+        {@const Page = tabPages[t.id]}
+        <section class="tab-panel page-scroll" id={i === tabIdx ? 'pages' : undefined} inert={i !== tabIdx}
+          use:pullToRefresh={{ onRefresh: doRefresh, onPull, threshold: PULL_THRESHOLD, enabled: !$refreshing && i === tabIdx }}>
+          {#if built.has(t.id) && Page}
+            <svelte:boundary onerror={(e) => { console.error('Render error:', e); crashMsg = (e as any)?.message || String(e); recordError((e as any)?.message || String(e), { stack: (e as any)?.stack, kind: 'render' }); }}>
+              {#key unitsKey}<Page />{/key}
+              {#snippet failed(error, reset)}{@render crashBox(error, reset)}{/snippet}
+            </svelte:boundary>
+          {/if}
+        </section>
+      {/each}
+    </div>
+  </div>
+
+  {#if tabIdx < 0}
   <main
     id="pages"
+    class="page-scroll"
     use:pullToRefresh={{
       onRefresh: doRefresh,
       onPull,
       threshold: PULL_THRESHOLD,
       enabled: !$refreshing
     }}
-    use:swipeTabs={{
-      tabs: TABS.map((t) => base + t.id),
-      current: () => location.pathname,
-      go: (path) => goto(path),
-      onSwipe: () => haptic('select'),
-    }}
   >
     <svelte:boundary onerror={(e) => { console.error('Render error:', e); crashMsg = (e as any)?.message || String(e); recordError((e as any)?.message || String(e), { stack: (e as any)?.stack, kind: 'render' }); }}>
       {#key unitsKey}{@render children()}{/key}
-      {#snippet failed(error, reset)}
-        <div class="crash-box">
-          <div style="font-size:2rem;margin-bottom:8px">⚠️</div>
-          <div style="font-weight:700;color:var(--text);margin-bottom:6px">Something broke on this screen</div>
-          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:14px;word-break:break-word">{String((error as any)?.message || error)}</div>
-          <button class="btn bp bfl" onclick={() => { crashMsg = null; reset(); }}>Try again</button>
-          <button class="btn bg_ bfl" style="margin-top:8px" onclick={() => location.assign('/')}>Go to Today</button>
-        </div>
-      {/snippet}
+      {#snippet failed(error, reset)}{@render crashBox(error, reset)}{/snippet}
     </svelte:boundary>
   </main>
+  {/if}
 
   {#if $refreshError}
     <div class="crash-toast" role="alert" style="background:var(--amber);color:#111">
@@ -863,7 +917,12 @@
      confirm is an export you don't trust. */
   .menu-sec{font-size:0.6875rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:22px 0 2px}
   .menu-note{font-size:0.6875rem;line-height:1.45;color:var(--muted);padding:8px 0 2px}
-#pages{flex:1;overflow-y:auto;overflow-x:hidden;padding:18px 16px calc(var(--nav-h) + 28px + var(--sb));overscroll-behavior-y:contain}
+main#pages{flex:1}
+  .page-scroll{overflow-y:auto;overflow-x:hidden;padding:18px 16px calc(var(--nav-h) + 28px + var(--sb));overscroll-behavior-y:contain}
+  /* The tab strip: four full-width panels in a row, each its own scroll. */
+  #tabs{flex:1;min-height:0;position:relative;overflow:hidden}
+  .tab-track{display:flex;height:100%}
+  .tab-panel{flex:0 0 100%;min-width:0;height:100%}
   /* Pull-to-refresh indicator: a zero-height strip above the scroll area that
      grows with the drag, so the content moves down with the finger. */
   #ptr{flex-shrink:0;overflow:hidden;display:flex;align-items:center;justify-content:center;background:var(--bg2);transition:height .25s var(--ease)}
@@ -876,7 +935,7 @@
   #app{display:flex;flex-direction:column;height:100vh;height:calc(100dvh + var(--ios-gap,0px))}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
   @keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-  #pages > :global(*){animation:fadeUp .35s var(--ease)}
+  main#pages > :global(*), .tab-panel > :global(*){animation:fadeUp .35s var(--ease)}
   .ob-recover{display:block;width:100%;max-width:460px;margin:0 auto 4px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;padding:10px;color:var(--amber);font-size:0.75rem;font-weight:700;cursor:pointer;font-family:inherit}
   .ob-recover:disabled{opacity:.6}
   .crash-box{text-align:center;padding:40px 20px}

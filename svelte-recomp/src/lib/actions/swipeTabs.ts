@@ -1,21 +1,25 @@
 // Swipe sideways on a main screen to reach the next tab (Today, Food, Train,
-// Progress, in the bottom bar's order), the way tabbed apps work. The page
-// follows the finger, rubber-bands at either end, and on release past the
-// line the old tab slides out and the new one slides in from the side it was
-// pulled from. A page with its own tab row ([data-swipe-tabs]: Food's Today,
-// History, Recipes; Train's Upcoming, History) is swiped through first, and
-// past either end of it the main tabs take over.
+// Progress, in the bottom bar's order), the way native tabbed apps work. The
+// tabs sit side by side in one strip (+layout.svelte), each built once and
+// kept, so the next tab is already there and shows beside the finger as it
+// drags; letting go only finishes the slide, at the finger's own speed, and the
+// page address follows. A page with its own tab row ([data-swipe-tabs]: Food's
+// Today, History, Recipes; Train's Upcoming, History) is a strip too
+// (SwipeViews.svelte) and is swiped through first; past either end of it the
+// main tabs take over.
 //
 // It never takes a gesture that isn't its own: a touch that starts near the
 // screen's left or right edge belongs to the phone's back gesture; inputs, a
 // chart being read by dragging, a row's swipe-to-delete, a sideways scroller
-// and an open sheet keep their own moves.
+// and an open sheet keep their own moves; a scroll that starts on an angle
+// stays a scroll.
 //
 // Touch events, not pointer events: the browser cancels pointer events the
 // moment it decides a drag is a scroll (see pullToRefresh.ts), and a
 // non-passive touchmove can still stop the page scrolling while it's pulled.
 //
-// Usage: <main use:swipeTabs={{ tabs, current: () => location.pathname, go, onSwipe }}>
+// Usage: <div use:swipeTabs={{ tabs, current: () => location.pathname, go, prepare, onSwipe }}>
+//          <div data-swipe-track>…one child per tab…</div></div>
 
 export type SwipeDir = 'next' | 'prev';
 
@@ -83,15 +87,29 @@ export interface SwipeTabsOptions {
   tabs: readonly string[];
   /** The path showing now. */
   current: () => string;
-  /** Open a tab. */
+  /** Open a tab (the page address follows the slide). */
   go: (path: string) => Promise<unknown>;
+  /** Build a tab that isn't built yet: a swipe toward it has just started. */
+  prepare?: (path: string) => void;
   /** A swipe landed (a haptic tick). */
   onSwipe?: () => void;
 }
 
-type Target = { inner: HTMLElement } | { path: string };
-type Transition = { ready: Promise<void>; updateCallbackDone: Promise<void>; finished: Promise<void> };
-const quiet = () => {};
+/** One planned move of a strip: which strip, from which view to which (null:
+ *  nothing that way, so it only stretches), and what landing there means. */
+type Move = { track: HTMLElement; from: number; to: number | null; gap: number; path?: string; commit: () => Promise<unknown> };
+
+/** Where a strip sits with view i in place, pulled dx px. */
+const at = (i: number, gap: number, dx = 0) => `translate3d(calc(${-i} * (100% + ${gap}px) + ${dx}px),0,0)`;
+
+/** Resolves when a strip's slide has finished (or should have). */
+function settle(track: HTMLElement, ms: number): Promise<void> {
+  return new Promise((done) => {
+    const end = () => { track.removeEventListener('transitionend', end); clearTimeout(t); done(); };
+    const t = setTimeout(end, ms + 80);
+    track.addEventListener('transitionend', end);
+  });
+}
 
 export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   let o = opts;
@@ -99,18 +117,16 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
   let busy = false;
   let axis: 'x' | 'y' | null = null;
   let x0 = 0, y0 = 0, t0 = 0, x = 0, y = 0;
-  let mover: HTMLElement = node; // what follows the finger: the whole page, or only the content under its tab row
-  let shown = 0; // px the mover sits off centre now
+  let moving: Move | null = null; // the strip following the finger now
+  let prepared = '';
   let frame = 0;
   let trail: [number, number][] = []; // the last moments of the finger: [time, x]
 
   const still = () => matchMedia('(prefers-reduced-motion: reduce)').matches;
-  function place(el: HTMLElement, px: number, ms = 0) {
-    if (el !== mover) { mover.style.transform = ''; mover.style.willChange = ''; mover = el; }
-    shown = px;
-    el.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none';
-    el.style.transform = px ? `translate3d(${px}px,0,0)` : '';
-    el.style.willChange = px ? 'transform' : '';
+  function place(track: HTMLElement, transform: string, ms = 0) {
+    track.style.transition = ms ? `transform ${ms}ms cubic-bezier(.2,.9,.25,1)` : 'none';
+    track.style.transform = transform;
+    track.style.willChange = 'transform';
   }
   /** The finger's speed over its last ~60 ms, px per ms. */
   function speed(): number {
@@ -119,27 +135,40 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     return end && from && end[0] > from[0] ? Math.abs(end[1] - from[1]) / (end[0] - from[0]) : 0;
   }
 
-  /** This page's own tab row, if it has one on screen ([data-swipe-tabs] with role="tab" buttons). */
-  function row(): { list: HTMLElement; tabs: HTMLElement[]; i: number } | null {
-    const list = node.querySelector<HTMLElement>('[data-swipe-tabs]');
-    if (!list?.offsetParent) return null;
-    const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
-    const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
-    return i < 0 ? null : { list, tabs, i };
-  }
+  const mainTrack = () => node.querySelector<HTMLElement>(':scope > [data-swipe-track]');
+  const mainIndex = () => o.tabs.indexOf(o.current());
 
-  /** Where a swipe that way leads: the page's own next tab, else the next main tab. */
-  function target(dir: SwipeDir): Target | null {
-    const r = row();
-    const j = r && innerStep(r.i, r.tabs.length, dir);
-    if (r && j !== null) return { inner: r.tabs[j] };
+  /** Which strip a swipe that way moves: this tab's own row first, then the main tabs. */
+  function plan(dir: SwipeDir): Move | null {
+    const main = mainTrack();
+    const mi = mainIndex();
+    if (!main || mi < 0) return null;
+    const panel = main.children[mi] as HTMLElement | undefined;
+    const list = panel?.querySelector<HTMLElement>('[data-swipe-tabs]');
+    const inner = panel?.querySelector<HTMLElement>('[data-swipe-panel] [data-swipe-track]');
+    if (list?.offsetParent && inner) {
+      const tabs = [...list.querySelectorAll<HTMLElement>('[role="tab"]')];
+      const i = tabs.findIndex((t) => t.getAttribute('aria-selected') === 'true');
+      const j = i < 0 ? null : innerStep(i, tabs.length, dir);
+      if (j !== null) {
+        return { track: inner, from: i, to: j, gap: Number(inner.dataset.gap ?? 0), commit: async () => {
+          tabs[j].click();
+          // Keep the row in sight if the page was scrolled past it.
+          const top = list.getBoundingClientRect().top - panel!.getBoundingClientRect().top + panel!.scrollTop - 8;
+          if (panel!.scrollTop > top) panel!.scrollTop = Math.max(0, top);
+        } };
+      }
+    }
     const path = neighbourTab(o.current(), dir, o.tabs);
-    return path ? { path } : null;
+    return { track: main, from: mi, to: path ? mi + (dir === 'next' ? 1 : -1) : null, gap: 0, path: path ?? undefined,
+      commit: async () => { if (path) await o.go(path); } };
   }
 
-  /** A page's own tabs slide only the content under the row ([data-swipe-panel]); main tabs slide the page. */
-  const moverFor = (to: Target | null) =>
-    to && 'inner' in to ? node.querySelector<HTMLElement>('[data-swipe-panel]') ?? node : node;
+  /** Put a strip back where it rests. */
+  function rest(m: Move, ms = 0) {
+    place(m.track, at(m.from, m.gap), ms);
+    if (!ms) m.track.style.willChange = '';
+  }
 
   function start(e: TouchEvent) {
     tracking = false;
@@ -148,6 +177,7 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     if (!o.tabs.includes(o.current()) || atEdge(t.clientX, innerWidth) || ownsSideways(e.target, node)) return;
     tracking = true;
     axis = null;
+    moving = null;
     x0 = x = t.clientX;
     y0 = y = t.clientY;
     t0 = e.timeStamp;
@@ -171,25 +201,13 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     // One move per frame, however fast the screen reports the finger.
     cancelAnimationFrame(frame);
     frame = requestAnimationFrame(() => {
-      const to = target(dx < 0 ? 'next' : 'prev');
-      place(moverFor(to), to ? dx : dx * 0.25); // rubber band at either end
+      const m = plan(dx < 0 ? 'next' : 'prev');
+      if (!m) return;
+      if (moving && moving.track !== m.track) rest(moving); // turned back across a row's end
+      moving = m;
+      if (m.path && m.path !== prepared) { prepared = m.path; o.prepare?.(m.path); }
+      place(m.track, at(m.from, m.gap, m.to === null ? dx * 0.25 : dx)); // rubber band at either end
     });
-  }
-
-  /** Open where the swipe leads. No waiting for a frame here: while a view
-   *  transition waits for this, the browser draws none (it froze 4 s, 19 Nov). */
-  async function open(to: Target) {
-    if ('inner' in to) {
-      const r = row();
-      to.inner.click();
-      await new Promise((done) => setTimeout(done, 0));
-      // Keep the tab row in sight if the page was scrolled past it.
-      const top = r ? r.list.getBoundingClientRect().top - node.getBoundingClientRect().top + node.scrollTop - 8 : 0;
-      if (node.scrollTop > top) node.scrollTop = Math.max(0, top);
-    } else {
-      await o.go(to.path);
-      node.scrollTop = 0;
-    }
   }
 
   async function end(e: TouchEvent) {
@@ -198,34 +216,20 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     cancelAnimationFrame(frame);
     if (axis !== 'x') return;
     const dir = swipeVerdict(x - x0, y - y0, e.timeStamp - t0, innerWidth);
-    const to = dir && target(dir);
-    if (!to) { place(mover, 0, 220); return; }
+    const m = dir && plan(dir);
+    if (moving && (!m || moving.track !== m.track)) rest(moving, 220);
+    if (!m || m.to === null) { if (m) rest(m, 220); return; }
     busy = true;
     o.onSwipe?.();
-    const root = document.documentElement;
-    const el = moverFor(to);
-    const from = el === mover ? shown : 0;
-    const doc = document as Document & { startViewTransition?: (update: () => Promise<void>) => Transition };
     try {
-      if (still() || !doc.startViewTransition) {
-        place(el, 0);
-        await open(to);
-        return;
-      }
-      // One motion: the old tab carries on from where the finger let go, and the
-      // new one arrives right beside it (app.css, tab-out-* and tab-in-*).
-      root.style.setProperty('--swipe-from', `${from}px`);
-      root.style.setProperty('--swipe-ms', `${swipeDuration(from, speed(), innerWidth)}ms`);
-      root.dataset.swipe = dir;
-      place(el, 0); // captured centred; the animation starts it at --swipe-from
-      el.style.viewTransitionName = 'tab-page';
-      const t = doc.startViewTransition(() => open(to));
-      t.ready.catch(quiet); // a skipped transition is no error: the tab still opens
-      t.updateCallbackDone.catch(quiet);
-      await t.finished.catch(quiet);
+      const ms = still() ? 0 : swipeDuration(x - x0, speed(), innerWidth);
+      place(m.track, at(m.to, m.gap), ms);
+      await settle(m.track, ms);
+      await m.commit();
     } finally {
-      el.style.viewTransitionName = '';
-      delete root.dataset.swipe;
+      m.track.style.transition = '';
+      m.track.style.willChange = '';
+      moving = null;
       busy = false;
     }
   }
@@ -234,7 +238,7 @@ export function swipeTabs(node: HTMLElement, opts: SwipeTabsOptions) {
     if (!tracking) return;
     tracking = false;
     cancelAnimationFrame(frame);
-    if (axis === 'x') place(mover, 0, 220);
+    if (axis === 'x' && moving) rest(moving, 220);
   }
 
   node.addEventListener('touchstart', start, { passive: true });

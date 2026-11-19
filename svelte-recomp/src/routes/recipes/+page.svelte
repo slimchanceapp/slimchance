@@ -8,6 +8,7 @@
   import Modal from '$lib/components/Modal.svelte';
   import MiniChart from '$lib/components/MiniChart.svelte';
   import { swipeActions } from '$lib/actions/swipe';
+  import SwipeViews from '$lib/components/SwipeViews.svelte';
   import FoodLogger from '$lib/components/FoodLogger.svelte';
   import { page } from '$app/state';
   import { goto } from '$app/navigation';
@@ -420,9 +421,8 @@
   {/each}
 </div>
 
-<!-- What a swipe slides between Today, History and Recipes; the header and the row above stay put (swipeTabs.ts). -->
-<div data-swipe-panel>
-{#if view === 'today'}
+<!-- The views a swipe slides between Today, History and Recipes; the header and the row above stay put (swipeTabs.ts). -->
+{#snippet todayView()}
 <!-- Where the number comes from, in the log's own terms: a log that leaves the
      same things out every week is still a good ruler, so the target is set in
      its units and nobody is asked to weigh the oil. -->
@@ -491,7 +491,8 @@
   </div>
 {/if}
 
-{:else if view === 'history'}
+{/snippet}
+{#snippet historyView()}
 {#if kcalTrend.length >= 2}
   <div class="card">
     <div class="flex jb ac">
@@ -544,7 +545,8 @@
 
 <!-- Weekly eating patterns. -->
 <NutritionInsights />
-{:else}
+{/snippet}
+{#snippet recipesView()}
 <div class="card gen-card">
   <div class="card-lbl">Cook something new</div>
   <div class="gen-sub">
@@ -600,8 +602,8 @@
     </div>
   </div>
 {/if}
-{/if}
-</div>
+{/snippet}
+<SwipeViews index={['today', 'history', 'recipes'].indexOf(view)} views={[todayView, historyView, recipesView]} />
 
 <Modal open={selected !== null} onclose={() => selected = null}>
   {#if selected}

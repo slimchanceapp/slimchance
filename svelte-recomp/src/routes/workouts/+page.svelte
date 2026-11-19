@@ -1,4 +1,5 @@
 <script lang="ts">
+  import SwipeViews from '$lib/components/SwipeViews.svelte';
   import { buildGroups } from '$lib/training';
   import { DEFAULT_SESSIONS, type PlanDay, type PlanSession, type PlanExercise } from '$lib/training';
   import { buildSchedule } from '$lib/training';
@@ -924,9 +925,8 @@
   <button class="wtab" role="tab" aria-selected={tab === 'history'} class:on={tab === 'history'} onclick={() => tab = 'history'}>History</button>
 </div>
 
-<!-- What a swipe slides between Upcoming and History; the header and the row above stay put (swipeTabs.ts). -->
-<div data-swipe-panel>
-{#if tab === 'upcoming'}
+<!-- The views a swipe slides between Upcoming and History; the header and the row above stay put (swipeTabs.ts). -->
+{#snippet upcomingView()}
 
   {#snippet dayCard(day: ReturnType<typeof getWeekDates>[number], isToday: boolean)}
     <div class="card" style="padding:10px 12px">
@@ -1028,7 +1028,8 @@
 
   <!-- Programs, at the bottom: offered, and put away with "Not now". -->
 
-{:else}
+{/snippet}
+{#snippet historyView()}
   <!-- What actually happened, day by day. Hand-logged sets and watch sessions
        merged, because a day with only a watch session is still a training day. -->
   {#if historyDays.length > 0}
@@ -1085,8 +1086,8 @@
       {/each}
     </div>
   {/if}
-{/if}
-</div>
+{/snippet}
+<SwipeViews index={tab === 'upcoming' ? 0 : 1} views={[upcomingView, historyView]} />
 
 {#if sessionKey && sessions.get(sessionKey)}
   {@const sess = sessions.get(sessionKey)}
