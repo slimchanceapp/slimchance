@@ -1,9 +1,12 @@
 // The coach arranges the rest of the training week (pact m14, 2026-11-10:
 // "which of your own sessions go on which day, walks and rest, from your Train
 // week and the watch. Never new exercises or loads"). The AI proposes; this
-// decides whether the proposal may be shown. Pure; checked in selfcheck.js.
+// decides whether the proposal may be shown. A sport keeps its own day (his
+// report, 19 Nov: badminton moved to days he couldn't play, so the week
+// couldn't be followed): the app puts it there, and a session on it is
+// refused. Pure; checked in selfcheck.js.
 
-export interface TrainDay { date: string; kind: 'session' | 'walk' | 'rest'; session: string | null; minutes: number | null; why: string }
+export interface TrainDay { date: string; kind: 'session' | 'walk' | 'rest' | 'sport'; session: string | null; minutes: number | null; why: string }
 export interface CheckedTrainPlan { ok: boolean; why: string | null; days: TrainDay[]; note: string }
 
 /** Sessions still to do this week: the plan's count, less what's done. */
@@ -14,7 +17,7 @@ const plain = (s: unknown, max: number) => { const t = String(s ?? '').trim(); r
 
 export function checkTrainPlan(
   reply: { days?: unknown; note?: unknown } | null | undefined,
-  f: { days: string[]; sessions: string[]; left: number; easyToday: boolean; today: string },
+  f: { days: string[]; sessions: string[]; left: number; easyToday: boolean; today: string; sports?: Record<string, string> },
 ): CheckedTrainPlan {
   const fail = (why: string): CheckedTrainPlan => ({ ok: false, why, days: [], note: '' });
   if (!reply || !Array.isArray(reply.days)) return fail('no plan in the answer');
@@ -23,6 +26,12 @@ export function checkTrainPlan(
   for (const date of f.days) {
     const d = (reply.days as any[]).find((x) => x?.date === date);
     if (!d) return fail(`nothing for ${date}`);
+    const sport = f.sports?.[date];
+    if (sport) {
+      if (d.kind === 'session') return fail(`${date} is their ${sport} day: never a session on it`);
+      days.push({ date, kind: 'sport', session: sport, minutes: null, why: plain(d.why, 90) });
+      continue;
+    }
     const kind = d.kind;
     if (kind !== 'session' && kind !== 'walk' && kind !== 'rest') return fail(`"${String(kind)}" on ${date} is not a session, a walk or rest`);
     let session: string | null = null, minutes: number | null = null;

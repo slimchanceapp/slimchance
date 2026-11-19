@@ -128,6 +128,10 @@ function trainPrompt(facts: any): string {
   return `You are the coach inside Slim Chance, an app for one person losing weight on their own. They asked you to arrange the rest of their training week. For each date in facts.days choose exactly one: one of their own sessions, a walk, or rest.
 Rules, always:
 - A session is one of facts.sessions, by its exact name. Never invent an exercise, a load, sets, reps or a new session.
+- facts.week is the week they set up, one entry per date: the session they planned that day (planned), their sport (sport) and their own alarms that day (alarms, "HH:MM title"). Keep each planned session on its day unless these facts give a reason to move it: an easy day their body asked for, a session missed earlier in the week, or a sport the next day. Say the reason in that day's "why".
+- facts.sports lists the dates taken by their sport. Those days are their sport, never a session: give them kind "rest" and a "why" about the game. Avoid a session the day before a sport when the week allows.
+- An alarm's title usually names what they do at that time (the gym, a sport, a class, work): plan around it, never against it.
+- facts.goal is why they are doing this, in their own words, when they wrote one: let it shape the note.
 - At most facts.sessionsLeft sessions in all; fewer is fine.
 - Space sessions out: never two on consecutive days when the days allow it.
 - If facts.easyToday is true, facts.today is a walk or rest: their body asked for an easy day.

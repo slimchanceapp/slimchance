@@ -13,8 +13,16 @@
   import { supabase } from '$lib/db/client';
   import { checkTrainPlan, type CheckedTrainPlan, type TrainDay } from '$lib/training';
   import { trainPlan } from '$lib/stores/trainPlan';
+  import { liveAlarms } from '$lib/stores/live';
 
-  let { sessions, left, doneDates }: { sessions: string[]; left: number; doneDates: string[] } = $props();
+  // His report (19 Nov): the coach made a week he couldn't follow, blind to
+  // his own week. It now gets, for each day left, the session he planned, his
+  // sport (which keeps its day: the check refuses a session on it) and his own
+  // alarms that day, plus his goal in his own words.
+  type WeekDay = { dow: number; session: string | null; sport: string | null };
+  let { sessions, left, doneDates, weekPlan = [], goal = '' }:
+    { sessions: string[]; left: number; doneDates: string[]; weekPlan?: WeekDay[]; goal?: string } = $props();
+  const _alarms = liveAlarms();
 
   const _bio = liveBiometrics();
   const today = $derived($todayDate as string);
@@ -33,6 +41,15 @@
     return readyToday(rows.find((b) => b.date === today), rows.filter((b) => b.date < today && b.date >= since));
   });
   const easyToday = $derived(ready?.word === 'Low');
+  const week = $derived(days.map((date) => {
+    const dow = noon(date).getDay();
+    const w = weekPlan.find((x) => x.dow === dow);
+    const alarms = (($_alarms as any[]) ?? [])
+      .filter((a) => a.enabled !== false && a.days?.includes(dow))
+      .map((a) => `${a.time} ${a.title}`);
+    return { date, planned: w?.session ?? null, sport: w?.sport ?? null, alarms };
+  }));
+  const sports = $derived(Object.fromEntries(week.filter((w) => w.sport).map((w) => [w.date, w.sport as string])));
   // Kept (stores/trainPlan) so it's still here after a reload; past days drop off.
   const plan = $derived.by(() => {
     const ds = $trainPlan?.days.filter((d) => d.date >= today) ?? [];
@@ -47,11 +64,12 @@
     const facts: Record<string, unknown> = {
       today, days, sessions, sessionsLeft: left, doneDates: doneDates.filter((d) => d >= monday),
       easyToday, readiness: ready?.word ?? null, notes: $coachNotes ?? '', watch: $watchSays,
+      week, sports, goal: goal || null,
     };
     for (let attempt = 0; attempt < 2 && !got && !err; attempt++) {
       const { data, error } = await supabase.functions.invoke('coach', { body: { mode: 'train', facts }, timeout: 55_000 });
       if (error || data?.error) { err = data?.error ?? 'Your coach couldn’t be reached. Try again in a minute.'; break; }
-      const checked = checkTrainPlan(data?.reply, { days, sessions, left, easyToday, today });
+      const checked = checkTrainPlan(data?.reply, { days, sessions, left, easyToday, today, sports });
       if (checked.ok) got = checked;
       else facts.problem = checked.why;
     }
@@ -61,7 +79,7 @@
   }
 
   const dayName = (s: string) => (s === today ? 'Today' : noon(s).toLocaleDateString('en-GB', { weekday: 'short' }));
-  const what = (d: TrainDay) => (d.kind === 'session' ? d.session : d.kind === 'walk' ? `Walk · ${d.minutes} min` : 'Rest');
+  const what = (d: TrainDay) => (d.kind === 'session' || d.kind === 'sport' ? d.session : d.kind === 'walk' ? `Walk · ${d.minutes} min` : 'Rest');
 </script>
 
 {#if $coachOn && sessions.length && days.length}
@@ -70,14 +88,17 @@
     {#if plan}
       <ul class="tp-days">
         {#each plan.days as d (d.date)}
-          <li class:tp-today={d.date === today} class:tp-session={d.kind === 'session'}><b>{dayName(d.date)}</b><span>{what(d)}</span>{#if d.why}<em>{d.why}</em>{/if}</li>
+          <li class:tp-today={d.date === today} class:tp-session={d.kind === 'session' || d.kind === 'sport'}><b>{dayName(d.date)}</b><span>{what(d)}</span>{#if d.why}<em>{d.why}</em>{/if}</li>
         {/each}
       </ul>
       {#if plan.note}<p class="tp-note">{plan.note}</p>{/if}
     {:else}
-      <p class="tp-lead">Your coach places your own sessions over the days left{easyToday ? ', with an easy day today' : ''}, with walks and rest between. Never a new exercise.</p>
+      <p class="tp-lead">Your coach places your own sessions over the days left, around your sport and your alarms{easyToday ? ', with an easy day today' : ''}, with walks and rest between. Never a new exercise.</p>
     {/if}
-    <button class="btn {plan ? 'bg_' : 'bp'} bfl" disabled={busy} onclick={ask}>{busy ? 'Your coach is planning…' : plan ? 'Plan again' : 'Plan my week'}</button>
+    <div class="tp-btns">
+      <button class="btn {plan ? 'bg_' : 'bp'} bfl" disabled={busy} onclick={ask}>{busy ? 'Your coach is planning…' : plan ? 'Plan again' : 'Plan my week'}</button>
+      {#if plan}<button class="btn bg_" onclick={() => trainPlan.set(null)}>Close</button>{/if}
+    </div>
     {#if err}<p class="tp-err">{err}</p>{/if}
   </section>
 {/if}
@@ -92,5 +113,6 @@
   .tp-days li.tp-session span{font-weight:700}
   .tp-days li.tp-today{outline:2px solid var(--amber);outline-offset:-2px}
   .tp-note{font-size:0.875rem;line-height:1.5;color:var(--text);margin:0 0 10px}
+  .tp-btns{display:flex;gap:8px}
   .tp-err{font-size:0.8125rem;color:var(--led-warn);margin:8px 0 0}
 </style>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import SwipeViews from '$lib/components/SwipeViews.svelte';
+  import { sportOf } from '$lib/moments';
   import { buildGroups } from '$lib/training';
   import { DEFAULT_SESSIONS, type PlanDay, type PlanSession, type PlanExercise } from '$lib/training';
   import { buildSchedule } from '$lib/training';
@@ -916,7 +917,9 @@
 
 <!-- The coach arranges your own sessions over the days left (pact m14). -->
 <TrainPlan
-  sessions={[...new Set(schedule.filter((d: any) => isTrainingDay(d)).map((d: any) => sessionDisplayName(d)).filter(Boolean))]}
+  sessions={[...new Set(schedule.filter((d: any) => d.session_key).map((d: any) => sessionDisplayName(d)).filter(Boolean))]}
+  weekPlan={schedule.map((d: any) => ({ dow: d.day_of_week, session: d.session_key ? sessionDisplayName(d) : null, sport: sportOf(d) }))}
+  goal={$_goalReason ?? ''}
   left={sessionsLeft(weeklyTarget, gymSessions7)}
   doneDates={[...trainedDates]} />
 
@@ -1100,9 +1103,11 @@
         {:else}
           <div style="font-size:1.125rem;font-weight:700;color:var(--text)">{sess.name}</div>
         {/if}
-          <span style="cursor:pointer;color:var(--amber);font-size:0.8125rem;margin-left:8px" onclick={() => editingSession = !editingSession} role="button" tabindex="0" onkeydown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); editingSession = !editingSession; } }}>
-            {editingSession ? 'Done ✓' : 'Edit ✎'}
-          </span>
+          <!-- A real button (19 Nov: a small "Edit ✎" word was easy to miss). Edits save to the
+               person's own copy of the session: swap an exercise by typing its name. -->
+          <button class="btn {editingSession ? 'bp' : 'bg_'} bsm" style="margin-left:8px;flex-shrink:0" onclick={() => editingSession = !editingSession}>
+            {editingSession ? 'Done' : 'Edit exercises'}
+          </button>
       </div>
       <div style="font-size:0.75rem;color:var(--muted);margin-bottom:12px">{sess.duration}</div>
       {#if todayVolume > 0}

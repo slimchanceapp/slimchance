@@ -6516,26 +6516,33 @@ check('the coach arranges your own sessions over the week: never a new one, neve
   // Pact m14 (2026-11-10): "which of your own sessions go on which day, walks
   // and rest, from your Train week and the watch. Never new exercises or loads."
   const { checkTrainPlan, sessionsLeft } = await import('../src/lib/training/trainPlan.ts');
-  const f = { days: ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'], sessions: ['Lower', 'Badminton'], left: 2, easyToday: false, today: '2026-11-12' };
+  // His report (19 Nov): the coach made a week he couldn't follow. Badminton
+  // was one of the "sessions" it could move to any day, and it was never told
+  // his planned days, his alarms or his goal. A sport stays on its day: the app
+  // keeps it there, and a session on it is refused.
+  const f = { days: ['2026-11-12', '2026-11-13', '2026-11-14', '2026-11-15'], sessions: ['Lower', 'Upper'], left: 2, easyToday: false, today: '2026-11-12', sports: { '2026-11-14': 'Badminton' } };
   const good = { days: [
     { date: '2026-11-12', kind: 'session', session: 'lower', why: 'Fresh legs today' },
     { date: '2026-11-13', kind: 'walk', minutes: 30, why: 'Loosen up' },
-    { date: '2026-11-14', kind: 'session', session: 'Badminton', why: 'Your usual game' },
-    { date: '2026-11-15', kind: 'rest', why: 'Recover for Monday' }], note: 'A steady week.' };
+    { date: '2026-11-14', kind: 'rest', why: 'Your game tonight' },
+    { date: '2026-11-15', kind: 'session', session: 'Upper', why: 'Arms after the game' }], note: 'A steady week.' };
   const ok = checkTrainPlan(good, f);
   assert.equal(ok.ok, true, ok.why ?? '');
   assert.equal(ok.days[0].session, 'Lower', 'their own name, as they wrote it');
+  assert.deepEqual([ok.days[2].kind, ok.days[2].session], ['sport', 'Badminton'], 'their sport stays on its day, named');
   const with_ = (i, day) => ({ ...good, days: good.days.map((d, k) => (k === i ? day : d)) });
+  assert.match(checkTrainPlan(with_(2, { date: '2026-11-14', kind: 'session', session: 'Lower', why: 'x' }), f).why, /Badminton day/, 'never a session on their sport day');
+  assert.match(checkTrainPlan(with_(0, { date: '2026-11-12', kind: 'session', session: 'Badminton', why: 'x' }), f).why, /isn't one of their sessions/, 'a sport is not a session to move');
   assert.match(checkTrainPlan(with_(0, { date: '2026-11-12', kind: 'session', session: 'Deadlifts 5x5', why: 'x' }), f).why, /isn't one of their sessions/, 'never a new exercise');
   assert.match(checkTrainPlan(with_(1, { date: '2026-11-13', kind: 'session', session: 'Lower', why: 'x' }), f).why, /only 2 are left|back to back/, 'never more than is left');
   const backToBack = { days: [
     { date: '2026-11-12', kind: 'session', session: 'Lower', why: 'x' },
-    { date: '2026-11-13', kind: 'session', session: 'Badminton', why: 'x' },
-    { date: '2026-11-14', kind: 'walk', minutes: 30, why: 'x' },
+    { date: '2026-11-13', kind: 'session', session: 'Upper', why: 'x' },
+    { date: '2026-11-14', kind: 'rest', why: 'x' },
     { date: '2026-11-15', kind: 'rest', why: 'x' }], note: '' };
   assert.match(checkTrainPlan(backToBack, f).why, /back to back/, 'spaced out when the days allow');
-  const crowded = { ...backToBack, days: backToBack.days.map((d, k) => (k === 2 ? { date: d.date, kind: 'session', session: 'Lower', why: 'x' } : d)) };
-  assert.equal(checkTrainPlan(crowded, { ...f, left: 3 }).ok, true, 'three in four days cannot all be apart, so back to back is allowed');
+  const crowded = { ...backToBack, days: backToBack.days.map((d, k) => (k === 3 ? { date: d.date, kind: 'session', session: 'Lower', why: 'x' } : d)) };
+  assert.equal(checkTrainPlan(crowded, { ...f, left: 3, sports: {} }).ok, true, 'three in four days cannot all be apart, so back to back is allowed');
   assert.match(checkTrainPlan(good, { ...f, easyToday: true }).why, /easy day/, 'an easy day when the body asks for one');
   assert.match(checkTrainPlan(with_(1, { date: '2026-11-13', kind: 'walk', minutes: 120, why: 'x' }), f).why, /15 to 60/);
   assert.equal(checkTrainPlan(with_(3, { date: '2026-11-15', kind: 'rest', why: 'Rest 2 days' }), f).days[3].why, '', 'no unchecked numbers in its words');
@@ -6548,7 +6555,13 @@ check('the coach arranges your own sessions over the week: never a new one, neve
   const card = readFileSync('src/lib/components/TrainPlan.svelte', 'utf8');
   assert.match(card, /\{#if \$coachOn && sessions\.length && days\.length\}/, 'only for people who turned the coach on');
   assert.match(card, /const checked = checkTrainPlan\(data\?\.reply/, 'every plan checked before it is shown');
-  assert.match(readFileSync('src/routes/workouts/+page.svelte', 'utf8'), /<TrainPlan\n  sessions=/);
+  assert.match(card, /onclick=\{\(\) => trainPlan\.set\(null\)\}>Close<\/button>/, 'a plan can be closed');
+  assert.match(card, /week, sports, goal: goal \|\| null/, 'it is told his planned week (sessions, sport, alarms each day) and his goal');
+  const train = readFileSync('src/routes/workouts/+page.svelte', 'utf8');
+  assert.match(train, /<TrainPlan\n  sessions=\{\[\.\.\.new Set\(schedule\.filter\(\(d: any\) => d\.session_key\)/, 'only gym sessions move; a sport keeps its day');
+  assert.match(train, /weekPlan=\{schedule\.map/);
+  assert.match(coach, /facts\.sports/);
+  assert.match(coach, /facts\.week is the week they set up/);
 });
 
 check('the hero speaks of the chance, never of the body', async () => {
