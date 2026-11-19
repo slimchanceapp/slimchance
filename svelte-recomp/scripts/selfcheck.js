@@ -5939,6 +5939,8 @@ check('assistants are told when to call Slim Chance, which units to send, and to
     assert.match(t.description, /^Use when /, `${t.name} starts with when to use it`);
     assert.match(t.description, /Only send what the person shared and asked about\./, `${t.name}: their own data, at their request`);
     for (const k of ['readOnlyHint', 'destructiveHint', 'openWorldHint']) assert.equal(typeof t.annotations[k], 'boolean', `${t.name}.${k}`);
+    // 2026-11-19: an assistant directory's form flags tools without annotations.title (the older spot).
+    assert.equal(t.annotations.title, t.title, `${t.name}: annotations.title, the name directories show`);
   }
 });
 

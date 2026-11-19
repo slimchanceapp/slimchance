@@ -263,7 +263,8 @@ export function handleMcp(msg: any, headers: { protocolVersion?: string | null }
       });
     }
     case 'ping': return ok({});
-    case 'tools/list': return ok({ tools: [TOOL, SIGNALS_TOOL] });
+    // The title also sits in annotations, the older spot some directories still read.
+    case 'tools/list': return ok({ tools: [TOOL, SIGNALS_TOOL].map((t) => ({ ...t, annotations: { ...t.annotations, title: t.title } })) });
     case 'tools/call':
       if (toolName(msg.params?.name) === TOOL.name) return ok(slimChance(msg.params?.arguments ?? {}));
       if (toolName(msg.params?.name) === SIGNALS_TOOL.name) return ok(bodySignals(msg.params?.arguments ?? {}));
