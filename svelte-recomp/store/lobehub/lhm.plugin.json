@@ -1,0 +1,214 @@
+{
+  "identifier": "slim-chance",
+  "name": "Slim Chance",
+  "version": "1.1.0",
+  "author": "Slim Chance",
+  "authorUrl": "https://slimchance.app/about/",
+  "description": "Is your weight really moving? From dated morning weigh-ins: the trend under the daily water swings, the rate per week with its range, and the chance in 10 that it is truly moving, plus what a watch (steps, sleep, resting heart rate, HRV) says beside the scale. Free, no account, stores nothing. Not medical advice.",
+  "homepage": "https://slimchance.app/about/",
+  "cloudEndpoint": "https://slimchance.app/mcp",
+  "icon": "https://slimchance.app/icon-512.png",
+  "tags": [
+    "weight-loss",
+    "health",
+    "fitness",
+    "weight-trend",
+    "wearables"
+  ],
+  "tools": [
+    {
+      "name": "get_weight_trend",
+      "title": "Slim Chance: is my weight really moving?",
+      "description": "Use when someone shares dated scale readings, or asks whether their weight loss (or gain) is really working, has stalled, or is just water. Turns dated morning scale readings into an honest trend: where the weight really is under the daily water noise, the rate per week with its 95% range, and the chance in 10 that it is truly moving the way the person wants. It reads the last 5 weeks up to the latest reading; it describes the recent past, it is not a forecast. Needs at least 7 readings in those 5 weeks for a verdict; with fewer it says how many more mornings it needs. Only send what the person shared and asked about. Nothing you send is stored.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "weigh_ins": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 400,
+            "description": "Morning scale readings, any order, one per day (a later reading for the same date replaces an earlier one).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "weight": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "weight"
+              ]
+            }
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "kg",
+              "lb"
+            ],
+            "description": "Unit of the weights, and of the answer. Default kg."
+          },
+          "goal": {
+            "type": "string",
+            "enum": [
+              "lose",
+              "gain",
+              "hold"
+            ],
+            "description": "Which way the person wants the weight to go. Default lose."
+          },
+          "goal_weight": {
+            "type": "number",
+            "description": "Optional target weight, same unit: adds \"at this pace, about N weeks\"."
+          }
+        },
+        "required": [
+          "weigh_ins"
+        ]
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Slim Chance: is my weight really moving?"
+      }
+    },
+    {
+      "name": "get_body_signals",
+      "title": "Slim Chance: what the watch says beside the scale",
+      "description": "Use when someone with a watch or fitness tracker asks what their resting heart rate, steps, sleep or HRV say, or why the scale stalled while they trained. Gives each daily signal its own honest trend over the last 5 weeks (rising, falling, steady, or too noisy to call), with a plain meaning: resting heart rate (falling usually means fitness improving), daily steps (falling is a common hidden reason weight loss slows), sleep hours and HRV. With morning weights too, it also gives the weight trend and says when the watch explains the scale. Separate signals, not a health score; not medical advice. Needs 7 days of a signal for its trend. Only send what the person shared and asked about. Nothing you send is stored.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "resting_hr": {
+            "type": "array",
+            "maxItems": 400,
+            "description": "Resting heart rate per day, beats per minute.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "bpm": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "bpm"
+              ]
+            }
+          },
+          "steps": {
+            "type": "array",
+            "maxItems": 400,
+            "description": "Steps per day.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "steps": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "steps"
+              ]
+            }
+          },
+          "sleep_hours": {
+            "type": "array",
+            "maxItems": 400,
+            "description": "Hours slept per night, dated by the morning.",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "hours": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "hours"
+              ]
+            }
+          },
+          "hrv": {
+            "type": "array",
+            "maxItems": 400,
+            "description": "Heart rate variability per day, milliseconds (as the watch reports it).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "ms": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "ms"
+              ]
+            }
+          },
+          "weigh_ins": {
+            "type": "array",
+            "minItems": 0,
+            "maxItems": 400,
+            "description": "Morning scale readings, any order, one per day (a later reading for the same date replaces an earlier one).",
+            "items": {
+              "type": "object",
+              "properties": {
+                "date": {
+                  "type": "string",
+                  "description": "YYYY-MM-DD"
+                },
+                "weight": {
+                  "type": "number"
+                }
+              },
+              "required": [
+                "date",
+                "weight"
+              ]
+            }
+          },
+          "unit": {
+            "type": "string",
+            "enum": [
+              "kg",
+              "lb"
+            ],
+            "description": "Unit of the weights, and of the answer. Default kg."
+          }
+        }
+      },
+      "annotations": {
+        "readOnlyHint": true,
+        "destructiveHint": false,
+        "idempotentHint": true,
+        "openWorldHint": false,
+        "title": "Slim Chance: what the watch says beside the scale"
+      }
+    }
+  ]
+}
